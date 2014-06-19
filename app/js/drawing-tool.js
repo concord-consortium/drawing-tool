@@ -4,4 +4,4 @@ function DrawingTool(selector) {
   console.log("Drawing Tool created");
 }
 
-exports.DrawingTool = DrawingTool;
+module.exports = DrawingTool;

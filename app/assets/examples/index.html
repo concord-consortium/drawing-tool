@@ -3,13 +3,19 @@
   <head>
     <meta charset="utf-8">
     <title>HTML5 Drawing Tool Demo</title>
+  	<link rel="stylesheet" type="text/css" href="../vendor.css">
+  	<link rel="stylesheet" type="text/css" href="../drawing-tool.css">
   </head>
   <body>
-    <!-- page content -->
-    <div id="container"></div>
+    <div class="container">
+        <h1>HTML5 Drawing Tool</h1>
+        <div id="tool"></div>
+      </div>
+    </div>
+  <script src="../vendor.js"></script>
   <script src="../drawing-tool.js"></script>
   <script>
-  	var drawingTool = new DrawingTool("#container");
+  	var drawingTool = new DrawingTool("#tool");
   </script>
   </body>
 </html>

@@ -2,6 +2,13 @@
   "name": "drawing-tool",
   "version": "0.0.1",
   "main": "public/app.js",
-  "dependencies": {},
-  "overrides": {}
+  "dependencies": {
+    "fabric": "1.4.7",
+    "bootstrap": "3.1.1"
+  },
+  "overrides": {
+    "fabric": {
+      "main": "./dist/fabric.js"
+    }
+  }
 }

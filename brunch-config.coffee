@@ -19,8 +19,13 @@ exports.config =
   conventions:
     vendor: /^(bower_components|vendor|app\/initialize\.js)/
 
-  plugins:
-    afterBrunch: [
-      'echo "update ./dist directory"'
-      'rsync -a public/ dist --include="*.js" --include="*.css" --exclude="*"'
-    ]
+  overrides:
+    dist:
+      optimize: true
+      sourceMaps: false
+      plugins: autoReload: enabled: false
+      plugins:
+        afterBrunch: [
+          'echo "- updating ./dist directory"'
+          'rsync -av public/ dist --include="*.js" --include="*.css" --exclude="*"'
+        ]

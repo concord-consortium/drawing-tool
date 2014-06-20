@@ -1,7 +1,8 @@
 #!/bin/sh
 
-echo "- running brunch build"
-brunch build -e dist
+echo "- running brunch build -e production"
+rm -rf public
+brunch build -e production
 
 echo "- cloning drawing-tool repo into temporary dir"
 git clone git@github.com:concord-consortium/drawing-tool.git --branch gh-pages __gh-pages-tmp__

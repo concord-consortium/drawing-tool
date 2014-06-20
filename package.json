@@ -2,7 +2,7 @@
   "name": "drawing-tool",
   "description": "HTML5 Drawing Tool",
   "author": "",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "repository": {
     "type": "git",
     "url": "https://github.com/concord-consortium/drawing-tool"
@@ -16,6 +16,7 @@
     "css-brunch": ">= 1.0 < 1.8",
     "uglify-js-brunch": ">= 1.0 < 1.8",
     "clean-css-brunch": ">= 1.0 < 1.8",
-    "auto-reload-brunch": ">= 1.0 < 1.8"
+    "auto-reload-brunch": ">= 1.0 < 1.8",
+    "after-brunch": ">= 0.0.4"
   }
 }

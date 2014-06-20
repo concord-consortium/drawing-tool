@@ -18,3 +18,9 @@ exports.config =
    # See: https://github.com/brunch/brunch/issues/712
   conventions:
     vendor: /^(bower_components|vendor|app\/initialize\.js)/
+
+  plugins:
+    afterBrunch: [
+      'echo "update ./dist directory"'
+      'rsync -a public/ dist --include="*.js" --include="*.css" --exclude="*"'
+    ]

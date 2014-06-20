@@ -1,7 +1,16 @@
 {
   "name": "drawing-tool",
-  "version": "0.0.1",
-  "main": "public/app.js",
+  "version": "0.0.2",
+  "main": [
+    "dist/drawing-tool.js",
+    "dist/drawing-tool.css"
+  ],
+  "ignore": [
+    "app",
+    "vendor",
+    "brunch-config.coffee",
+    "package.json"
+  ],
   "dependencies": {
     "fabric": "1.4.7",
     "bootstrap": "3.1.1"

@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+l<!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="utf-8">
@@ -9,13 +9,14 @@
   <body>
     <div class="container">
         <h1>HTML5 Drawing Tool</h1>
-        <div id="tool"></div>
-      </div>
+        <h2>(actually just manipulating rectangles)</h2>
+        <canvas id="tool" width="500px" height="500px"
+        style="border: 3px solid;"></canvas>
     </div>
   <script src="../vendor.js"></script>
   <script src="../drawing-tool.js"></script>
   <script>
-  	var drawingTool = new DrawingTool("#tool");
+  	var drawingTool = new DrawingTool("tool");
   </script>
   </body>
 </html>

@@ -5,21 +5,26 @@
     <title>HTML5 Drawing Tool Demo</title>
   	<link rel="stylesheet" type="text/css" href="../vendor.css">
   	<link rel="stylesheet" type="text/css" href="../drawing-tool.css">
+    <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.min.css" rel="stylesheet">
   </head>
   <body>
     <div class="container">
         <h1 id="hero">HTML5 Drawing Tool</h1>
         <h2>(actually just manipulating rectangles)</h2>
-        <button id="rect">Rectangle</button>
-        <button id="circ">Circle</button>
-        <button id="fancy">Fancy Add Rectangle</button>
-        <canvas id="tool" width="500px" height="500px"
+        <div id="tools">
+          <button id="select"><i class="fa fa-location-arrow"></i></button>
+          <button id="line">Line</button>
+          <button id="rect">Rectangle</button>
+          <button id="circ">Circle</button>
+          <button id="fancy">Fancy Add Rectangle</button>
+        </div>
+        <canvas id="draw" width="700px" height="500px"
         style="border: 3px solid;"></canvas>
     </div>
   <script src="../vendor.js"></script>
   <script src="../drawing-tool.js"></script>
   <script>
-  	var drawingTool = new DrawingTool("tool");
+  	var drawingTool = new DrawingTool("draw");
   </script>
   </body>
 </html>

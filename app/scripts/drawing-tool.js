@@ -7,105 +7,119 @@ function DrawingTool (selector) {
 
   this.getCanvas = function(){ return this.canvas; }
 
+  // adding sample shape
   var rect3 = new fabric.Rect({
-    width: 50, height: 100, left: 275, top: 350, angle: 45,
-    stroke: '#eee', strokeWidth: 10,
+    width: 200, height: 100, left: 500, top: 150, angle: 45,
     fill: 'rgba(0,0,200,0.5)'
   });
   this.canvas.add(rect3);
 
-  $(document).ready(function(){
-    $('.btn').click(function(){
-      console.log($(this).find("input").val());
-    });
-  });
+  var self = this;
 
-  this.selectionTool = new SelectionTool();
-  this.lineTool = new LineTool();
-  // this.rectangleTool = new RectangleTool();
+  // Tools & implementation
+  var selectionTool = new Tool("Selection Tool", "select");
+  selectionTool.activate = function(){
+    console.log("items are now selectable");
+    this.setSelectable(true);
+  }
+  selectionTool.deactivate = function(){
+    console.log("items are no longer selectable");
+    this.setSelectable(false);
+  }
+  selectionTool.setSelectable = function(selectable){
+    self.canvas.selection = selectable;
+    var items = self.canvas.getObjects();
+    for (var i = items.length - 1; i >= 0; i--) {
+      items[i].selectable = selectable;
+    };
+  }
+
+  var lineTool = new Tool("Line Tool", "line");
+  lineTool.activate = function(){
+    console.info ("implemented line tool activation function");
+  }
+  lineTool.deactivate = function(){
+
+  }
+  // var rectangleTool = new RectangleTool();
   // var ellipseTool = new EllipseTool();
   // var squareTool = new SquareTool();
   // var circleTool = new CircleTool();
 
-  var tools = [this.selectionTool, this.lineTool];//, this.rectangleTool];
-  for (var i = tools.length - 1; i >= 0; i--) {
-    console.log(tools[i]);
-    // tools[i].getButton().addEventListener("click", function(){console.log("hihihih")},false);
-  };
+  this.tools = {
+    "select": selectionTool,
+    "line": lineTool
+  }
 
-  this.currentTool = this.selectionTool;
+  this.currentTool;
+  this.chooseTool("select");
+
+  $('.btn').click(function(){
+    var id = $(this).find("input").val();
+    console.log("ui detected a click on " + id);
+    self.chooseTool(id);
+  });
+
+
+  // $('.btn').on('click', $.proxy(function () { 
+  //   console.log($(this)); 
+  // }, this));
+
   console.log("drawing tool constructor finished");
 }
 
-DrawingTool.prototype.toolManager = function(){
-  console.log(this.name);
-}
+DrawingTool.prototype.chooseTool = function(toolSelector) {
 
-var Tool = function Tool (selector){
-  this.name = "Tool";
-  this.active = false;
-
-  if (document.getElementById(selector).checked){
-    console.log(this.name + " is checked");
+  // implement a stop if same tool is already selected?
+  var newTool = this.tools[toolSelector];
+  if (newTool === undefined){
+    console.warn("Warning! Could not find tool with selector \"" + toolSelector
+    + "\"\nExiting tool chooser.");
+    return;
   }
-  else { console.log("nope"); }
-
-  // this.btn = document.getElementById(selector);
-  // this.btn.addEventListener('click',function(){console.log("clicked")},false);
-
-  // // How much of this is bad practice? (also probably unneccessary)
-  // var self = this;
-  // this.btn.addEventListener('click',function(){self.setActive(true)},false);
+  try {
+    console.log("Choosing " + newTool.name + " over " + this.currentTool.name);
+    this.currentTool.setActive(false);
+    var oldTool = this.currentTool;
+  } catch (err) {
+    console.log("Choosing " + newTool.name);
+  }
+  newTool.setActive(true);
+  this.currentTool = newTool;
+  return oldTool;
 }
 
-Tool.prototype.getButton = function (){ return this.btn; }
+var Tool = function Tool (name, selector) {
+  this.name = name || "Tool";
+  this.selector = selector || "";
+  this.active = false;
+}
 
-Tool.prototype.setActive = function(active){
-  console.log(this.name + " active? " +  active);
+Tool.prototype.setActive = function(active) {
+  console.info(this.name + " active? " +  this.active);
   if (this.active === active) { return active; }
   this.active = active;
   if (active === true){
     // this tool is now active
-    console.log(this.name + " has been activated");
+    console.log("Activating " + this.name);
     this.activate();
+    console.log(this.name + " has been activated");
   }
   else{
     // this tool has been deselected
+    console.log("Deactivating " + this.name);
+    this.deactivate();
     console.log(this.name + " is no longer active");
-    // this.deactivate();
   }
 
   return active;
 }
 
-Tool.prototype.isActive = function(){ return this.active; }
+Tool.prototype.isActive = function() { return this.active; }
 
-function SelectionTool (){
-  this.name = "Selection Tool";
-  console.log(this.name + " initialized");
-  this.setActive(true);
-}
+Tool.prototype.activate = function() { console.warn("unimplemented activation method"); }
 
-SelectionTool.prototype = new Tool("select");
-SelectionTool.prototype.activate = function(){ console.log(this.name + " success!")};
-
-function LineTool(){
-  this.name = "Line Tool";
-  console.log(this.name + " initialized");
-  this.setActive(false);
-}
-LineTool.prototype = new Tool("line");
-LineTool.prototype.activate = function(){ console.log(this.name + " success!")};
-
-// function RectangleTool(){
-//   this.name = "RectangleTool - Test";
-//   console.log(this.name + " initialized");
-//   this.setActive(false);
-// }
-// RectangleTool.prototype = new Tool("rect");
-// RectangleTool.prototype.activate = function(){
-//   console.log(this.name + " success!");
-// }
+Tool.prototype.deactivate = function() { console.warn("unimplemented deactivation method"); }
 
 
 module.exports = DrawingTool;

@@ -11,18 +11,25 @@
     <div class="container">
         <h1 id="hero">HTML5 Drawing Tool</h1>
         <h2>(actually just manipulating rectangles)</h2>
-        <div id="tools">
-          <button id="select"><i class="fa fa-location-arrow"></i></button>
-          <button id="line">Line</button>
-          <button id="rect">Rectangle</button>
-          <button id="circ">Circle</button>
-          <button id="fancy">Fancy Add Rectangle</button>
+        <div class="drawing-tool">
+          <form id="tools" class="btn-group-vertical" data-toggle="buttons">
+            <label class="btn btn-primary" id="select">
+              <input type="radio" name="options" value="select"> S
+            </label>
+            <label class="btn btn-primary" id="line">
+              <input type="radio" name="options" value="line"> L
+            </label>
+            <label class="btn btn-primary" id="rect">
+              <input type="radio" name="options" value="rect"> R
+            </label>
+          </form>
+          <canvas id="draw" width="700px" height="500px"
+          style="border: 3px solid;"></canvas>
         </div>
-        <canvas id="draw" width="700px" height="500px"
-        style="border: 3px solid;"></canvas>
     </div>
   <script src="../vendor.js"></script>
   <script src="../drawing-tool.js"></script>
+  <script src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
   <script>
   	var drawingTool = new DrawingTool("draw");
   </script>

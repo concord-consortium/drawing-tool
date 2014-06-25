@@ -1,3 +1,5 @@
+var Tool = require('scripts/tool')
+
 // Constructor function.
 function DrawingTool (selector) {
   // Implement me!
@@ -8,10 +10,13 @@ function DrawingTool (selector) {
   fabric.Object.prototype.perPixelTargetFind = true;
   fabric.Line.prototype.strokeWidth = 10;
   fabric.Line.prototype.stroke = "green";
+  fabric.Rect.prototype.fill = "rgba(100,200,200,0.5)";
 
   this.getCanvas = function(){ return this.canvas; }
 
-  // adding sample shapes
+  this.canvas.selectionColor = 'rgba(0,255,0,0.3)';
+
+  // //adding sample shapes
   // var rect3 = new fabric.Rect({
   //   width: 200, height: 100, left: 500, top: 150, angle: 45,
   //   fill: 'rgba(0,0,200,0.5)'
@@ -43,11 +48,11 @@ function DrawingTool (selector) {
 
   // TODO: refactor this core code to handle all different shapes
   //       maybe with a "shape tool" prototype
+  // TODO: fix line editing (endpoints, disable selection/scaling)
   var lineTool = new Tool("Line Tool", "line");
   lineTool.activate = function(){
     var moved = false;
     var tempNewLine;
-    var index = self.canvas.getObjects().length;
     var x1, y1, x2, y2;
     // on mouse down, start drawing line
     self.canvas.on("mouse:down", function(options){
@@ -90,14 +95,77 @@ function DrawingTool (selector) {
     self.canvas.off('mouse:down');
     self.canvas.off('mouse:move');
   }
-  // var rectangleTool = new RectangleTool();
+
+  var rectangleTool = new Tool("Rectangle Tool", "rect");
+  rectangleTool.activate = function(){
+    var moved = false;
+    var tempNewRect;
+    var x1, y1, x2, y2;
+    // on mouse down, start drawing rect
+    self.canvas.on("mouse:down", function(options){
+      x1 = options.e.offsetX;
+      y1 = options.e.offsetY;
+      tempNewRect = new fabric.Rect({
+        top: y1,
+        left: x1,
+        width: 0,
+        height: 0
+      });
+      tempNewRect.selectable = false;
+      self.canvas.add(tempNewRect);
+    })
+    // on mouse move, update rect and re-render the canvas
+    self.canvas.on("mouse:move", function(options){
+      if (tempNewRect === undefined) return;
+      console.log("Moved");
+      if (!moved){ moved = true; } // movement has clearly occured
+      x2 = options.e.offsetX;
+      y2 = options.e.offsetY;
+      tempNewRect.width = x2 - x1;
+      tempNewRect.height = y2 - y1;
+      self.canvas.renderAll(false);
+    })
+    // on mouse up, check if a Rect was drawn or a click
+    self.canvas.on("mouse:up", function(options){
+      self.canvas.remove(tempNewRect);
+      if (moved && dist(x1, y1, x2, y2) > 3) {// successful Rect draw
+        self.canvas.renderAll(false);
+        if (tempNewRect.width < 0){
+          x1 = x1 + tempNewRect.width;
+          tempNewRect.width = -tempNewRect.width;
+        }
+        if (tempNewRect.height < 0){
+          y1 = y1 + tempNewRect.height;
+          tempNewRect.height = -tempNewRect.height;
+        }
+        var newRect = new fabric.Rect({
+          top: y1,
+          left: x1,
+          width: tempNewRect.width,
+          height: tempNewRect.height
+        });
+        self.canvas.add(newRect);
+        console.log("Rect constructed");
+      } else { // click (no Rect drawn) - move back to select tool
+        self.chooseTool("select");
+      }
+      tempNewRect = undefined;
+      moved = false;
+    })
+  }
+  rectangleTool.deactivate = function(){
+    self.canvas.off('mouse:up');
+    self.canvas.off('mouse:down');
+    self.canvas.off('mouse:move');
+  }
   // var ellipseTool = new EllipseTool();
   // var squareTool = new SquareTool();
   // var circleTool = new CircleTool();
 
   this.tools = {
     "select": selectionTool,
-    "line": lineTool
+    "line": lineTool,
+    "rect": rectangleTool
   }
 
   this.currentTool;
@@ -117,6 +185,8 @@ function DrawingTool (selector) {
 }
 
 DrawingTool.prototype.chooseTool = function(toolSelector) {
+  console.warn("lolololol");
+
 
   // TODO: update HTML elements to reflect tool change (might be needed for selection)
   // TODO: implement a stop if same tool is already selected?
@@ -137,7 +207,8 @@ DrawingTool.prototype.chooseTool = function(toolSelector) {
   newTool.setActive(true);
   this.currentTool = newTool;
 
-  $('#' + toolSelector).find("input").prop('checked',true);
+  // $('#' + toolSelector).find("input").prop('checked',true);
+  // $('#' + toolSelector).button();
 
   return oldTool;
 }
@@ -148,42 +219,6 @@ DrawingTool.prototype.check = function() {
     console.log(shapes[i].selectable + " " + shapes[i]);
   }
 }
-
-
-/*
- * Tool "Class"
- */
-var Tool = function Tool (name, selector) {
-  this.name = name || "Tool";
-  this.selector = selector || "";
-  this.active = false;
-}
-
-Tool.prototype.setActive = function(active) {
-  console.log(this.name + " active? " +  this.active);
-  if (this.active === active) { return active; }
-  this.active = active;
-  if (active === true){
-    // this tool is now active
-    console.log("Activating " + this.name);
-    this.activate();
-    console.log(this.name + " has been activated");
-  }
-  else{
-    // this tool has been deselected
-    console.log("Deactivating " + this.name);
-    this.deactivate();
-    console.log(this.name + " is no longer active");
-  }
-
-  return active;
-}
-
-Tool.prototype.isActive = function() { return this.active; }
-
-Tool.prototype.activate = function() { console.warn("unimplemented activation method"); }
-
-Tool.prototype.deactivate = function() { console.warn("unimplemented deactivation method"); }
 
 function dist (x1, y1, x2, y2){
   var dx2 = Math.pow(x1 - x2, 2),

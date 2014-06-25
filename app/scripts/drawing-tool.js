@@ -8,13 +8,12 @@ function DrawingTool (selector) {
   fabric.Object.prototype.transparentCorners = false;
   fabric.Object.prototype.selectable = false;
   fabric.Object.prototype.perPixelTargetFind = true;
+  fabric.Group.prototype.selectable = true;
   fabric.Line.prototype.strokeWidth = 10;
   fabric.Line.prototype.stroke = "green";
   fabric.Rect.prototype.fill = "rgba(100,200,200,0.5)";
 
   this.getCanvas = function(){ return this.canvas; }
-
-  this.canvas.selectionColor = 'rgba(0,255,0,0.3)';
 
   // //adding sample shapes
   // var rect3 = new fabric.Rect({

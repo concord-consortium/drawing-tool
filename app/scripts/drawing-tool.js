@@ -4,20 +4,22 @@ function DrawingTool (selector) {
   console.log("Drawing Tool created");
   this.canvas = new fabric.Canvas(selector);
   fabric.Object.prototype.transparentCorners = false;
+  fabric.Object.prototype.selectable = false;
+  fabric.Object.prototype.perPixelTargetFind = true;
   fabric.Line.prototype.strokeWidth = 10;
   fabric.Line.prototype.stroke = "green";
 
   this.getCanvas = function(){ return this.canvas; }
 
-  // adding sample shape
-  var rect3 = new fabric.Rect({
-    width: 200, height: 100, left: 500, top: 150, angle: 45,
-    fill: 'rgba(0,0,200,0.5)'
-  });
-  this.canvas.add(rect3);
-
-  var ttt = new fabric.Line([0,0,100,100], {});
-  this.canvas.add(ttt);
+  // adding sample shapes
+  // var rect3 = new fabric.Rect({
+  //   width: 200, height: 100, left: 500, top: 150, angle: 45,
+  //   fill: 'rgba(0,0,200,0.5)'
+  // });
+  // this.canvas.add(rect3);
+  //
+  // var ttt = new fabric.Line([0,0,100,100], {});
+  // this.canvas.add(ttt);
 
   var self = this;
 
@@ -39,41 +41,54 @@ function DrawingTool (selector) {
     };
   }
 
+  // TODO: refactor this core code to handle all different shapes
+  //       maybe with a "shape tool" prototype
   var lineTool = new Tool("Line Tool", "line");
   lineTool.activate = function(){
     var moved = false;
-    var newLine;
+    var tempNewLine;
     var index = self.canvas.getObjects().length;
+    var x1, y1, x2, y2;
+    // on mouse down, start drawing line
     self.canvas.on("mouse:down", function(options){
-      var x1 = options.e.offsetX, y1 = options.e.offsetY;
-      newLine = new fabric.Line([x1, y1, x1, y1], {});
-      newLine.selectable = false;
-      self.canvas.add(newLine);
+      x1 = options.e.offsetX;
+      y1 = options.e.offsetY;
+      tempNewLine = new fabric.Line([x1, y1, x1, y1], {});
+      tempNewLine.selectable = false;
+      self.canvas.add(tempNewLine);
     })
+    // on mouse move, update line and re-render the canvas
     self.canvas.on("mouse:move", function(options){
-      if (newLine === undefined) return;
+      if (tempNewLine === undefined) return;
       console.log("Moved");
-      if (!moved) moved = true; // movement has clearly occured
-      newLine.set('x2', options.e.offsetX);
-      newLine.set('y2', options.e.offsetY);
+      if (!moved){ moved = true; } // movement has clearly occured
+      x2 = options.e.offsetX;
+      y2 = options.e.offsetY;
+      tempNewLine.set('x2', x2);
+      tempNewLine.set('y2', y2);
       self.canvas.renderAll(false);
     })
+    // on mouse up, check if a line was drawn or a click
     self.canvas.on("mouse:up", function(options){
-      newLine.stroke = "black";
-      if (moved) {// successful line draw
-        // TODO: set a threshold of movement
+      tempNewLine.stroke = "black";
+      self.canvas.remove(tempNewLine);
+      // QUESTION: is the distance function overkill?
+      if (moved && dist(x1, y1, x2, y2) > 3) {// successful line draw
         self.canvas.renderAll(false);
+        var newLine = new fabric.Line([x1, y1, x2, y2],{});
+        self.canvas.add(newLine);
         console.log("line constructed");
       } else { // click (no line drawn) - move back to select tool
-        self.canvas.remove(newLine);
         self.chooseTool("select");
       }
-      newLine = undefined;
+      tempNewLine = undefined;
       moved = false;
     })
   }
   lineTool.deactivate = function(){
-
+    self.canvas.off('mouse:up');
+    self.canvas.off('mouse:down');
+    self.canvas.off('mouse:move');
   }
   // var rectangleTool = new RectangleTool();
   // var ellipseTool = new EllipseTool();
@@ -96,11 +111,7 @@ function DrawingTool (selector) {
 
   $("#canvas-container").click(function(){
     self.chooseTool("select");
-  })
-
-  // $('.btn').on('click', $.proxy(function () {
-  //   console.log($(this));
-  // }, this));
+  });
 
   console.log("drawing tool constructor finished");
 }
@@ -116,10 +127,6 @@ DrawingTool.prototype.chooseTool = function(toolSelector) {
     return;
   }
 
-  this.canvas.off('mouse:up');
-  this.canvas.off('mouse:down');
-  this.canvas.off('mouse:move');
-
   try {
     console.log("Choosing " + newTool.name + " over " + this.currentTool.name);
     this.currentTool.setActive(false);
@@ -129,6 +136,9 @@ DrawingTool.prototype.chooseTool = function(toolSelector) {
   }
   newTool.setActive(true);
   this.currentTool = newTool;
+
+  $('#' + toolSelector).find("input").prop('checked',true);
+
   return oldTool;
 }
 
@@ -175,5 +185,10 @@ Tool.prototype.activate = function() { console.warn("unimplemented activation me
 
 Tool.prototype.deactivate = function() { console.warn("unimplemented deactivation method"); }
 
+function dist (x1, y1, x2, y2){
+  var dx2 = Math.pow(x1 - x2, 2),
+      dy2 = Math.pow(y1 - y2, 2);
+  return Math.sqrt(dx2 + dy2);
+}
 
 module.exports = DrawingTool;

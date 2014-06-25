@@ -4,6 +4,8 @@ function DrawingTool (selector) {
   console.log("Drawing Tool created");
   this.canvas = new fabric.Canvas(selector);
   fabric.Object.prototype.transparentCorners = false;
+  fabric.Line.prototype.strokeWidth = 10;
+  fabric.Line.prototype.stroke = "green";
 
   this.getCanvas = function(){ return this.canvas; }
 
@@ -13,6 +15,9 @@ function DrawingTool (selector) {
     fill: 'rgba(0,0,200,0.5)'
   });
   this.canvas.add(rect3);
+
+  var ttt = new fabric.Line([0,0,100,100], {});
+  this.canvas.add(ttt);
 
   var self = this;
 
@@ -36,7 +41,36 @@ function DrawingTool (selector) {
 
   var lineTool = new Tool("Line Tool", "line");
   lineTool.activate = function(){
-    console.info ("implemented line tool activation function");
+    var moved = false;
+    var newLine;
+    var index = self.canvas.getObjects().length;
+    self.canvas.on("mouse:down", function(options){
+      var x1 = options.e.offsetX, y1 = options.e.offsetY;
+      newLine = new fabric.Line([x1, y1, x1, y1], {});
+      newLine.selectable = false;
+      self.canvas.add(newLine);
+    })
+    self.canvas.on("mouse:move", function(options){
+      if (newLine === undefined) return;
+      console.log("Moved");
+      if (!moved) moved = true; // movement has clearly occured
+      newLine.set('x2', options.e.offsetX);
+      newLine.set('y2', options.e.offsetY);
+      self.canvas.renderAll(false);
+    })
+    self.canvas.on("mouse:up", function(options){
+      newLine.stroke = "black";
+      if (moved) {// successful line draw
+        // TODO: set a threshold of movement
+        self.canvas.renderAll(false);
+        console.log("line constructed");
+      } else { // click (no line drawn) - move back to select tool
+        self.canvas.remove(newLine);
+        self.chooseTool("select");
+      }
+      newLine = undefined;
+      moved = false;
+    })
   }
   lineTool.deactivate = function(){
 
@@ -60,9 +94,12 @@ function DrawingTool (selector) {
     self.chooseTool(id);
   });
 
+  $("#canvas-container").click(function(){
+    self.chooseTool("select");
+  })
 
-  // $('.btn').on('click', $.proxy(function () { 
-  //   console.log($(this)); 
+  // $('.btn').on('click', $.proxy(function () {
+  //   console.log($(this));
   // }, this));
 
   console.log("drawing tool constructor finished");
@@ -70,13 +107,19 @@ function DrawingTool (selector) {
 
 DrawingTool.prototype.chooseTool = function(toolSelector) {
 
-  // implement a stop if same tool is already selected?
+  // TODO: update HTML elements to reflect tool change (might be needed for selection)
+  // TODO: implement a stop if same tool is already selected?
   var newTool = this.tools[toolSelector];
   if (newTool === undefined){
     console.warn("Warning! Could not find tool with selector \"" + toolSelector
     + "\"\nExiting tool chooser.");
     return;
   }
+
+  this.canvas.off('mouse:up');
+  this.canvas.off('mouse:down');
+  this.canvas.off('mouse:move');
+
   try {
     console.log("Choosing " + newTool.name + " over " + this.currentTool.name);
     this.currentTool.setActive(false);
@@ -89,6 +132,17 @@ DrawingTool.prototype.chooseTool = function(toolSelector) {
   return oldTool;
 }
 
+DrawingTool.prototype.check = function() {
+  var shapes = this.canvas.getObjects();
+  for (var i = 0; i < shapes.length; i++) {
+    console.log(shapes[i].selectable + " " + shapes[i]);
+  }
+}
+
+
+/*
+ * Tool "Class"
+ */
 var Tool = function Tool (name, selector) {
   this.name = name || "Tool";
   this.selector = selector || "";
@@ -96,7 +150,7 @@ var Tool = function Tool (name, selector) {
 }
 
 Tool.prototype.setActive = function(active) {
-  console.info(this.name + " active? " +  this.active);
+  console.log(this.name + " active? " +  this.active);
   if (this.active === active) { return active; }
   this.active = active;
   if (active === true){

@@ -4,7 +4,6 @@ function SelectionTool(name, selector, canvas) {
 
   Tool.call(this, name, selector, canvas);
 
-
 }
 
 SelectionTool.prototype = Object.create(Tool.prototype);

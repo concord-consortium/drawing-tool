@@ -163,12 +163,8 @@ function DrawingTool (selector) {
 
   $('.btn').click(function(){
     var id = $(this).find("input").val();
-    console.log("ui detected a click on " + id);
+    // console.log("ui detected a click on " + id);
     self.chooseTool(id);
-  });
-
-  $("#canvas-container").click(function(){
-    self.chooseTool("select");
   });
 
   console.log("drawing tool constructor finished");
@@ -176,7 +172,11 @@ function DrawingTool (selector) {
 
 DrawingTool.prototype.chooseTool = function(toolSelector) {
   // TODO: update HTML elements to reflect tool change (might be needed for selection)
-  // TODO: implement a stop if same tool is already selected?
+  if (!(this.currentTool === undefined) && this.currentTool.selector === toolSelector){
+    console.log(this.currentTool.name + " is already selected");
+    return;
+  }
+
   var newTool = this.tools[toolSelector];
   if (newTool === undefined){
     console.warn("Warning! Could not find tool with selector \"" + toolSelector
@@ -193,6 +193,8 @@ DrawingTool.prototype.chooseTool = function(toolSelector) {
   }
   newTool.setActive(true);
   this.currentTool = newTool;
+
+  $("#" + toolSelector).click();
 
   // $('#' + toolSelector).find("input").prop('checked',true);
   // $('#' + toolSelector).button();

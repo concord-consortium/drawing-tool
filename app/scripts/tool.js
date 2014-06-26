@@ -1,9 +1,12 @@
 /*
  * Tool "Class"
  */
-var Tool = function Tool (name, selector) {
+function Tool (name, selector, canvas) {
+  console.info(name + " ");
+
   this.name = name || "Tool";
   this.selector = selector || "";
+  this.canvas = canvas;
   this.active = false;
 }
 

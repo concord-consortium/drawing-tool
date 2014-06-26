@@ -1,17 +1,22 @@
-var Tool = require('scripts/tool')
+var Tool = require('scripts/tool');
+var SelectionTool = require('scripts/select-tool');
 
 // Constructor function.
 function DrawingTool (selector) {
+
   // Implement me!
   console.log("Drawing Tool created");
   this.canvas = new fabric.Canvas(selector);
+
   fabric.Object.prototype.transparentCorners = false;
   fabric.Object.prototype.selectable = false;
-  fabric.Object.prototype.perPixelTargetFind = true;
+  fabric.Object.prototype.perPixelTargetFind = true; // not working?
+
+  fabric.Object.prototype.strokeWidth = 10;
+  fabric.Object.prototype.stroke = "rgba(100,200,200,0.75)";
+  fabric.Object.prototype.fill = "";
+
   fabric.Group.prototype.selectable = true;
-  fabric.Line.prototype.strokeWidth = 10;
-  fabric.Line.prototype.stroke = "green";
-  fabric.Rect.prototype.fill = "rgba(100,200,200,0.5)";
 
   this.getCanvas = function(){ return this.canvas; }
 
@@ -28,22 +33,8 @@ function DrawingTool (selector) {
   var self = this;
 
   // Tools & implementation
-  var selectionTool = new Tool("Selection Tool", "select");
-  selectionTool.activate = function(){
-    console.log("items are now selectable");
-    this.setSelectable(true);
-  }
-  selectionTool.deactivate = function(){
-    console.log("items are no longer selectable");
-    this.setSelectable(false);
-  }
-  selectionTool.setSelectable = function(selectable){
-    self.canvas.selection = selectable;
-    var items = self.canvas.getObjects();
-    for (var i = items.length - 1; i >= 0; i--) {
-      items[i].selectable = selectable;
-    };
-  }
+
+  var selectionTool = new SelectionTool("Selection Tool", "select", this.canvas);
 
   // TODO: refactor this core code to handle all different shapes
   //       maybe with a "shape tool" prototype
@@ -184,9 +175,6 @@ function DrawingTool (selector) {
 }
 
 DrawingTool.prototype.chooseTool = function(toolSelector) {
-  console.warn("lolololol");
-
-
   // TODO: update HTML elements to reflect tool change (might be needed for selection)
   // TODO: implement a stop if same tool is already selected?
   var newTool = this.tools[toolSelector];

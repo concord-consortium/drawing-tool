@@ -1,4 +1,4 @@
-var Tool = require('scripts/tool')
+var Tool = require('scripts/tool');
 
 function ShapeTool(name, selector, drawTool) {
   Tool.call(this, name, selector, drawTool);
@@ -24,11 +24,12 @@ ShapeTool.prototype.activate = function(){
 // set that object as active and change into selection mode
 ShapeTool.prototype.mouseDown = function(e){
   this.down = true;
+  this.moved = false;
 
   // TODO: FIX THIS
   if (this.firstAction === false && !(e.target === undefined)){
     e.e.type = "mouseup";
-    this.canvas.fire.call(this.canvas, "mouse:up", e);
+    // this.canvas.fire.call(this.canvas, "mouse:up", e);
     this.exit();
     // now that we are in selection mode, select the item
     this.canvas.setActiveObject.call(this.canvas, e.target);
@@ -45,10 +46,9 @@ ShapeTool.prototype.mouseMove = function(e){
 ShapeTool.prototype.mouseUp = function(e){
   this.down = false;
   // This is also interswined with the mouse down problem
-  if (this.firstAction === false && this.moved === false) {
+  if (this.moved === false) {
     this.exit();
   }
-  this.moved = false;
   this.firstAction = false;
 }
 

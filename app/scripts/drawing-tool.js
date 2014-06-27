@@ -1,6 +1,7 @@
 var Tool = require('scripts/tool');
 var SelectionTool = require('scripts/select-tool');
 var LineTool = require('scripts/line-tool');
+var Util = require('scripts/util');
 
 // Constructor function.
 function DrawingTool (selector) {
@@ -131,7 +132,7 @@ function DrawingTool (selector) {
     // on mouse up, check if a Rect was drawn or a click
     self.canvas.on("mouse:up", function(options){
       self.canvas.remove(tempNewRect);
-      if (moved && dist(x1, y1, x2, y2) > 3) {// successful Rect draw
+      if (moved && Util.dist(x1, y1, x2, y2) > 3) {// successful Rect draw
         self.canvas.renderAll(false);
         if (tempNewRect.width < 0){
           x1 = x1 + tempNewRect.width;
@@ -227,12 +228,6 @@ DrawingTool.prototype.check = function() {
   for (var i = 0; i < shapes.length; i++) {
     console.log(shapes[i].selectable + " " + shapes[i]);
   }
-}
-
-function dist (x1, y1, x2, y2){
-  var dx2 = Math.pow(x1 - x2, 2),
-      dy2 = Math.pow(y1 - y2, 2);
-  return Math.sqrt(dx2 + dy2);
 }
 
 module.exports = DrawingTool;

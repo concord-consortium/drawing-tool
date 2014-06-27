@@ -1,4 +1,4 @@
-var Tool = require('scripts/tool')
+var Tool = require('scripts/tool');
 
 function SelectionTool(name, selector, canvas) {
 

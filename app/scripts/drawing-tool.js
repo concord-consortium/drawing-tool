@@ -7,10 +7,12 @@ function DrawingTool (selector) {
   // Implement me!
   console.log("Drawing Tool created");
   this.canvas = new fabric.Canvas(selector);
+  this.canvas.perPixelTargetFind = true;
+
 
   fabric.Object.prototype.transparentCorners = false;
   fabric.Object.prototype.selectable = false;
-  fabric.Object.prototype.perPixelTargetFind = true; // not working?
+  // fabric.Object.prototype.perPixelTargetFind = true;
 
   fabric.Object.prototype.strokeWidth = 10;
   fabric.Object.prototype.stroke = "rgba(100,200,200,0.75)";
@@ -31,6 +33,11 @@ function DrawingTool (selector) {
   // this.canvas.add(ttt);
 
   var self = this;
+
+  this.canvas.on("mouse:down", function(e){
+    console.log(e.target);
+    
+  })
 
   // Tools & implementation
 
@@ -173,7 +180,7 @@ function DrawingTool (selector) {
 DrawingTool.prototype.chooseTool = function(toolSelector) {
   // TODO: update HTML elements to reflect tool change (might be needed for selection)
   if (!(this.currentTool === undefined) && this.currentTool.selector === toolSelector){
-    console.log(this.currentTool.name + " is already selected");
+    console.log(this.currentTool.name + " is already the current tool");
     return;
   }
 
@@ -194,7 +201,10 @@ DrawingTool.prototype.chooseTool = function(toolSelector) {
   newTool.setActive(true);
   this.currentTool = newTool;
 
-  $("#" + toolSelector).click();
+  var id = "#" + toolSelector;
+  if (!$(id).hasClass("active")){
+    $("#" + toolSelector).click();
+  }
 
   // $('#' + toolSelector).find("input").prop('checked',true);
   // $('#' + toolSelector).button();

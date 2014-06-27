@@ -8,6 +8,8 @@ function Tool (name, selector, canvas) {
   this.selector = selector || "";
   this.canvas = canvas;
   this.active = false;
+
+  this.listeners = {};
 }
 
 Tool.prototype.setActive = function(active) {
@@ -32,8 +34,37 @@ Tool.prototype.setActive = function(active) {
 
 Tool.prototype.isActive = function() { return this.active; }
 
-Tool.prototype.activate = function() { console.warn("unimplemented activation method"); }
+Tool.prototype.activate = function() {
+  console.warn("unimplemented activation method");
+  for (var i = 0; i < this.listeners.length; i++) {
+    var trigger = this.listeners[i].trigger,
+        action = this.listeners[i].action;
+    this.canvas.on(trigger, action);
+  }
+}
 
-Tool.prototype.deactivate = function() { console.warn("unimplemented deactivation method"); }
+Tool.prototype.deactivate = function() {
+  console.warn("unimplemented deactivation method");
+  for (var i = 0; i < this.listeners.length; i++) {
+    var trigger = this.listeners[i].trigger,
+        action = this.listeners[i].action;
+    this.canvas.off(trigger);
+  }
+}
+
+Tool.prototype.addEventListener = function(eventTrigger, eventHandler){
+  this.listeners[this.listeners.length] = {
+    trigger: eventTrigger,
+    action: eventHandler
+  };
+}
+
+Tool.prototype.removeEventListener = function(trigger){
+  for (var i = 0; i < this.listeners.length; i++) {
+    if(trigger == this.listeners[i].trigger){
+      return this.listeners.splice(i,1);
+    }
+  }
+}
 
 module.exports = Tool;

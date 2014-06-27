@@ -1,5 +1,6 @@
 var Tool = require('scripts/tool');
 var SelectionTool = require('scripts/select-tool');
+var LineTool = require('scripts/line-tool');
 
 // Constructor function.
 function DrawingTool (selector) {
@@ -34,25 +35,28 @@ function DrawingTool (selector) {
 
   var self = this;
 
-  this.canvas.on("mouse:down", function(e){
-    console.log(e.target);
-    
-  })
+  // testing target
+  // function printTarget(e){ console.log(e); }
+  // this.canvas.on("mouse:down", printTarget);
 
   // Tools & implementation
 
-  var selectionTool = new SelectionTool("Selection Tool", "select", this.canvas);
+  var selectionTool = new SelectionTool("Selection Tool", "select", this);
 
   // TODO: refactor this core code to handle all different shapes
   //       maybe with a "shape tool" prototype
   // TODO: fix line editing (endpoints, disable selection/scaling)
-  var lineTool = new Tool("Line Tool", "line");
+
+  var lineTool = new LineTool("Line Tool Test", "line", this);
+
+  /*var lineTool = new Tool("Line Tool", "line");
   lineTool.activate = function(){
     var moved = false;
     var tempNewLine;
     var x1, y1, x2, y2;
     // on mouse down, start drawing line
     self.canvas.on("mouse:down", function(options){
+      // console.log(options);
       x1 = options.e.offsetX;
       y1 = options.e.offsetY;
       tempNewLine = new fabric.Line([x1, y1, x1, y1], {});
@@ -93,7 +97,9 @@ function DrawingTool (selector) {
     self.canvas.off('mouse:move');
   }
 
-  var rectangleTool = new Tool("Rectangle Tool", "rect");
+  */
+
+  var rectangleTool = new Tool("Rectangle Tool", "rect", this);
   rectangleTool.activate = function(){
     var moved = false;
     var tempNewRect;
@@ -206,10 +212,14 @@ DrawingTool.prototype.chooseTool = function(toolSelector) {
     $("#" + toolSelector).click();
   }
 
-  // $('#' + toolSelector).find("input").prop('checked',true);
-  // $('#' + toolSelector).button();
-
   return oldTool;
+}
+
+// Changing the current tool out of this current tool
+// to the default tool aka 'select' tool
+// TODO: make this better and less bad... add as drawingTool property
+DrawingTool.prototype.changeOutOfTool = function(oldToolSelector){
+  this.chooseTool('select');
 }
 
 DrawingTool.prototype.check = function() {

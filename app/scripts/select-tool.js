@@ -8,6 +8,7 @@ function SelectionTool(name, selector, canvas) {
 
 SelectionTool.prototype = Object.create(Tool.prototype);
 SelectionTool.prototype.constructor = SelectionTool;
+SelectionTool.prototype.$super = Tool.prototype;
 
 SelectionTool.prototype.activate = function(){
   this.setSelectable(true);

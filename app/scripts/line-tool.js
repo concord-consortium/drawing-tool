@@ -5,7 +5,7 @@ function LineTool(name, selector, drawTool) {
 
   ShapeTool.call(this, name, selector, drawTool);
 
-  this.currentLine;
+  this.curr;
 
   var self = this;
 
@@ -25,8 +25,8 @@ LineTool.prototype.mouseDown = function(e){
   var x = e.e.offsetX,
       y = e.e.offsetY;
 
-  this.currentLine = new fabric.Line([x,y,x,y],{ selectable: false });
-  this.canvas.add(this.currentLine);
+  this.curr = new fabric.Line([x,y,x,y],{ selectable: false });
+  this.canvas.add(this.curr);
 }
 
 LineTool.prototype.mouseMove = function(e){
@@ -35,29 +35,28 @@ LineTool.prototype.mouseMove = function(e){
   console.log("moved " + this.moved);
   var x = e.e.offsetX,
       y = e.e.offsetY;
-  this.currentLine.set('x2', x);
-  this.currentLine.set('y2', y);
+  this.curr.set('x2', x);
+  this.curr.set('y2', y);
   this.canvas.renderAll(false);
 }
 
 LineTool.prototype.mouseUp = function(e){
-  console.log("up");
+  console.log("line up");
   this.parent.mouseUp.call(this, e);
-  this.canvas.remove(this.currentLine);
-  var x1 = this.currentLine.get('x1'),
-      y1 = this.currentLine.get('y1'),
-      x2 = this.currentLine.get('x2'),
-      y2 = this.currentLine.get('y2');
-  console.info(this.moved);
-  console.info(Util.dist(x1, y1, x2, y2) > 3);
-  if(this.moved && Util.dist(x1, y1, x2, y2) > 3){
+  this.canvas.remove(this.curr);
+
+  var x1 = this.curr.get('x1'),
+      y1 = this.curr.get('y1'),
+      x2 = this.curr.get('x2'),
+      y2 = this.curr.get('y2');
+  if(this.moved && Util.dist(x2 - x1, y2 - y1) > 3){
     var newLine = new fabric.Line([x1, y1, x2, y2],{});
     this.canvas.add(newLine);
     console.log("new line constructed");
   } else {
     this.parent.exit.call(this);
   }
-  this.currentLine = undefined;
+  this.curr = undefined;
 }
 
 LineTool.prototype.activate = function() {

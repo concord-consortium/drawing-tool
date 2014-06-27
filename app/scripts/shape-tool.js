@@ -28,7 +28,7 @@ ShapeTool.prototype.mouseDown = function(e){
 
   // TODO: FIX THIS
   if (this.firstAction === false && !(e.target === undefined)){
-    e.e.type = "mouseup";
+    // e.e.type = "mouseup";
     // this.canvas.fire.call(this.canvas, "mouse:up", e);
     this.exit();
     // now that we are in selection mode, select the item

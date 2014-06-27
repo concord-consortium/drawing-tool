@@ -57,7 +57,7 @@ Tool.prototype.addEventListener = function(eventTrigger, eventHandler){
     trigger: eventTrigger,
     action: eventHandler
   };
-  console.info(this.listeners);
+  // console.info(this.listeners);
 }
 
 Tool.prototype.removeEventListener = function(trigger){

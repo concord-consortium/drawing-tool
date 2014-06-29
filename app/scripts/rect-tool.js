@@ -73,7 +73,7 @@ RectangleTool.prototype.mouseUp = function(e){
       height: cheight
     })
     this.canvas.add(newRect);
-    this.actionComplete();
+    this.actionComplete(newRect);
     console.log("Rect constructed");
   } else {
     this.parent.exit.call(this);

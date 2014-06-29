@@ -54,6 +54,7 @@ EllipseTool.prototype.mouseUp = function(e){
   console.log("ellipse up");
   this.parent.mouseUp.call(this, e);
   this.curr = undefined;
+  // TODO: pass new ellipse to .actionComplete() when this function is finished!
   this.actionComplete();
 }
 

@@ -56,11 +56,16 @@ ShapeTool.prototype.mouseUp = function (e) {
   }
 };
 
-ShapeTool.prototype.actionComplete = function () {
-  this._firstAction = false;
-  // After first action we do want all objects to be selectable,
-  // so user can immediately move object that he just created.
-  this._setAllObjectsSelectable(true);
+ShapeTool.prototype.actionComplete = function (newObject) {
+  if (this._firstAction) {
+    this._firstAction = false;
+    // After first action we do want all objects to be selectable,
+    // so user can immediately move object that he just created.
+    this._setAllObjectsSelectable(true);
+  }
+  if (newObject) {
+    newObject.selectable = true;
+  }
 };
 
 ShapeTool.prototype._setAllObjectsSelectable = function (selectable) {

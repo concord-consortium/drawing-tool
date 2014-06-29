@@ -52,12 +52,12 @@ LineTool.prototype.mouseUp = function(e){
   if(this.moved && Util.dist(x2 - x1, y2 - y1) > 3){
     var newLine = new fabric.Line([x1, y1, x2, y2],{});
     this.canvas.add(newLine);
+    this.actionComplete();
     console.log("new line constructed");
   } else {
     this.parent.exit.call(this);
   }
   this.curr = undefined;
-  this.actionComplete();
 }
 
 LineTool.prototype.activate = function() {

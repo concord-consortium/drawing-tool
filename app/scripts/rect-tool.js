@@ -73,12 +73,12 @@ RectangleTool.prototype.mouseUp = function(e){
       height: cheight
     })
     this.canvas.add(newRect);
+    this.actionComplete();
     console.log("Rect constructed");
   } else {
     this.parent.exit.call(this);
   }
   this.curr = undefined;
-  this.actionComplete();
 }
 
 RectangleTool.prototype.activate = function() {

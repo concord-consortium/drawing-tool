@@ -54,6 +54,7 @@ EllipseTool.prototype.mouseUp = function(e){
   console.log("ellipse up");
   this.parent.mouseUp.call(this, e);
   this.curr = undefined;
+  this.actionComplete();
 }
 
 EllipseTool.prototype.activate = function() {

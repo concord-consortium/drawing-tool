@@ -57,6 +57,7 @@ LineTool.prototype.mouseUp = function(e){
     this.parent.exit.call(this);
   }
   this.curr = undefined;
+  this.actionComplete();
 }
 
 LineTool.prototype.activate = function() {

@@ -2,9 +2,10 @@ var Tool = require('scripts/tool');
 
 function ShapeTool(name, selector, drawTool) {
   Tool.call(this, name, selector, drawTool);
-  this.firstAction = false;
+
   this.moved = false;
   this.down = false;
+  this._firstAction = false;
 }
 
 ShapeTool.prototype = Object.create(Tool.prototype);
@@ -14,9 +15,16 @@ ShapeTool.prototype.tool = Tool.prototype;
 ShapeTool.prototype.activate = function(){
   // console.warn(this.name + " at shape tool activation");
   this.tool.activate.call(this);
-  this.firstAction = true;
   this.moved = false;
   this.down = false;
+  this._firstAction = true;
+}
+
+ShapeTool.prototype.exit = function() {
+  console.info("changing out of " + this.name);
+  this.down = false;
+  this.moved = false;
+  this.master.changeOutOfTool(this.selector);
 }
 
 // check if this is the first mouse down action
@@ -26,14 +34,11 @@ ShapeTool.prototype.mouseDown = function(e){
   this.down = true;
   this.moved = false;
 
-  // TODO: FIX THIS
-  if (this.firstAction === false && !(e.target === undefined)){
-    // e.e.type = "mouseup";
-    // this.canvas.fire.call(this.canvas, "mouse:up", e);
+  if (this._firstAction === false && e.target !== undefined) {
+    // Note that in #mouseUp handler we already set all objects to be
+    // selectable. Interaction with an object will be handled by Fabric.
+    // We have to exit to avoid drawing a new shape.
     this.exit();
-    // now that we are in selection mode, select the item
-    this.canvas.setActiveObject.call(this.canvas, e.target);
-    this.canvas.fire.call(this.canvas, "mouse:down", e);
   }
 }
 
@@ -49,14 +54,20 @@ ShapeTool.prototype.mouseUp = function(e){
   if (this.moved === false) {
     this.exit();
   }
-  this.firstAction = false;
 }
 
-ShapeTool.prototype.exit = function(){
-  console.info("changing out of " + this.name);
-  this.down = false;
-  this.moved = false;
-  this.master.changeOutOfTool.call(this.master, this.selector);
-}
+ShapeTool.prototype.actionComplete = function (e) {
+  this._firstAction = false;
+  // After first action we do want all objects to be selectable,
+  // so user can immediately move object that he just created.
+  this._setAllObjectsSelectable(true);
+};
+
+ShapeTool.prototype._setAllObjectsSelectable = function (selectable) {
+  var items = this.canvas.getObjects();
+  for (var i = items.length - 1; i >= 0; i--) {
+    items[i].selectable = selectable;
+  };
+};
 
 module.exports = ShapeTool;

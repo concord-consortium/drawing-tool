@@ -78,6 +78,7 @@ RectangleTool.prototype.mouseUp = function(e){
     this.parent.exit.call(this);
   }
   this.curr = undefined;
+  this.actionComplete();
 }
 
 RectangleTool.prototype.activate = function() {

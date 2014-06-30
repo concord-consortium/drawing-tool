@@ -3,6 +3,7 @@ var SelectionTool = require('scripts/select-tool');
 var LineTool      = require('scripts/line-tool');
 var RectangleTool = require('scripts/rect-tool');
 var EllipseTool   = require('scripts/ellipse-tool');
+var SquareTool   = require('scripts/square-tool');
 var CircleTool   = require('scripts/circle-tool');
 var Util          = require('scripts/util');
 
@@ -27,7 +28,7 @@ function DrawingTool (selector) {
   var lineTool = new LineTool("Line Tool", "line", this);
   var rectangleTool = new RectangleTool("Rectangle Tool", "rect", this);
   var ellipseTool = new EllipseTool("Ellipse Tool", "ellipse", this);
-  // var squareTool = new SquareTool();
+  var squareTool = new SquareTool("Square Tool", "square", this);
   var circleTool = new CircleTool("Circle Tool", "circle", this);
 
   // TODO: make this more programatic and less hard-coded
@@ -36,6 +37,7 @@ function DrawingTool (selector) {
     "line": lineTool,
     "rect": rectangleTool,
     "ellipse": ellipseTool,
+    "square": squareTool,
     "circle": circleTool
   };
 

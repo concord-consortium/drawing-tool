@@ -54,7 +54,7 @@ CircleTool.prototype.mouseMove = function (e) {
     this.curr.originY = "top";
   }
 
-  var radius = (width > height ? width : height) / 2;
+  var radius = (width < height ? width : height) / 2;
 
   this.curr.set('radius', radius);
 

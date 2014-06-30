@@ -10,6 +10,8 @@ function Tool(name, selector, drawTool) {
   this.canvas = drawTool.canvas;
   this.active = false;
 
+  this.master.tools[selector] = this;
+
   this._listeners = [];
 }
 

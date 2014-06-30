@@ -22,6 +22,8 @@ function DrawingTool (selector) {
 
   fabric.Group.prototype.selectable = true;
 
+  this.tools = {};
+
   // Tools
   var selectionTool = new SelectionTool("Selection Tool", "select", this);
   // TODO: fix line editing (endpoints, disable selection/scaling)
@@ -30,16 +32,6 @@ function DrawingTool (selector) {
   var ellipseTool = new EllipseTool("Ellipse Tool", "ellipse", this);
   var squareTool = new SquareTool("Square Tool", "square", this);
   var circleTool = new CircleTool("Circle Tool", "circle", this);
-
-  // TODO: make this more programatic and less hard-coded
-  this.tools = {
-    "select": selectionTool,
-    "line": lineTool,
-    "rect": rectangleTool,
-    "ellipse": ellipseTool,
-    "square": squareTool,
-    "circle": circleTool
-  };
 
   var self = this;
   $('.btn').click(function(){

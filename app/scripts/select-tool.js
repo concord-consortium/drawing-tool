@@ -13,7 +13,9 @@ SelectionTool.prototype.activate = function () {
 
 SelectionTool.prototype.deactivate = function () {
   this.setSelectable(false);
-  this.canvas.discardActiveObject();
+  this.canvas.deactivateAll();
+  this.canvas.renderAll(false);
+  console.log(this.canvas);
 };
 
 SelectionTool.prototype.setSelectable = function (selectable) {

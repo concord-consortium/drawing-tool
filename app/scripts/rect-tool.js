@@ -24,8 +24,7 @@ RectangleTool.prototype.mouseDown = function (e) {
     top: y,
     left: x,
     width: 0,
-    height: 0,
-    selectable: false
+    height: 0
   });
   this.canvas.add(this.curr);
 };

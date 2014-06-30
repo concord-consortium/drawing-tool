@@ -42,9 +42,12 @@ LineTool.prototype.mouseUp = function (e) {
       y1 = this.curr.get('y1'),
       x2 = this.curr.get('x2'),
       y2 = this.curr.get('y2');
-  if(Util.dist(x2 - x1, y2 - y1) > 3){
+  if(Util.dist(x2 - x1, y2 - y1) > 10){
     this.curr.setCoords();
     console.log("new line constructed");
+  } else {
+    this.canvas.remove(this.curr);
+    this.exit();
   }
   this.actionComplete(this.curr);
   this.curr = undefined;

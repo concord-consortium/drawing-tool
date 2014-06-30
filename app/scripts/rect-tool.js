@@ -1,29 +1,25 @@
 var ShapeTool = require('scripts/shape-tool');
-var Util = require('scripts/util');
+var Util      = require('scripts/util');
 
 function RectangleTool(name, selector, drawTool) {
-
   ShapeTool.call(this, name, selector, drawTool);
 
-  this.curr;
-
   var self = this;
-
-  this.addEventListener("mouse:down", function(e){ self.mouseDown(e); });
-  this.addEventListener("mouse:move", function(e){ self.mouseMove(e); });
-  this.addEventListener("mouse:up", function(e){ self.mouseUp(e); });
+  this.addEventListener("mouse:down", function (e) { self.mouseDown(e); });
+  this.addEventListener("mouse:move", function (e) { self.mouseMove(e); });
+  this.addEventListener("mouse:up", function (e) { self.mouseUp(e); });
 }
 
 RectangleTool.prototype = Object.create(ShapeTool.prototype);
 RectangleTool.prototype.constructor = RectangleTool;
 RectangleTool.prototype.parent = ShapeTool.prototype;
 
-RectangleTool.prototype.mouseDown = function(e){
+RectangleTool.prototype.mouseDown = function (e) {
   console.log("down");
   this.parent.mouseDown.call(this, e);
 
-  var x = e.e.offsetX,
-      y = e.e.offsetY;
+  var x = e.e.offsetX;
+  var y = e.e.offsetY;
 
   this.curr = new fabric.Rect({
     top: y,
@@ -31,14 +27,13 @@ RectangleTool.prototype.mouseDown = function(e){
     width: 0,
     height: 0,
     selectable: false
-  })
+  });
   this.canvas.add(this.curr);
-}
+};
 
-RectangleTool.prototype.mouseMove = function(e){
+RectangleTool.prototype.mouseMove = function (e) {
   this.parent.mouseMove.call(this, e);
   if (this.down === false) { return; }
-  console.log("moved " + this.moved);
   var x = e.e.offsetX,
       y = e.e.offsetY,
       x1 = this.curr.left,
@@ -46,9 +41,9 @@ RectangleTool.prototype.mouseMove = function(e){
   this.curr.width = x - x1;
   this.curr.height = y - y1;
   this.canvas.renderAll(false);
-}
+};
 
-RectangleTool.prototype.mouseUp = function(e){
+RectangleTool.prototype.mouseUp = function (e) {
   console.log("rect up");
   this.parent.mouseUp.call(this, e);
   this.canvas.remove(this.curr);
@@ -71,7 +66,7 @@ RectangleTool.prototype.mouseUp = function(e){
       left: cleft,
       width: cwidth,
       height: cheight
-    })
+    });
     this.canvas.add(newRect);
     this.actionComplete(newRect);
     console.log("Rect constructed");
@@ -79,11 +74,11 @@ RectangleTool.prototype.mouseUp = function(e){
     this.parent.exit.call(this);
   }
   this.curr = undefined;
-}
+};
 
-RectangleTool.prototype.activate = function() {
+RectangleTool.prototype.activate = function () {
   // console.warn("At line tool activation");
   this.parent.activate.call(this);
-}
+};
 
 module.exports = RectangleTool;

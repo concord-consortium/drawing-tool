@@ -1,7 +1,7 @@
 /*
  * Tool "Class"
  */
-function Tool (name, selector, drawTool) {
+function Tool(name, selector, drawTool) {
   console.info(name);
 
   this.name = name || "Tool";
@@ -13,7 +13,7 @@ function Tool (name, selector, drawTool) {
   this.listeners = [];
 }
 
-Tool.prototype.setActive = function(active) {
+Tool.prototype.setActive = function (active) {
   // console.log(this.name + " active? " +  this.active);
   if (this.active === active) { return active; }
   this.active = active;
@@ -21,51 +21,57 @@ Tool.prototype.setActive = function(active) {
     // this tool is now active
     console.log("Activating " + this.name);
     this.activate();
-  }
-  else{
+  } else {
     // this tool has been deselected
     console.log("Deactivating " + this.name);
     this.deactivate();
   }
 
   return active;
-}
+};
 
-Tool.prototype.isActive = function() { return this.active; }
+Tool.prototype.isActive = function () {
+  return this.active;
+};
 
-Tool.prototype.activate = function() {
+Tool.prototype.activate = function () {
   // console.warn(this.name + " at tool activation method");
   for (var i = 0; i < this.listeners.length; i++) {
-    var trigger = this.listeners[i].trigger,
-        action = this.listeners[i].action;
+    var trigger = this.listeners[i].trigger;
+    var action = this.listeners[i].action;
     this.canvas.on(trigger, action);
   }
-}
+};
 
-Tool.prototype.deactivate = function() {
+// This function will be called when user tries to activate a tool that
+// is already active. It can enable some special behavior.
+// Implement this function in a subclass when needed.
+Tool.prototype.activateAgain = function () {};
+
+Tool.prototype.deactivate = function () {
   // console.warn(this.name + " at deactivation method");
   for (var i = 0; i < this.listeners.length; i++) {
-    var trigger = this.listeners[i].trigger,
-        action = this.listeners[i].action;
+    var trigger = this.listeners[i].trigger;
+    var action = this.listeners[i].action;
     this.canvas.off(trigger);
   }
-}
+};
 
-Tool.prototype.addEventListener = function(eventTrigger, eventHandler){
+Tool.prototype.addEventListener = function (eventTrigger, eventHandler) {
   // console.log("event added");
   this.listeners[this.listeners.length] = {
     trigger: eventTrigger,
     action: eventHandler
   };
   // console.info(this.listeners);
-}
+};
 
-Tool.prototype.removeEventListener = function(trigger){
+Tool.prototype.removeEventListener = function (trigger) {
   for (var i = 0; i < this.listeners.length; i++) {
-    if(trigger == this.listeners[i].trigger){
+    if (trigger == this.listeners[i].trigger){
       return this.listeners.splice(i,1);
     }
   }
-}
+};
 
 module.exports = Tool;

@@ -17,7 +17,11 @@ ShapeTool.prototype.activate = function () {
   this.tool.activate.call(this);
   this.moved = false;
   this.down = false;
-  this._firstAction = true;
+  this._setFirstActionMode();
+};
+
+ShapeTool.prototype.activateAgain = function () {
+  this._setFirstActionMode();
 };
 
 ShapeTool.prototype.exit = function () {
@@ -66,6 +70,15 @@ ShapeTool.prototype.actionComplete = function (newObject) {
   if (newObject) {
     newObject.selectable = true;
   }
+};
+
+// This is a special mode which ensures that first action of the shape tool
+// always draws an object, even if user starts drawing over existing object.
+// Later that will cause interaction with the existing object unless user reselects
+// the tool. Please see: https://www.pivotaltracker.com/story/show/73959546
+ShapeTool.prototype._setFirstActionMode = function (selectable) {
+  this._firstAction = true;
+  this._setAllObjectsSelectable(false);
 };
 
 ShapeTool.prototype._setAllObjectsSelectable = function (selectable) {

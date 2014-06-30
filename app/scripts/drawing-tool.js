@@ -3,6 +3,7 @@ var SelectionTool = require('scripts/select-tool');
 var LineTool      = require('scripts/line-tool');
 var RectangleTool = require('scripts/rect-tool');
 var EllipseTool   = require('scripts/ellipse-tool');
+var CircleTool   = require('scripts/circle-tool');
 var Util          = require('scripts/util');
 
 // Constructor function.
@@ -27,13 +28,15 @@ function DrawingTool (selector) {
   var rectangleTool = new RectangleTool("Rectangle Tool", "rect", this);
   var ellipseTool = new EllipseTool("Ellipse Tool", "ellipse", this);
   // var squareTool = new SquareTool();
-  // var circleTool = new CircleTool();
+  var circleTool = new CircleTool("Circle Tool", "circle", this);
 
+  // TODO: make this more programatic and less hard-coded
   this.tools = {
     "select": selectionTool,
     "line": lineTool,
     "rect": rectangleTool,
-    "ellipse": ellipseTool
+    "ellipse": ellipseTool,
+    "circle": circleTool
   };
 
   var self = this;

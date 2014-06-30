@@ -37,20 +37,16 @@ LineTool.prototype.mouseMove = function (e) {
 LineTool.prototype.mouseUp = function (e) {
   console.log("line up");
   LineTool.super.mouseUp.call(this, e);
-  this.canvas.remove(this.curr);
 
   var x1 = this.curr.get('x1'),
       y1 = this.curr.get('y1'),
       x2 = this.curr.get('x2'),
       y2 = this.curr.get('y2');
-  if(this.moved && Util.dist(x2 - x1, y2 - y1) > 3){
-    var newLine = new fabric.Line([x1, y1, x2, y2], {});
-    this.canvas.add(newLine);
-    this.actionComplete(newLine);
+  if(Util.dist(x2 - x1, y2 - y1) > 3){
+    this.curr.setCoords();
     console.log("new line constructed");
-  } else {
-    this.exit();
   }
+  this.actionComplete(this.curr);
   this.curr = undefined;
 };
 

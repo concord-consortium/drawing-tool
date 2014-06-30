@@ -56,10 +56,12 @@ DrawingTool.prototype.changeOutOfTool = function(oldToolSelector){
   this.chooseTool('select');
 };
 
+
+// debugging method to print out all the items on the canvas
 DrawingTool.prototype.check = function() {
   var shapes = this.canvas.getObjects();
   for (var i = 0; i < shapes.length; i++) {
-    console.log(shapes[i].selectable + " " + shapes[i]);
+    console.log(shapes[i]);
   }
 };
 

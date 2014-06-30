@@ -1,4 +1,5 @@
-var Tool = require('scripts/tool');
+var inherit = require('scripts/inherit');
+var Tool    = require('scripts/tool');
 
 function ShapeTool(name, selector, drawTool) {
   Tool.call(this, name, selector, drawTool);
@@ -8,13 +9,11 @@ function ShapeTool(name, selector, drawTool) {
   this._firstAction = false;
 }
 
-ShapeTool.prototype = Object.create(Tool.prototype);
-ShapeTool.prototype.constructor = ShapeTool;
-ShapeTool.prototype.tool = Tool.prototype;
+inherit(ShapeTool, Tool);
 
 ShapeTool.prototype.activate = function () {
   // console.warn(this.name + " at shape tool activation");
-  this.tool.activate.call(this);
+  ShapeTool.super.activate.call(this);
   this.moved = false;
   this.down = false;
   this._setFirstActionMode();

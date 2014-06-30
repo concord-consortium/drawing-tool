@@ -1,12 +1,11 @@
-var Tool = require('scripts/tool');
+var inherit = require('scripts/inherit');
+var Tool    = require('scripts/tool');
 
 function SelectionTool(name, selector, canvas) {
   Tool.call(this, name, selector, canvas);
 }
 
-SelectionTool.prototype = Object.create(Tool.prototype);
-SelectionTool.prototype.constructor = SelectionTool;
-SelectionTool.prototype.$super = Tool.prototype;
+inherit(SelectionTool, Tool);
 
 SelectionTool.prototype.activate = function () {
   this.setSelectable(true);

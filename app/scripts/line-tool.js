@@ -1,3 +1,4 @@
+var inherit   = require('scripts/inherit');
 var ShapeTool = require('scripts/shape-tool');
 var Util      = require('scripts/util');
 
@@ -10,13 +11,11 @@ function LineTool(name, selector, drawTool) {
   this.addEventListener("mouse:up", function (e) { self.mouseUp(e); });
 }
 
-LineTool.prototype = Object.create(ShapeTool.prototype);
-LineTool.prototype.constructor = LineTool;
-LineTool.prototype.parent = ShapeTool.prototype;
+inherit(LineTool, ShapeTool);
 
 LineTool.prototype.mouseDown = function (e) {
   console.log("down");
-  this.parent.mouseDown.call(this, e);
+  LineTool.super.mouseDown.call(this, e);
 
   var x = e.e.offsetX;
   var y = e.e.offsetY;
@@ -26,7 +25,7 @@ LineTool.prototype.mouseDown = function (e) {
 };
 
 LineTool.prototype.mouseMove = function (e) {
-  this.parent.mouseMove.call(this, e);
+  LineTool.super.mouseMove.call(this, e);
   if (this.down === false) { return; }
   var x = e.e.offsetX,
       y = e.e.offsetY;
@@ -37,7 +36,7 @@ LineTool.prototype.mouseMove = function (e) {
 
 LineTool.prototype.mouseUp = function (e) {
   console.log("line up");
-  this.parent.mouseUp.call(this, e);
+  LineTool.super.mouseUp.call(this, e);
   this.canvas.remove(this.curr);
 
   var x1 = this.curr.get('x1'),
@@ -50,14 +49,9 @@ LineTool.prototype.mouseUp = function (e) {
     this.actionComplete(newLine);
     console.log("new line constructed");
   } else {
-    this.parent.exit.call(this);
+    this.exit();
   }
   this.curr = undefined;
-};
-
-LineTool.prototype.activate = function () {
-  // console.warn("At line tool activation");
-  this.parent.activate.call(this);
 };
 
 module.exports = LineTool;

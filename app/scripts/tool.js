@@ -10,7 +10,7 @@ function Tool(name, selector, drawTool) {
   this.canvas = drawTool.canvas;
   this.active = false;
 
-  this.listeners = [];
+  this._listeners = [];
 }
 
 Tool.prototype.setActive = function (active) {
@@ -30,15 +30,11 @@ Tool.prototype.setActive = function (active) {
   return active;
 };
 
-Tool.prototype.isActive = function () {
-  return this.active;
-};
-
 Tool.prototype.activate = function () {
   // console.warn(this.name + " at tool activation method");
-  for (var i = 0; i < this.listeners.length; i++) {
-    var trigger = this.listeners[i].trigger;
-    var action = this.listeners[i].action;
+  for (var i = 0; i < this._listeners.length; i++) {
+    var trigger = this._listeners[i].trigger;
+    var action = this._listeners[i].action;
     this.canvas.on(trigger, action);
   }
 };
@@ -50,26 +46,24 @@ Tool.prototype.activateAgain = function () {};
 
 Tool.prototype.deactivate = function () {
   // console.warn(this.name + " at deactivation method");
-  for (var i = 0; i < this.listeners.length; i++) {
-    var trigger = this.listeners[i].trigger;
-    var action = this.listeners[i].action;
+  for (var i = 0; i < this._listeners.length; i++) {
+    var trigger = this._listeners[i].trigger;
+    var action = this._listeners[i].action;
     this.canvas.off(trigger);
   }
 };
 
 Tool.prototype.addEventListener = function (eventTrigger, eventHandler) {
-  // console.log("event added");
-  this.listeners[this.listeners.length] = {
+  this._listeners.push({
     trigger: eventTrigger,
     action: eventHandler
-  };
-  // console.info(this.listeners);
+  });
 };
 
 Tool.prototype.removeEventListener = function (trigger) {
-  for (var i = 0; i < this.listeners.length; i++) {
-    if (trigger == this.listeners[i].trigger){
-      return this.listeners.splice(i,1);
+  for (var i = 0; i < this._listeners.length; i++) {
+    if (trigger == this._listeners[i].trigger){
+      return this._listeners.splice(i,1);
     }
   }
 };

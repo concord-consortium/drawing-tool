@@ -19,6 +19,8 @@ exports.config =
   conventions:
     vendor: /^(bower_components|vendor|app\/initialize\.js)/
 
+  sourceMaps: false
+
   overrides:
     dist:
       optimize: true

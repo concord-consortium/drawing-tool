@@ -1,3 +1,4 @@
+var inherit   = require('scripts/inherit');
 var ShapeTool = require('scripts/shape-tool');
 var Util      = require('scripts/util');
 
@@ -10,13 +11,11 @@ function EllipseTool(name, selector, drawTool) {
   this.addEventListener("mouse:up", function (e) { self.mouseUp(e); });
 }
 
-EllipseTool.prototype = Object.create(ShapeTool.prototype);
-EllipseTool.prototype.constructor = EllipseTool;
-EllipseTool.prototype.parent = ShapeTool.prototype;
+inherit(EllipseTool, ShapeTool);
 
 EllipseTool.prototype.mouseDown = function (e) {
   console.log("ellipse down");
-  this.parent.mouseDown.call(this, e);
+  EllipseTool.super.mouseDown.call(this, e);
 
   var x = e.e.offsetX;
   var y = e.e.offsetY;
@@ -32,7 +31,7 @@ EllipseTool.prototype.mouseDown = function (e) {
 };
 
 EllipseTool.prototype.mouseMove = function (e) {
-  this.parent.mouseMove.call(this, e);
+  EllipseTool.super.mouseMove.call(this, e);
   if (this.down === false) { return; }
   var x = e.e.offsetX,
       y = e.e.offsetY,
@@ -47,15 +46,10 @@ EllipseTool.prototype.mouseMove = function (e) {
 
 EllipseTool.prototype.mouseUp = function (e) {
   console.log("ellipse up");
-  this.parent.mouseUp.call(this, e);
+  EllipseTool.super.mouseUp.call(this, e);
   this.curr = undefined;
   // TODO: pass new ellipse to .actionComplete() when this function is finished!
   this.actionComplete();
-};
-
-EllipseTool.prototype.activate = function () {
-  // console.warn("At line tool activation");
-  this.parent.activate.call(this);
 };
 
 module.exports = EllipseTool;

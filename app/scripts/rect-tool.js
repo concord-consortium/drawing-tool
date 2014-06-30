@@ -1,3 +1,4 @@
+var inherit   = require('scripts/inherit');
 var ShapeTool = require('scripts/shape-tool');
 var Util      = require('scripts/util');
 
@@ -10,13 +11,11 @@ function RectangleTool(name, selector, drawTool) {
   this.addEventListener("mouse:up", function (e) { self.mouseUp(e); });
 }
 
-RectangleTool.prototype = Object.create(ShapeTool.prototype);
-RectangleTool.prototype.constructor = RectangleTool;
-RectangleTool.prototype.parent = ShapeTool.prototype;
+inherit(RectangleTool, ShapeTool);
 
 RectangleTool.prototype.mouseDown = function (e) {
   console.log("down");
-  this.parent.mouseDown.call(this, e);
+  RectangleTool.super.mouseDown.call(this, e);
 
   var x = e.e.offsetX;
   var y = e.e.offsetY;
@@ -32,7 +31,7 @@ RectangleTool.prototype.mouseDown = function (e) {
 };
 
 RectangleTool.prototype.mouseMove = function (e) {
-  this.parent.mouseMove.call(this, e);
+  RectangleTool.super.mouseMove.call(this, e);
   if (this.down === false) { return; }
   var x = e.e.offsetX,
       y = e.e.offsetY,
@@ -45,7 +44,7 @@ RectangleTool.prototype.mouseMove = function (e) {
 
 RectangleTool.prototype.mouseUp = function (e) {
   console.log("rect up");
-  this.parent.mouseUp.call(this, e);
+  RectangleTool.super.mouseUp.call(this, e);
   this.canvas.remove(this.curr);
   var ctop = this.curr.top,
       cleft = this.curr.left,
@@ -71,14 +70,9 @@ RectangleTool.prototype.mouseUp = function (e) {
     this.actionComplete(newRect);
     console.log("Rect constructed");
   } else {
-    this.parent.exit.call(this);
+    this.exit();
   }
   this.curr = undefined;
-};
-
-RectangleTool.prototype.activate = function () {
-  // console.warn("At line tool activation");
-  this.parent.activate.call(this);
 };
 
 module.exports = RectangleTool;

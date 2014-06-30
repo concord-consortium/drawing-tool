@@ -72,6 +72,17 @@ EllipseTool.prototype.mouseUp = function (e) {
   if (Util.dist(width, height) < 10) {
     this.canvas.remove(this.curr);
     this.moved = false;
+  } else {
+    if (this.curr.originX === "right") {
+      // "- this.curr.strokeWidth" eliminates the small position shift
+      // that would otherwise occur on mouseup
+      this.curr.left = this.curr.left - this.curr.width - this.curr.strokeWidth;
+      this.curr.originX = "left";
+    }
+    if (this.curr.originY === "bottom") {
+      this.curr.top = this.curr.top - this.curr.height - this.curr.strokeWidth;
+      this.curr.originY = "top";
+    }
   }
 
   this.curr.setCoords();

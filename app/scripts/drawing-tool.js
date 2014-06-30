@@ -1,10 +1,11 @@
 var Tool          = require('scripts/tool');
+var ShapeTool     = require('scripts/shape-tool');
 var SelectionTool = require('scripts/select-tool');
 var LineTool      = require('scripts/line-tool');
 var RectangleTool = require('scripts/rect-tool');
 var EllipseTool   = require('scripts/ellipse-tool');
-var SquareTool   = require('scripts/square-tool');
-var CircleTool   = require('scripts/circle-tool');
+var SquareTool    = require('scripts/square-tool');
+var CircleTool    = require('scripts/circle-tool');
 var Util          = require('scripts/util');
 
 // Constructor function.
@@ -14,6 +15,11 @@ function DrawingTool (selector) {
 
   fabric.Object.prototype.transparentCorners = false;
   fabric.Object.prototype.selectable = false;
+  fabric.Object.prototype.lockScalingX = true;
+  fabric.Object.prototype.lockScalingY = true;
+  // Custom Variables for Shape resizing
+  fabric.Object.prototype.minWidth = 10;
+  fabric.Object.prototype.minHeight = 10;
   // fabric.Object.prototype.perPixelTargetFind = true;
 
   fabric.Object.prototype.strokeWidth = 10;
@@ -40,6 +46,8 @@ function DrawingTool (selector) {
   });
 
   this.chooseTool("select");
+
+  this.canvas.on("object:scaling", ShapeTool.resizer);
 }
 
 DrawingTool.prototype.chooseTool = function(toolSelector){
@@ -80,6 +88,7 @@ DrawingTool.prototype._toolButtonClicked = function(toolSelector) {
   }
   newTool.setActive(true);
   this.currentTool = newTool;
+  this.canvas.renderAll(false);
 };
 
 module.exports = DrawingTool;

@@ -68,8 +68,20 @@ CircleTool.prototype.mouseUp = function (e) {
   console.log("Circle up");
 
   if (this.curr.radius < 10) {
+    // this shape doesn't pass the minimum size threshold and counts as a "click"
     this.canvas.remove(this.curr);
     this.moved = false;
+  } else {
+    if (this.curr.originX === "right") {
+      // "- this.curr.strokeWidth" eliminates the small position shift
+      // that would otherwise occur on mouseup
+      this.curr.left = this.curr.left - this.curr.width - this.curr.strokeWidth;
+      this.curr.originX = "left";
+    }
+    if (this.curr.originY === "bottom") {
+      this.curr.top = this.curr.top - this.curr.height - this.curr.strokeWidth;
+      this.curr.originY = "top";
+    }
   }
 
   this.curr.setCoords();

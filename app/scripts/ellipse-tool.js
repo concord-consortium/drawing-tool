@@ -21,10 +21,10 @@ EllipseTool.prototype.mouseDown = function (e) {
   var y = e.e.offsetY;
 
   this.curr = new fabric.Ellipse({
-    top: y - 100,
-    left: x - 50,
-    rx: 50,
-    ry: 100,
+    top: y,
+    left: x,
+    rx: 0.1,
+    ry: 0.1,
     selectable: false
   });
   this.canvas.add(this.curr);
@@ -38,18 +38,47 @@ EllipseTool.prototype.mouseMove = function (e) {
       x1 = this.curr.left,
       y1 = this.curr.top;
 
-  this.curr.set('rx', (x - x1) / 2);
-  this.curr.set('ry', (y - y1) / 2);
+  var width = x - x1;
+  var height = y - y1;
+
+  if (width < 0) {
+    this.curr.originX = "right";
+    width = -width;
+  } else {
+    this.curr.originX = "left";
+  }
+
+  if (height < 0) {
+    this.curr.originY = "bottom";
+    height = - height;
+  } else {
+    this.curr.originY = "top";
+  }
+
+  this.curr.set('rx', width / 2);
+  this.curr.set('ry', height / 2);
+
+  this.curr.set('width', width);
+  this.curr.set('height', height);
 
   this.canvas.renderAll(false);
 };
 
 EllipseTool.prototype.mouseUp = function (e) {
   console.log("ellipse up");
+
+  var width = this.curr.width,
+      height = this.curr.height;
+  if (Util.dist(width, height) < 10) {
+    this.canvas.remove(this.curr);
+    this.moved = false;
+  }
+
+  this.curr.setCoords();
+  this.canvas.renderAll(false);
   EllipseTool.super.mouseUp.call(this, e);
+  this.actionComplete(this.curr);
   this.curr = undefined;
-  // TODO: pass new ellipse to .actionComplete() when this function is finished!
-  this.actionComplete();
 };
 
 module.exports = EllipseTool;

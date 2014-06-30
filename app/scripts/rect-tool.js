@@ -45,33 +45,22 @@ RectangleTool.prototype.mouseMove = function (e) {
 RectangleTool.prototype.mouseUp = function (e) {
   console.log("rect up");
   RectangleTool.super.mouseUp.call(this, e);
-  this.canvas.remove(this.curr);
-  var ctop = this.curr.top,
-      cleft = this.curr.left,
-      cheight = this.curr.height,
-      cwidth = this.curr.width;
-  // moved is now redundant on this portion right?
-  if(this.moved && Util.dist(cwidth, cheight) > 3){
-    if (cwidth < 0){
-      cleft = cleft + cwidth;
-      cwidth = -cwidth;
+  if(Util.dist(this.curr.width, this.curr.height) > 3){
+    if (this.curr.width < 0) {
+      this.curr.left = this.curr.left + this.curr.width;
+      this.curr.width = - this.curr.width;
     }
-    if (cheight < 0){
-      ctop = ctop + cheight;
-      cheight = -cheight;
+    if (this.curr.height < 0) {
+      this.curr.top = this.curr.top + this.curr.height;
+      this.curr.height = - this.curr.height;
     }
-    var newRect = new fabric.Rect({
-      top: ctop,
-      left: cleft,
-      width: cwidth,
-      height: cheight
-    });
-    this.canvas.add(newRect);
-    this.actionComplete(newRect);
-    console.log("Rect constructed");
+    this.curr.setCoords();
   } else {
     this.exit();
   }
+
+  this.canvas.renderAll(false);
+  this.actionComplete(this.curr);
   this.curr = undefined;
 };
 

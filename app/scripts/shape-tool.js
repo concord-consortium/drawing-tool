@@ -53,7 +53,6 @@ ShapeTool.prototype.mouseMove = function (e) {
 
 ShapeTool.prototype.mouseUp = function (e) {
   this.down = false;
-  // This is also interswined with the mouse down problem
   if (this.moved === false) {
     this.exit();
   }

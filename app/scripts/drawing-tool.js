@@ -7,6 +7,7 @@ var EllipseTool   = require('scripts/ellipse-tool');
 var SquareTool    = require('scripts/square-tool');
 var CircleTool    = require('scripts/circle-tool');
 var Util          = require('scripts/util');
+var Resizer       = require('scripts/resizer');
 
 // Constructor function.
 function DrawingTool (selector) {
@@ -18,6 +19,7 @@ function DrawingTool (selector) {
   fabric.Object.prototype.lockScalingX = true;
   fabric.Object.prototype.lockScalingY = true;
   fabric.Object.prototype.hasControls = false;
+  // fabric.Object.prototype.hasBorders = false;
   // Custom Variables for Shape resizing
   fabric.Object.prototype.minWidth = 15;
   fabric.Object.prototype.minHeight = 15;
@@ -47,6 +49,8 @@ function DrawingTool (selector) {
   });
 
   this.chooseTool("select");
+
+  this.canvas.on("selection:created", function(e){ console.warn("hi"); });
 
 }
 

@@ -49,8 +49,70 @@ LineTool.prototype.mouseUp = function (e) {
     this.canvas.remove(this.curr);
     this.exit();
   }
+
+  // control point
+  var sidelen = fabric.Line.prototype.cornerSize;
+
+  this.curr.ctp = [
+  new fabric.Rect({
+    left: x1,
+    top: y1,
+    width: sidelen,
+    height: sidelen,
+    strokeWidth: false,
+    stroke: "grey",
+    fill: "grey",
+    visible: false
+  }),
+
+  new fabric.Rect({
+    left: x2,
+    top: y2,
+    width: sidelen,
+    height: sidelen,
+    strokeWidth: 0,
+    stroke: "grey",
+    fill: "grey",
+    visible: false
+  })
+  ];
+
+  this.canvas.add(this.curr.ctp[0]);
+  this.canvas.add(this.curr.ctp[1]);
+
+  this.curr.on('selected', LineTool.objectSelected);
+  this.curr.on('moving', LineTool.objectMoved);
+
   this.actionComplete(this.curr);
   this.curr = undefined;
 };
+
+LineTool.objectSelected = function(e) {
+  var self = this;
+  LineTool.updateControlPoints.call(self, e);
+
+  console.log(e);
+
+  this.ctp[0].visible = true;
+  this.ctp[1].visible = true;
+
+  this.canvas.renderAll(false);
+}
+
+LineTool.objectMoved = function(e) {
+  var self = this;
+  LineTool.updateControlPoints.call(self, e);
+  if(this.ctp[0].visible){
+    this.canvas.renderAll(false);
+  }
+}
+
+LineTool.updateControlPoints = function(e) {
+  // `this` is the object/line
+  this.ctp[0].top = this.top;
+  this.ctp[0].left = this.left;
+  this.ctp[1].top = this.top + this.height;
+  this.ctp[1].left = this.left + this.width;
+}
 
 module.exports = LineTool;

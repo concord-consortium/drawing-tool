@@ -67,6 +67,7 @@ ShapeTool.prototype.actionComplete = function (newObject) {
   }
   if (newObject) {
     newObject.selectable = true;
+    newObject.on("selected", ShapeTool.resizer);
   }
 };
 
@@ -85,5 +86,9 @@ ShapeTool.prototype._setAllObjectsSelectable = function (selectable) {
     items[i].selectable = selectable;
   }
 };
+
+ShapeTool.resizer = function(e) {
+  console.warn(this);
+}
 
 module.exports = ShapeTool;

@@ -17,9 +17,10 @@ function DrawingTool (selector) {
   fabric.Object.prototype.selectable = false;
   fabric.Object.prototype.lockScalingX = true;
   fabric.Object.prototype.lockScalingY = true;
+  fabric.Object.prototype.hasControls = false;
   // Custom Variables for Shape resizing
-  fabric.Object.prototype.minWidth = 10;
-  fabric.Object.prototype.minHeight = 10;
+  fabric.Object.prototype.minWidth = 15;
+  fabric.Object.prototype.minHeight = 15;
   // fabric.Object.prototype.perPixelTargetFind = true;
 
   fabric.Object.prototype.strokeWidth = 10;
@@ -47,7 +48,6 @@ function DrawingTool (selector) {
 
   this.chooseTool("select");
 
-  this.canvas.on("object:scaling", ShapeTool.resizer);
 }
 
 DrawingTool.prototype.chooseTool = function(toolSelector){

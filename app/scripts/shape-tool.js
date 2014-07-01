@@ -86,41 +86,4 @@ ShapeTool.prototype._setAllObjectsSelectable = function (selectable) {
   }
 };
 
-ShapeTool.shapeSpecificResizer = {};
-
-// Assuming origin is top left
-// using "__corner" is bad practice?
-ShapeTool.resizer = function(e){
-  var s = e.target;
-
-  if (!(s.originX === "left")) { console.warn("Origin X is not 'left'"); }
-  if (!(s.originY === "top")) { console.warn("Origin Y is not 'top'"); }
-
-  var dx = e.e.webkitMovementX;
-  var dy = e.e.webkitMovementY;
-
-  if (s.__corner.charAt(0) === 't' || s.__corner === 'mt'){
-    s.top += dy;
-    s.height -= dy;
-  } else if (s.__corner.charAt(0) === 'b' || s.__corner === 'mb'){
-    s.height += dy;
-  }
-
-  if (s.__corner.charAt(1) === 'l'){
-    s.left += dx;
-    s.width -= dx;
-  } else if (s.__corner.charAt(1) === 'r'){
-    s.width += dx;
-  }
-
-  if (s.width < s.minWidth) { s.width = s.minWidth; }
-  if (s.height < s.minHeight) { s.height = s.minHeight; }
-
-  s.setCoords();
-
-  if(ShapeTool.shapeSpecificResizer[s.type]) {
-    ShapeTool.shapeSpecificResizer[s.type](e);
-  }
-}
-
 module.exports = ShapeTool;

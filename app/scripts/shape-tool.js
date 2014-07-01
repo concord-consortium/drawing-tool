@@ -86,6 +86,8 @@ ShapeTool.prototype._setAllObjectsSelectable = function (selectable) {
   }
 };
 
+ShapeTool.shapeSpecificResizer = {};
+
 // Assuming origin is top left
 // using "__corner" is bad practice?
 ShapeTool.resizer = function(e){
@@ -115,6 +117,10 @@ ShapeTool.resizer = function(e){
   if (s.height < s.minHeight) { s.height = s.minHeight; }
 
   s.setCoords();
+
+  if(ShapeTool.shapeSpecificResizer[s.type]) {
+    ShapeTool.shapeSpecificResizer[s.type](e);
+  }
 }
 
 module.exports = ShapeTool;

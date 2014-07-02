@@ -7,7 +7,6 @@ var EllipseTool   = require('scripts/ellipse-tool');
 var SquareTool    = require('scripts/square-tool');
 var CircleTool    = require('scripts/circle-tool');
 var Util          = require('scripts/util');
-var Resizer       = require('scripts/resizer');
 
 // Constructor function.
 function DrawingTool (selector) {

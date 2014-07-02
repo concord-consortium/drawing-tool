@@ -176,6 +176,10 @@ LineTool.updateLine = function(e) {
   line.set('x' + (this.id + 1), this.left);
   line.set('y' + (this.id + 1), this.top);
   line.setCoords();
+  // update the "previous" values so dx and dy don't get wonky
+  // when the control points are manipulated
+  line.prevLeft = line.left;
+  line.prevTop = line.top;
   line.canvas.renderAll(false);
 };
 

@@ -7,6 +7,7 @@ var EllipseTool   = require('scripts/ellipse-tool');
 var SquareTool    = require('scripts/square-tool');
 var CircleTool    = require('scripts/circle-tool');
 var Util          = require('scripts/util');
+var rescale2resize = require('scripts/rescale-2-resize');
 
 // Constructor function.
 function DrawingTool (selector) {
@@ -15,8 +16,6 @@ function DrawingTool (selector) {
 
   fabric.Object.prototype.transparentCorners = false;
   fabric.Object.prototype.selectable = false;
-  fabric.Object.prototype.lockScalingX = true;
-  fabric.Object.prototype.lockScalingY = true;
   // Custom Variables for Shape resizing
   fabric.Object.prototype.minWidth = 10;
   fabric.Object.prototype.minHeight = 10;
@@ -45,9 +44,10 @@ function DrawingTool (selector) {
     self._toolButtonClicked(id);
   });
 
-  this.chooseTool("select");
+  // Apply a fix that changes native FabricJS rescaling bahvior into resizing.
+  rescale2resize(this.canvas);
 
-  this.canvas.on("object:scaling", ShapeTool.resizer);
+  this.chooseTool("select");
 }
 
 DrawingTool.prototype.chooseTool = function(toolSelector){

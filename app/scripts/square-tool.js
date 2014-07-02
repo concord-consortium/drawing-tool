@@ -25,7 +25,7 @@ SquareTool.prototype.mouseDown = function (e) {
     left: x,
     width: 0,
     height: 0,
-    selectable: false
+    lockUniScaling: true, // it's a square!
   });
   this.canvas.add(this.curr);
 };

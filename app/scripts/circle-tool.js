@@ -9,8 +9,6 @@ function CircleTool(name, selector, drawTool) {
   this.addEventListener("mouse:down", function (e) { self.mouseDown(e); });
   this.addEventListener("mouse:move", function (e) { self.mouseMove(e); });
   this.addEventListener("mouse:up", function (e) { self.mouseUp(e); });
-
-  ShapeTool.shapeSpecificResizer[selector] = CircleTool.resizer;
 }
 
 inherit(CircleTool, ShapeTool);
@@ -26,6 +24,7 @@ CircleTool.prototype.mouseDown = function (e) {
     top: y,
     left: x,
     radius: 0.1,
+    lockUniScaling: true,
     selectable: false
   });
   this.canvas.add(this.curr);
@@ -93,13 +92,5 @@ CircleTool.prototype.mouseUp = function (e) {
   this.actionComplete(this.curr);
   this.curr = undefined;
 };
-
-CircleTool.resizer = function(e){
-  var s = e.target;
-  s.radius = ((s.width < s.height) ? s.width : s.height);
-  s.width = s.radius;
-  s.height = s.radius;
-  s.radius /= 2;
-}
 
 module.exports = CircleTool;

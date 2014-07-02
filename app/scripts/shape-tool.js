@@ -96,6 +96,6 @@ ShapeTool.prototype._setAllObjectsSelectable = function (selectable) {
 
 ShapeTool.resizer = function(e) {
   // console.warn(this);
-}
+};
 
 module.exports = ShapeTool;

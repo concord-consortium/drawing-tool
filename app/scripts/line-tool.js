@@ -12,10 +12,10 @@ function LineTool(name, selector, drawTool) {
 
   // Setting up a "deselected" event
   // see https://groups.google.com/d/topic/fabricjs/pcFJOroSkI4/discussion
+  // this._selectedObj has already been declared in drawing-tool.js
   fabric.Line.prototype.is = function(obj) {
     return this === obj || this.ctp[0] === obj || this.ctp[1] === obj;
-  }
-  this.canvas._selectedObj;
+  };
 
   // the context for the event is the object (which is why the .call is needed)
   this.canvas.on.call(this.canvas, "object:selected", function(e){
@@ -45,7 +45,7 @@ function LineTool(name, selector, drawTool) {
     this._selectedObj = undefined;
   });
 
-};
+}
 
 inherit(LineTool, ShapeTool);
 
@@ -140,7 +140,7 @@ LineTool.objectDeselected = function(e) {
   this.ctp[1].visible = false;
 
   this.canvas.renderAll(false);
-}
+};
 
 LineTool.objectMoved = function(e) {
   var dx = this.left - this.prevLeft;
@@ -173,9 +173,8 @@ LineTool.updateLine = function(e) {
   var line = this.line;
   line.set('x' + (this.id + 1), this.left);
   line.set('y' + (this.id + 1), this.top);
-  console.info
   line.setCoords();
   line.canvas.renderAll(false);
-}
+};
 
 module.exports = LineTool;

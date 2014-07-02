@@ -50,7 +50,7 @@ function DrawingTool (selector) {
 
   // to help with detecting "deselect" events
   // see https://groups.google.com/d/topic/fabricjs/pcFJOroSkI4/discussion
-  this.canvas._selectedItem;
+  this.canvas._selectedItem = undefined;
 }
 
 DrawingTool.prototype.chooseTool = function(toolSelector){

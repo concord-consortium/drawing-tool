@@ -16,16 +16,18 @@ function DrawingTool (selector) {
 
   fabric.Object.prototype.transparentCorners = false;
   fabric.Object.prototype.selectable = false;
-  // Custom Variables for Shape resizing
-  fabric.Object.prototype.minWidth = 10;
-  fabric.Object.prototype.minHeight = 10;
-  // fabric.Object.prototype.perPixelTargetFind = true;
 
+  // Custom Variables for Shape resizing
+  fabric.Object.prototype.minWidth = 15;
+  fabric.Object.prototype.minHeight = 15;
+
+  fabric.Object.prototype.perPixelTargetFind = true;
   fabric.Object.prototype.strokeWidth = 10;
-  fabric.Object.prototype.stroke = "rgba(100,200,200,0.75)";
+  fabric.Object.prototype.stroke = "rgba(100,200,200,.75)";
   fabric.Object.prototype.fill = "";
 
-  fabric.Group.prototype.selectable = true;
+  fabric.Line.prototype.hasControls = false;
+  fabric.Line.prototype.hasBorders = false;
 
   this.tools = {};
 
@@ -48,6 +50,10 @@ function DrawingTool (selector) {
   rescale2resize(this.canvas);
 
   this.chooseTool("select");
+  
+  // to help with detecting "deselect" events
+  // see https://groups.google.com/d/topic/fabricjs/pcFJOroSkI4/discussion
+  this.canvas._selectedItem = undefined;
 }
 
 DrawingTool.prototype.chooseTool = function(toolSelector){

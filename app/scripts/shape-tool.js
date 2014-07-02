@@ -17,6 +17,10 @@ ShapeTool.prototype.activate = function () {
   this.moved = false;
   this.down = false;
   this._setFirstActionMode();
+
+  // Changes cursor to crosshair when drawing a shape
+  // see https://www.pivotaltracker.com/n/projects/1103712/stories/73647372
+  this.canvas.defaultCursor = "crosshair";
 };
 
 ShapeTool.prototype.activateAgain = function () {
@@ -28,6 +32,9 @@ ShapeTool.prototype.exit = function () {
   this.down = false;
   this.moved = false;
   this.master.changeOutOfTool(this.selector);
+  // Changes cursor back to default
+  // see https://www.pivotaltracker.com/n/projects/1103712/stories/73647372
+  this.canvas.defaultCursor = "default";
 };
 
 // check if this is the first mouse down action
@@ -67,6 +74,7 @@ ShapeTool.prototype.actionComplete = function (newObject) {
   }
   if (newObject) {
     newObject.selectable = true;
+    // newObject.on("selected", ShapeTool.resizer);
   }
 };
 

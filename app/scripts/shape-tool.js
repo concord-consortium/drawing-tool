@@ -17,6 +17,7 @@ ShapeTool.prototype.activate = function () {
   this.moved = false;
   this.down = false;
   this._setFirstActionMode();
+  // this.canvas.c = "crosshair";
 };
 
 ShapeTool.prototype.activateAgain = function () {
@@ -67,7 +68,7 @@ ShapeTool.prototype.actionComplete = function (newObject) {
   }
   if (newObject) {
     newObject.selectable = true;
-    newObject.on("selected", ShapeTool.resizer);
+    // newObject.on("selected", ShapeTool.resizer);
   }
 };
 
@@ -88,7 +89,7 @@ ShapeTool.prototype._setAllObjectsSelectable = function (selectable) {
 };
 
 ShapeTool.resizer = function(e) {
-  console.warn(this);
+  // console.warn(this);
 }
 
 module.exports = ShapeTool;

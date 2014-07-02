@@ -16,22 +16,33 @@ function LineTool(name, selector, drawTool) {
     return this === obj || this.ctp[0] === obj || this.ctp[1] === obj;
   }
   this.canvas._selectedObj;
+
+  // the context for the event is the object (which is why the .call is needed)
   this.canvas.on.call(this.canvas, "object:selected", function(e){
-    if (this._selectedObj !== undefined){
-      if(this._selectedObj.type === "line" && !this._selectedObj.is(e.target)) {
-        LineTool.objectDeselected.call(this._selectedObj);
+    // TODO: this can be shortened with a flag on the control rectangles
+    //       marking their special status
+    if (this._selectedObj !== undefined) {
+      if (this._selectedObj.type === "line") {
+        if (!this._selectedObj.is(e.target)) {
+          LineTool.objectDeselected.call(this._selectedObj);
+          this._selectedObj = e.target;
+        } else {
+          // nothing
+        }
+      } else {
         this._selectedObj = e.target;
       }
-    } else if (this._selectedObj === undefined) {
+    } else {
       this._selectedObj = e.target;
     }
   });
+
+  // the fabric canvas is the context for a selection cleared
   this.canvas.on("selection:cleared", function(e) {
     if (this._selectedObj && this._selectedObj.type === "line"){
       LineTool.objectDeselected.call(this._selectedObj);
-    } else if (this._selectedObj) {
-      this._selectedObj = undefined;
     }
+    this._selectedObj = undefined;
   });
 
 };
@@ -82,8 +93,8 @@ LineTool.prototype.mouseUp = function (e) {
   // control point
   var sidelen = fabric.Line.prototype.cornerSize;
   this.curr.ctp = [
-    this._makeCircle(x1, y1, sidelen, this.curr, 0),
-    this._makeCircle(x1, y1, sidelen, this.curr, 1)
+    this._makePoint(x1, y1, sidelen, this.curr, 0),
+    this._makePoint(x2, y2, sidelen, this.curr, 1)
   ];
 
   this.curr.on('selected', LineTool.objectSelected);
@@ -94,13 +105,14 @@ LineTool.prototype.mouseUp = function (e) {
   this.curr = undefined;
 };
 
-LineTool.prototype._makeCircle = function(l, t, s, source, i){
-  var point = new fabric.Circle({
+LineTool.prototype._makePoint = function(l, t, s, source, i){
+  var point = new fabric.Rect({
     left: l,
     top: t,
-    radius: s/2,
+    width: s,
+    height: s,
     strokeWidth: 0,
-    fill: "rgba(100,200,200,1)",
+    fill: "rgba(102,153,255,0.5)",
     visible: false,
     selectable: true,
     line: source,

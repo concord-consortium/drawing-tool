@@ -1,4 +1,4 @@
-// Drawing Tool 
+// Drawing Tool
 
 .drawing-tool {
 	position: relative;
@@ -10,7 +10,7 @@
 }
 
 .canvas-container {
-	border: 3px solid;
+	/*border: 3px solid;*/
 	width: 700px;
 	height: 500px;
 	margin: 0;

@@ -79,18 +79,14 @@ LineTool.prototype.mouseMove = function (e) {
 LineTool.prototype.mouseUp = function (e) {
   console.log("line up");
   LineTool.super.mouseUp.call(this, e);
+  if (!this.active) { return; }
 
   var x1 = this.curr.get('x1'),
       y1 = this.curr.get('y1'),
       x2 = this.curr.get('x2'),
       y2 = this.curr.get('y2');
-  if(Util.dist(x2 - x1, y2 - y1) > 10){
-    this.curr.setCoords();
-    console.log("new line constructed");
-  } else {
-    this.canvas.remove(this.curr);
-    this.exit();
-  }
+  this.curr.setCoords();
+  console.log("new line constructed");
 
   this.curr.set('prevTop', this.curr.get('top'));
   this.curr.set('prevLeft', this.curr.get('left'));

@@ -1,20 +1,22 @@
 var inherit = require('scripts/inherit');
 var Tool    = require('scripts/tool');
+var Util    = require('scripts/util');
 
 function ShapeTool(name, selector, drawTool) {
   Tool.call(this, name, selector, drawTool);
 
-  this.moved = false;
   this.down = false;
   this._firstAction = false;
+  this.curr = undefined;
 }
 
 inherit(ShapeTool, Tool);
 
+ShapeTool.prototype.minimumSize = 10;
+
 ShapeTool.prototype.activate = function () {
   // console.warn(this.name + " at shape tool activation");
   ShapeTool.super.activate.call(this);
-  this.moved = false;
   this.down = false;
   this._setFirstActionMode();
 
@@ -30,11 +32,13 @@ ShapeTool.prototype.activateAgain = function () {
 ShapeTool.prototype.exit = function () {
   console.info("changing out of " + this.name);
   this.down = false;
-  this.moved = false;
   this.master.changeOutOfTool(this.selector);
   // Changes cursor back to default
   // see https://www.pivotaltracker.com/n/projects/1103712/stories/73647372
   this.canvas.defaultCursor = "default";
+  if (this.curr) {
+    this.canvas.remove(this.curr);
+  }
 };
 
 // check if this is the first mouse down action
@@ -42,7 +46,6 @@ ShapeTool.prototype.exit = function () {
 // set that object as active and change into selection mode
 ShapeTool.prototype.mouseDown = function (e) {
   this.down = true;
-  this.moved = false;
 
   if (this._firstAction === false && e.target !== undefined) {
     // Note that in #mouseUp handler we already set all objects to be
@@ -50,19 +53,23 @@ ShapeTool.prototype.mouseDown = function (e) {
     // We have to exit to avoid drawing a new shape.
     this.exit();
   }
+
+  var loc = Util.getLoc(e.e);
+  this.__startX = loc.x;
+  this.__startY = loc.y;
 };
 
 ShapeTool.prototype.mouseMove = function (e) {
-  if (this.moved === false && this.down === true){
-    this.moved = true;
-  }
+
 };
 
 ShapeTool.prototype.mouseUp = function (e) {
   this.down = false;
-  if (this.moved === false) {
+  var loc = Util.getLoc(e.e);
+  if (Util.dist(this.__startX - loc.x, this.__startY - loc.y) < this.minimumSize) {
     this.exit();
   }
+
 };
 
 ShapeTool.prototype.actionComplete = function (newObject) {

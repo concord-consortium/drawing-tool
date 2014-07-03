@@ -23,9 +23,9 @@ function DrawingTool (selector) {
   fabric.Object.prototype.minHeight = 15;
 
   fabric.Object.prototype.perPixelTargetFind = true;
-  fabric.Object.prototype.strokeWidth = 10;
-  fabric.Object.prototype.stroke = "rgba(100,200,200,.75)";
-  fabric.Object.prototype.fill = "";
+  this.setStrokeWidth(10);
+  this.setStrokeColor("rgba(100,200,200,.75)");
+  this.setFill("");
 
   fabric.Line.prototype.hasControls = false;
   fabric.Line.prototype.hasBorders = false;
@@ -83,6 +83,20 @@ DrawingTool.prototype.check = function() {
     console.log(shapes[i]);
   }
 };
+
+DrawingTool.prototype.setStrokeColor = function(color) {
+  fabric.Object.prototype.stroke = color;
+  this.canvas.freeDrawingBrush.color = color;
+}
+
+DrawingTool.prototype.setStrokeWidth = function(width) {
+  fabric.Object.prototype.strokeWidth = width;
+  this.canvas.freeDrawingBrush.width = width;
+}
+
+DrawingTool.prototype.setFill = function(color) {
+  fabric.Object.prototype.fill = color;
+}
 
 DrawingTool.prototype._toolButtonClicked = function(toolSelector) {
   if (this.currentTool !== undefined && this.currentTool.selector === toolSelector) {

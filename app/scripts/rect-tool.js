@@ -53,19 +53,17 @@ RectangleTool.prototype.mouseMove = function (e) {
 RectangleTool.prototype.mouseUp = function (e) {
   console.log("rect up");
   RectangleTool.super.mouseUp.call(this, e);
-  if(Util.dist(this.curr.width, this.curr.height) > 3){
-    if (this.curr.width < 0) {
-      this.curr.left = this.curr.left + this.curr.width;
-      this.curr.width = - this.curr.width;
-    }
-    if (this.curr.height < 0) {
-      this.curr.top = this.curr.top + this.curr.height;
-      this.curr.height = - this.curr.height;
-    }
-    this.curr.setCoords();
-  } else {
-    this.exit();
+  if (!this.active) { return; }
+
+  if (this.curr.width < 0) {
+    this.curr.left = this.curr.left + this.curr.width;
+    this.curr.width = - this.curr.width;
   }
+  if (this.curr.height < 0) {
+    this.curr.top = this.curr.top + this.curr.height;
+    this.curr.height = - this.curr.height;
+  }
+  this.curr.setCoords();
 
   this.canvas.renderAll(false);
   this.actionComplete(this.curr);

@@ -18,12 +18,12 @@ var resizers = {
   },
   ellipse: function (s) {
     basicWidthHeightTransform(s);
-    s.rx = s.width / 2;
-    s.ry = s.height / 2;
+    s.rx = Math.abs(s.width / 2);
+    s.ry = Math.abs(s.height / 2);
   },
   circle: function (s) {
     uniformWidthHeightTransform(s);
-    s.radius = s.width / 2;
+    s.radius = Math.abs(s.width / 2);
   },
   square: function (s) {
     uniformWidthHeightTransform(s);

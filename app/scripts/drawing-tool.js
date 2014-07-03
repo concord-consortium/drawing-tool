@@ -6,6 +6,7 @@ var RectangleTool = require('scripts/rect-tool');
 var EllipseTool   = require('scripts/ellipse-tool');
 var SquareTool    = require('scripts/square-tool');
 var CircleTool    = require('scripts/circle-tool');
+var FreeDrawTool  = require('scripts/free-draw');
 var Util          = require('scripts/util');
 var rescale2resize = require('scripts/rescale-2-resize');
 
@@ -33,12 +34,12 @@ function DrawingTool (selector) {
 
   // Tools
   var selectionTool = new SelectionTool("Selection Tool", "select", this);
-  // TODO: fix line editing (endpoints, disable selection/scaling)
   var lineTool = new LineTool("Line Tool", "line", this);
   var rectangleTool = new RectangleTool("Rectangle Tool", "rect", this);
   var ellipseTool = new EllipseTool("Ellipse Tool", "ellipse", this);
   var squareTool = new SquareTool("Square Tool", "square", this);
   var circleTool = new CircleTool("Circle Tool", "circle", this);
+  var freeDrawTool = new FreeDrawTool("Free Draw Tool", "free", this);
 
   var self = this;
   $('.btn').click(function(){
@@ -50,7 +51,7 @@ function DrawingTool (selector) {
   rescale2resize(this.canvas);
 
   this.chooseTool("select");
-  
+
   // to help with detecting "deselect" events
   // see https://groups.google.com/d/topic/fabricjs/pcFJOroSkI4/discussion
   this.canvas._selectedItem = undefined;

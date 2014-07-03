@@ -1,8 +1,8 @@
 var inherit = require('scripts/inherit');
 var Tool    = require('scripts/tool');
 
-function SelectionTool(name, selector, canvas) {
-  Tool.call(this, name, selector, canvas);
+function SelectionTool(name, selector, drawTool) {
+  Tool.call(this, name, selector, drawTool);
 }
 
 inherit(SelectionTool, Tool);

@@ -7,9 +7,16 @@ module.exports = {
 
   // e is the mouse/touch event
   getLoc: function getLoc(e) {
-    return {
-      x: e.touches[0].clientX + e.layerX || e.layerX,
-      y: e.touches[0].clientY + e.layerY || e.layerY
+    if (e instanceof MouseEvent) {
+      return {
+        x: e.layerX,
+        y: e.layerY
+      };
+    } else if (e instanceof TouchEvent) {
+      return {
+        x: e.touches[0].clientX + e.layerX,
+        y: e.touches[0].clientY + e.layerY
+      }
     }
   }
 };

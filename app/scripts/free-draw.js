@@ -8,11 +8,11 @@ function FreeDrawTool(name, selector, drawTool) {
 inherit(FreeDrawTool, Tool);
 
 FreeDrawTool.prototype.activate = function() {
-  // enable freedrawing mode
+  this.canvas.isDrawingMode = true;
 }
 
 FreeDrawTool.prototype.deactivate = function() {
-  // disable freedrawing mode
+  this.canvas.isDrawingMode = false;
 }
 
 module.exports = FreeDrawTool;

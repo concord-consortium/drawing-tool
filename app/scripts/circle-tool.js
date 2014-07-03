@@ -17,8 +17,8 @@ CircleTool.prototype.mouseDown = function (e) {
   console.log("Circle down");
   CircleTool.super.mouseDown.call(this, e);
 
-  var x = e.e.offsetX;
-  var y = e.e.offsetY;
+  var x = e.e.layerX;
+  var y = e.e.layerY;
 
   this.curr = new fabric.Circle({
     top: y,
@@ -33,8 +33,8 @@ CircleTool.prototype.mouseDown = function (e) {
 CircleTool.prototype.mouseMove = function (e) {
   CircleTool.super.mouseMove.call(this, e);
   if (this.down === false) { return; }
-  var x = e.e.offsetX,
-      y = e.e.offsetY,
+  var x = e.e.layerX,
+      y = e.e.layerY,
       x1 = this.curr.left,
       y1 = this.curr.top;
 

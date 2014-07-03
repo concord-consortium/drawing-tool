@@ -17,8 +17,8 @@ SquareTool.prototype.mouseDown = function (e) {
   console.log("down");
   SquareTool.super.mouseDown.call(this, e);
 
-  var x = e.e.offsetX;
-  var y = e.e.offsetY;
+  var x = e.e.layerX;
+  var y = e.e.layerY;
 
   this.curr = new fabric.Rect({
     top: y,
@@ -33,8 +33,8 @@ SquareTool.prototype.mouseDown = function (e) {
 SquareTool.prototype.mouseMove = function (e) {
   SquareTool.super.mouseMove.call(this, e);
   if (this.down === false) { return; }
-  var width = e.e.offsetX - this.curr.left;
-  var height = e.e.offsetY - this.curr.top;
+  var width = e.e.layerX - this.curr.left;
+  var height = e.e.layerY - this.curr.top;
 
   var sideLen = Math.abs(width) > Math.abs(height) ? Math.abs(width) : Math.abs(height);
   this.curr.width = sideLen;

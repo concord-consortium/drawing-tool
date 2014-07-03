@@ -17,8 +17,8 @@ EllipseTool.prototype.mouseDown = function (e) {
   console.log("ellipse down");
   EllipseTool.super.mouseDown.call(this, e);
 
-  var x = e.e.offsetX;
-  var y = e.e.offsetY;
+  var x = e.e.layerX;
+  var y = e.e.layerY;
 
   this.curr = new fabric.Ellipse({
     top: y,
@@ -33,8 +33,8 @@ EllipseTool.prototype.mouseDown = function (e) {
 EllipseTool.prototype.mouseMove = function (e) {
   EllipseTool.super.mouseMove.call(this, e);
   if (this.down === false) { return; }
-  var x = e.e.offsetX,
-      y = e.e.offsetY,
+  var x = e.e.layerX,
+      y = e.e.layerY,
       x1 = this.curr.left,
       y1 = this.curr.top;
 

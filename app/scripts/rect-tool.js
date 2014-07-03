@@ -17,8 +17,8 @@ RectangleTool.prototype.mouseDown = function (e) {
   console.log("down");
   RectangleTool.super.mouseDown.call(this, e);
 
-  var x = e.e.offsetX;
-  var y = e.e.offsetY;
+  var x = e.e.layerX;
+  var y = e.e.layerY;
 
   this.curr = new fabric.Rect({
     top: y,
@@ -32,12 +32,13 @@ RectangleTool.prototype.mouseDown = function (e) {
 RectangleTool.prototype.mouseMove = function (e) {
   RectangleTool.super.mouseMove.call(this, e);
   if (this.down === false) { return; }
-  var x = e.e.offsetX,
-      y = e.e.offsetY,
+  var x = e.e.layerX,
+      y = e.e.layerY,
       x1 = this.curr.left,
       y1 = this.curr.top;
   this.curr.width = x - x1;
   this.curr.height = y - y1;
+  
   this.canvas.renderAll(false);
 };
 

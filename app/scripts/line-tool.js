@@ -53,8 +53,11 @@ LineTool.prototype.mouseDown = function (e) {
   console.log("down");
   LineTool.super.mouseDown.call(this, e);
 
-  var x = e.e.offsetX;
-  var y = e.e.offsetY;
+  if ( !this.active ) { return; }
+
+  var loc = Util.getLoc(e.e);
+  var x = loc.x;
+  var y = loc.y;
 
   this.curr = new fabric.Line([x,y,x,y],{ selectable: false });
   this.canvas.add(this.curr);
@@ -63,8 +66,11 @@ LineTool.prototype.mouseDown = function (e) {
 LineTool.prototype.mouseMove = function (e) {
   LineTool.super.mouseMove.call(this, e);
   if (this.down === false) { return; }
-  var x = e.e.offsetX,
-      y = e.e.offsetY;
+
+  var loc = Util.getLoc(e.e);
+  var x = loc.x;
+  var y = loc.y;
+
   this.curr.set('x2', x);
   this.curr.set('y2', y);
   this.canvas.renderAll(false);

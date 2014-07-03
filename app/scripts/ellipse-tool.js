@@ -17,6 +17,9 @@ EllipseTool.prototype.mouseDown = function (e) {
   console.log("ellipse down");
   EllipseTool.super.mouseDown.call(this, e);
 
+  // if this tool is no longer active, stop current action!
+  if (!this.active) { return; }
+  
   var x = e.e.layerX;
   var y = e.e.layerY;
 

@@ -17,6 +17,8 @@ RectangleTool.prototype.mouseDown = function (e) {
   console.log("down");
   RectangleTool.super.mouseDown.call(this, e);
 
+  if (!this.active) { return; }
+
   var x = e.e.layerX;
   var y = e.e.layerY;
 
@@ -38,7 +40,7 @@ RectangleTool.prototype.mouseMove = function (e) {
       y1 = this.curr.top;
   this.curr.width = x - x1;
   this.curr.height = y - y1;
-  
+
   this.canvas.renderAll(false);
 };
 

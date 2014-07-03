@@ -17,6 +17,8 @@ CircleTool.prototype.mouseDown = function (e) {
   console.log("Circle down");
   CircleTool.super.mouseDown.call(this, e);
 
+  if (!this.active) { return; }
+
   var x = e.e.layerX;
   var y = e.e.layerY;
 

@@ -30,12 +30,12 @@ function DrawingTool (selector) {
   fabric.Line.prototype.hasControls = false;
   fabric.Line.prototype.hasBorders = false;
 
-  //adding sample shapes
-  var rect3 = new fabric.Rect({
-    width: 200, height: 100, left: 500, top: 150, angle: 45,
-    fill: 'rgba(0,0,200,0.5)'
-  });
-  this.canvas.add(rect3);
+  // //adding sample shapes
+  // var rect3 = new fabric.Rect({
+  //   width: 200, height: 100, left: 500, top: 150, angle: 45,
+  //   fill: 'rgba(0,0,200,0.5)'
+  // });
+  // this.canvas.add(rect3);
 
   this.tools = {};
 

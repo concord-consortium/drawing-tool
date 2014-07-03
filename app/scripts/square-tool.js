@@ -16,6 +16,8 @@ inherit(SquareTool, ShapeTool);
 SquareTool.prototype.mouseDown = function (e) {
   console.log("down");
   SquareTool.super.mouseDown.call(this, e);
+  
+  if (!this.active) { return; }
 
   var x = e.e.layerX;
   var y = e.e.layerY;

@@ -1,6 +1,7 @@
 # HTML5 Drawing Tool
 
-This is HTML5 Drawing Tool, built with [Brunch](http://brunch.io).
+This is HTML5 Drawing Tool, built with [Brunch](http://brunch.io) and uses [Fabric](http://fabricjs.com).
+[View the demo](http://concord-consortium.github.io/drawing-tool/examples/)
 
 ## Getting started
 * Install (if you don't have them):

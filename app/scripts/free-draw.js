@@ -8,6 +8,8 @@ function FreeDrawTool(name, selector, drawTool) {
     this.addEventListener("mouse:down", function (e) { self.mouseDown(e); });
     this.addEventListener("mouse:move", function (e) { self.mouseMove(e); });
     this.addEventListener("mouse:up", function (e) { self.mouseUp(e); });
+
+    this.setLabel('F');
 }
 
 inherit(FreeDrawTool, ShapeTool);

@@ -13,6 +13,8 @@ function Tool(name, selector, drawTool) {
   this.master.tools[selector] = this;
 
   this._listeners = [];
+
+  this.initUI();
 }
 
 Tool.prototype.setActive = function (active) {
@@ -68,6 +70,21 @@ Tool.prototype.removeEventListener = function (trigger) {
       return this._listeners.splice(i,1);
     }
   }
+};
+
+Tool.prototype.initUI = function () {
+  this.$element = $('<label class="btn btn-primary">')
+    .attr('id', this.selector)
+    .appendTo(this.master.$tools);
+  $('<input type="radio" name="options">')
+    .attr('value', this.selector)
+    .appendTo(this.$element);
+  $('<span>')
+    .appendTo(this.$element);
+};
+
+Tool.prototype.setLabel = function (label) {
+  this.$element.find('span').text(label);
 };
 
 module.exports = Tool;

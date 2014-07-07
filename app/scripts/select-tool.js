@@ -3,6 +3,8 @@ var Tool    = require('scripts/tool');
 
 function SelectionTool(name, selector, drawTool) {
   Tool.call(this, name, selector, drawTool);
+
+  this.setLabel('S');
 }
 
 inherit(SelectionTool, Tool);

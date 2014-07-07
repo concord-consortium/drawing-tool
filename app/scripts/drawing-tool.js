@@ -1,19 +1,27 @@
-var Tool          = require('scripts/tool');
-var ShapeTool     = require('scripts/shape-tool');
-var SelectionTool = require('scripts/select-tool');
-var LineTool      = require('scripts/line-tool');
-var RectangleTool = require('scripts/rect-tool');
-var EllipseTool   = require('scripts/ellipse-tool');
-var SquareTool    = require('scripts/square-tool');
-var CircleTool    = require('scripts/circle-tool');
-var FreeDrawTool  = require('scripts/free-draw');
-var Util          = require('scripts/util');
+var Tool           = require('scripts/tool');
+var ShapeTool      = require('scripts/shape-tool');
+var SelectionTool  = require('scripts/select-tool');
+var LineTool       = require('scripts/line-tool');
+var RectangleTool  = require('scripts/rect-tool');
+var EllipseTool    = require('scripts/ellipse-tool');
+var SquareTool     = require('scripts/square-tool');
+var CircleTool     = require('scripts/circle-tool');
+var FreeDrawTool   = require('scripts/free-draw');
+var Util           = require('scripts/util');
 var rescale2resize = require('scripts/rescale-2-resize');
 
+var CANVAS_ID = 'dt-drawing-area';
+var DEF_OPTIONS = {
+  width: 700,
+  height: 500
+};
+
 // Constructor function.
-function DrawingTool (selector) {
-  this.canvas = new fabric.Canvas(generateHTML(selector));
-  this.canvas.perPixelTargetFind = true;
+function DrawingTool(selector, options) {
+  this.options = $.extend(true, {}, options, DEF_OPTIONS);
+
+  this._initUI(selector);
+  this._initFabricJS();
 
   fabric.Object.prototype.transparentCorners = false;
   fabric.Object.prototype.selectable = false;
@@ -49,7 +57,7 @@ function DrawingTool (selector) {
   var freeDrawTool = new FreeDrawTool("Free Draw Tool", "free", this);
 
   var self = this;
-  $('.btn').click(function(){
+  $('.btn').click(function () {
     var id = $(this).find("input").val();
     self._toolButtonClicked(id);
   });
@@ -87,16 +95,51 @@ DrawingTool.prototype.check = function() {
 DrawingTool.prototype.setStrokeColor = function(color) {
   fabric.Object.prototype.stroke = color;
   this.canvas.freeDrawingBrush.color = color;
-}
+};
 
 DrawingTool.prototype.setStrokeWidth = function(width) {
   fabric.Object.prototype.strokeWidth = width;
   this.canvas.freeDrawingBrush.width = width;
-}
+};
 
 DrawingTool.prototype.setFill = function(color) {
   fabric.Object.prototype.fill = color;
-}
+};
+
+
+DrawingTool.prototype._initUI = function(selector) {
+  $(selector).empty();
+  this.$element = $('<div class="dt-container">').appendTo(selector);
+  this.$tools = $('<div class="dt-tools btn-group-vertical" data-toggle="buttons">')
+    .appendTo(this.$element);
+  var $canvasContainer = $('<div class="dt-canvas-container">')
+    .appendTo(this.$element);
+  $('<canvas>')
+    .attr('id', CANVAS_ID)
+    .attr('width', this.options.width + 'px')
+    .attr('height', this.options.height + 'px')
+    .appendTo($canvasContainer);
+};
+
+DrawingTool.prototype._initFabricJS = function () {
+  this.canvas = new fabric.Canvas(CANVAS_ID);
+  this.canvas.perPixelTargetFind = true;
+
+  fabric.Object.prototype.transparentCorners = false;
+  fabric.Object.prototype.selectable = false;
+
+  // Custom Variables for Shape resizing
+  fabric.Object.prototype.minWidth = 15;
+  fabric.Object.prototype.minHeight = 15;
+
+  fabric.Object.prototype.perPixelTargetFind = true;
+  this.setStrokeWidth(10);
+  this.setStrokeColor("rgba(100,200,200,.75)");
+  this.setFill("");
+
+  fabric.Line.prototype.hasControls = false;
+  fabric.Line.prototype.hasBorders = false;
+};
 
 DrawingTool.prototype._toolButtonClicked = function(toolSelector) {
   if (this.currentTool !== undefined && this.currentTool.selector === toolSelector) {
@@ -118,35 +161,5 @@ DrawingTool.prototype._toolButtonClicked = function(toolSelector) {
   this.currentTool = newTool;
   this.canvas.renderAll(false);
 };
-
-function generateHTML(selector) {
-  var html = '<div id="tools" class="btn-group-vertical" data-toggle="buttons">\
-    <label class="btn btn-primary" id="select">\
-      <input type="radio" name="options" value="select"> S\
-    </label>\
-    <label class="btn btn-primary" id="line">\
-      <input type="radio" name="options" value="line"> L\
-    </label>\
-    <label class="btn btn-primary" id="rect">\
-      <input type="radio" name="options" value="rect"> R\
-    </label>\
-    <label class="btn btn-primary" id="square">\
-      <input type="radio" name="options" value="square"> Sq\
-    </label>\
-    <label class="btn btn-primary" id="ellipse">\
-      <input type="radio" name="options" value="ellipse"> E\
-    </label>\
-    <label class="btn btn-primary" id="circle">\
-      <input type="radio" name="options" value="circle"> C\
-    </label>\
-    <label class="btn btn-primary" id="free">\
-      <input type="radio" name="options" value="free"> F\
-    </label>\
-  </div>\
-  <canvas id="draw" width="700px" height="500px"\
-  style="border: 3px solid;"></canvas>';
-  $("#" + selector).append(html);
-  return "draw";
-}
 
 module.exports = DrawingTool;

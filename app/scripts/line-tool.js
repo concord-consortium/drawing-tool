@@ -10,6 +10,8 @@ function LineTool(name, selector, drawTool) {
   this.addEventListener("mouse:move", function (e) { self.mouseMove(e); });
   this.addEventListener("mouse:up", function (e) { self.mouseUp(e); });
 
+  this.setLabel('L');
+
   // Setting up a "deselected" event
   // see https://groups.google.com/d/topic/fabricjs/pcFJOroSkI4/discussion
   // this._selectedObj has already been declared in drawing-tool.js

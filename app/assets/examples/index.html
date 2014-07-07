@@ -11,13 +11,39 @@
     <div class="container">
         <h1 id="hero">HTML5 Drawing Tool</h1>
         <h2>(now featuring shapes!!)</h2>
-        <div id="drawing-tool"></div>
+        <div class="drawing-tool">
+          <div id="tools" class="btn-group-vertical" data-toggle="buttons">
+            <label class="btn btn-primary" id="select">
+              <input type="radio" name="options" value="select"> S
+            </label>
+            <label class="btn btn-primary" id="line">
+              <input type="radio" name="options" value="line"> L
+            </label>
+            <label class="btn btn-primary" id="rect">
+              <input type="radio" name="options" value="rect"> R
+            </label>
+            <label class="btn btn-primary" id="square">
+              <input type="radio" name="options" value="square"> Sq
+            </label>
+            <label class="btn btn-primary" id="ellipse">
+              <input type="radio" name="options" value="ellipse"> E
+            </label>
+            <label class="btn btn-primary" id="circle">
+              <input type="radio" name="options" value="circle"> C
+            </label>
+            <label class="btn btn-primary" id="free">
+              <input type="radio" name="options" value="free"> F
+            </label>
+          </div>
+          <canvas id="draw" width="700px" height="500px"
+          style="border: 3px solid;"></canvas>
+        </div>
     </div>
   <script src="../vendor.js"></script>
   <script src="../drawing-tool.js"></script>
   <script src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
   <script>
-  	var drawingTool = new DrawingTool("drawing-tool");
+  	var drawingTool = new DrawingTool("draw");
   </script>
   </body>
 </html>

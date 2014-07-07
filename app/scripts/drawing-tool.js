@@ -12,7 +12,7 @@ var rescale2resize = require('scripts/rescale-2-resize');
 
 // Constructor function.
 function DrawingTool (selector) {
-  this.canvas = new fabric.Canvas(generateHTML(selector));
+  this.canvas = new fabric.Canvas(selector);
   this.canvas.perPixelTargetFind = true;
 
   fabric.Object.prototype.transparentCorners = false;
@@ -118,35 +118,5 @@ DrawingTool.prototype._toolButtonClicked = function(toolSelector) {
   this.currentTool = newTool;
   this.canvas.renderAll(false);
 };
-
-function generateHTML(selector) {
-  var html = '<div id="tools" class="btn-group-vertical" data-toggle="buttons">\
-    <label class="btn btn-primary" id="select">\
-      <input type="radio" name="options" value="select"> S\
-    </label>\
-    <label class="btn btn-primary" id="line">\
-      <input type="radio" name="options" value="line"> L\
-    </label>\
-    <label class="btn btn-primary" id="rect">\
-      <input type="radio" name="options" value="rect"> R\
-    </label>\
-    <label class="btn btn-primary" id="square">\
-      <input type="radio" name="options" value="square"> Sq\
-    </label>\
-    <label class="btn btn-primary" id="ellipse">\
-      <input type="radio" name="options" value="ellipse"> E\
-    </label>\
-    <label class="btn btn-primary" id="circle">\
-      <input type="radio" name="options" value="circle"> C\
-    </label>\
-    <label class="btn btn-primary" id="free">\
-      <input type="radio" name="options" value="free"> F\
-    </label>\
-  </div>\
-  <canvas id="draw" width="700px" height="500px"\
-  style="border: 3px solid;"></canvas>';
-  $("#" + selector).append(html);
-  return "draw";
-}
 
 module.exports = DrawingTool;

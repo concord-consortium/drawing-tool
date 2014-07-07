@@ -21,13 +21,13 @@
 
 #tools {
 	position: absolute;
-	width: 75px;
+	width: 72px;
 }
 
 label.btn {
 	font-size: 36px;
-	line-height: 75px;
-	height: 75px;
+	line-height: 72px;
+	height: 72px;
 	vertical-align: middle;
 	padding: 0;
 }

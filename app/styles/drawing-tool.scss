@@ -1,3 +1,6 @@
+$buttonSize: 72px;
+$buttonFontSize: 36px;
+
 .dt-container {
   .dt-canvas-container {
     vertical-align: middle;
@@ -9,14 +12,18 @@
   .dt-tools {
     display: inline-block;
     vertical-align: middle;
-    width: 75px;
+    width: $buttonSize;
   }
 
   .btn {
-    font-size: 36px;
-    line-height: 72px;
-    height: 72px;
+    font-size: $buttonFontSize;
+    line-height: $buttonSize;
+    height: $buttonSize;
     vertical-align: middle;
     padding: 0;
+  }
+
+  .locked {
+    background-color: grey;
   }
 }

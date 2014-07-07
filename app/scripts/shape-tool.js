@@ -5,9 +5,10 @@ var Util    = require('scripts/util');
 function ShapeTool(name, selector, drawTool) {
   Tool.call(this, name, selector, drawTool);
 
-  this.down = false;
-  this._firstAction = false;
-  this.curr = undefined;
+  this.down = false; // mouse down
+  this._firstAction = false; // special behavior on first action
+  this._locked = false; // locked into first action mode
+  this.curr = undefined; // current shape being manipulated
 }
 
 inherit(ShapeTool, Tool);
@@ -27,18 +28,33 @@ ShapeTool.prototype.activate = function () {
 
 ShapeTool.prototype.activateAgain = function () {
   this._setFirstActionMode();
+  this._locked = true;
+  $('#' + this.selector).addClass('locked');
 };
 
+ShapeTool.prototype.deactivate = function() {
+  ShapeTool.super.deactivate.call(this);
+  this.unlock();
+}
+
+ShapeTool.prototype.unlock = function() {
+  $('#' + this.selector).removeClass('locked');
+  this._locked = false;
+}
+
 ShapeTool.prototype.exit = function () {
+  if (this.curr) {
+    this.canvas.remove(this.curr);
+  }
+
+  if (this._locked) { return; }
+
   console.info("changing out of " + this.name);
   this.down = false;
   this.master.changeOutOfTool(this.selector);
   // Changes cursor back to default
   // see https://www.pivotaltracker.com/n/projects/1103712/stories/73647372
   this.canvas.defaultCursor = "default";
-  if (this.curr) {
-    this.canvas.remove(this.curr);
-  }
 };
 
 // check if this is the first mouse down action
@@ -72,13 +88,13 @@ ShapeTool.prototype.mouseUp = function (e) {
 };
 
 ShapeTool.prototype.actionComplete = function (newObject) {
-  if (this._firstAction) {
+  if (this._firstAction && !this._locked) {
     this._firstAction = false;
     // After first action we do want all objects to be selectable,
     // so user can immediately move object that he just created.
     this._setAllObjectsSelectable(true);
   }
-  if (newObject) {
+  if (newObject && !this._locked) {
     newObject.selectable = true;
   }
 };

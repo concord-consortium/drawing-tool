@@ -20,7 +20,6 @@ FreeDrawTool.prototype.activate = function() {
 }
 
 FreeDrawTool.prototype.deactivate = function() {
-  console.log("deactivated");
   FreeDrawTool.super.deactivate.call(this);
   this.canvas.isDrawingMode = false;
 }

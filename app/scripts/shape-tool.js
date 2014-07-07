@@ -46,7 +46,6 @@ ShapeTool.prototype.exit = function () {
 // set that object as active and change into selection mode
 ShapeTool.prototype.mouseDown = function (e) {
   this.down = true;
-
   if (this._firstAction === false && e.target !== undefined) {
     // Note that in #mouseUp handler we already set all objects to be
     // selectable. Interaction with an object will be handled by Fabric.
@@ -81,7 +80,6 @@ ShapeTool.prototype.actionComplete = function (newObject) {
   }
   if (newObject) {
     newObject.selectable = true;
-    // newObject.on("selected", ShapeTool.resizer);
   }
 };
 
@@ -89,7 +87,7 @@ ShapeTool.prototype.actionComplete = function (newObject) {
 // always draws an object, even if user starts drawing over existing object.
 // Later that will cause interaction with the existing object unless user reselects
 // the tool. Please see: https://www.pivotaltracker.com/story/show/73959546
-ShapeTool.prototype._setFirstActionMode = function (selectable) {
+ShapeTool.prototype._setFirstActionMode = function () {
   this._firstAction = true;
   this._setAllObjectsSelectable(false);
 };

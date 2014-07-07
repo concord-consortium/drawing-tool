@@ -1,0 +1,22 @@
+.dt-container {
+  .dt-canvas-container {
+    vertical-align: middle;
+    display: inline-block;
+    border-radius: 5px;
+    border: 1px solid #999;
+  }
+
+  .dt-tools {
+    display: inline-block;
+    vertical-align: middle;
+    width: 75px;
+  }
+
+  .btn {
+    font-size: 36px;
+    line-height: 72px;
+    height: 72px;
+    vertical-align: middle;
+    padding: 0;
+  }
+}

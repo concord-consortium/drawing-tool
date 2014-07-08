@@ -46,7 +46,7 @@ function LineTool(name, selector, drawTool) {
 
   // the fabric canvas is the context for a selection cleared
   this.canvas.on("selection:cleared", function (e) {
-    if (this._selectedObj && this._selectedObj.type === "line"){
+    if (this._selectedObj && this._selectedObj.type === "line") {
       LineTool.objectDeselected.call(this._selectedObj);
     }
     this._selectedObj = undefined;

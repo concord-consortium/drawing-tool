@@ -4,32 +4,46 @@ var Tool     = require('scripts/tool');
 function DeleteTool(name, selector, drawTool) {
   Tool.call(this, name, selector, drawTool);
 
-  this.setLabel('Tr');
+  this.singleUse = true;
 
-  // // delete the selected object(s)
-  // // see: https://www.pivotaltracker.com/story/show/74415780
-  // $('.dt-canvas-container').keydown(function(e) {
-  //   console.log(e);
-  //   if (e.keyCode === 8) {
-  //     if (canvas.getActiveObject()) {
-  //       canvas.remove(canvas.getActiveObject());
-  //     } else if (self.canvas.getActiveGroup()) {
-  //       canvas.getActiveGroup().forEachObject(function(o){ canvas.remove(o) });
-  //       canvas.discardActiveGroup().renderAll();
-  //     }
-  //     e.preventDefault();
-  //   }
-  // });
-}
+  // delete the selected object(s)
+  // see: https://www.pivotaltracker.com/story/show/74415780
+  var self = this;
+  $('.dt-canvas-container').keydown(function(e) {
+    if (e.keyCode === 8) {
+      e.preventDefault();
+      self._delete();
+    }
+  });
+};
 
 inherit(DeleteTool, Tool);
 
-// on activation, immediately dump back into the selection tool
-DeleteTool.prototype.activate = function() {
-  // this.master.changeOutOfTool(this.selector);
-  this.master.changeOutOfTool();
+DeleteTool.prototype.use = function () {
+  this._delete();
+};
+
+DeleteTool.prototype._delete = function () {
+  var canvas = this.canvas;
+  if (canvas.getActiveObject()) {
+    canvas.remove(canvas.getActiveObject());
+  } else if (canvas.getActiveGroup()) {
+    canvas.getActiveGroup().forEachObject(function(o){ canvas.remove(o); });
+    canvas.discardActiveGroup().renderAll();
+  }
 }
 
-DeleteTool.prototype.deactivate = function() {}
+DeleteTool.prototype.initUI = function () {
+  this.$element = $('<label class="btn btn-primary">')
+    .attr('id', this.selector)
+    .appendTo(this.master.$tools)
+    .hide();
+  $('<span>')
+    .text('Tr')
+    .appendTo(this.$element);
+};
+
+DeleteTool.prototype.show = function () { this.$element.show(); }
+DeleteTool.prototype.hide = function () { this.$element.hide(); }
 
 module.exports = DeleteTool;

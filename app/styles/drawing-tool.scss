@@ -1,4 +1,4 @@
-$buttonSize: 72px;
+$buttonSize: 62px;
 $buttonFontSize: 36px;
 
 .container {
@@ -9,7 +9,7 @@ $buttonFontSize: 36px;
 
 .dt-container {
   .dt-canvas-container {
-    vertical-align: middle;
+    vertical-align: top; // not needed but why not
     display: inline-block;
     border-radius: 5px;
     border: 1px solid #999;
@@ -18,7 +18,7 @@ $buttonFontSize: 36px;
 
   .dt-tools {
     display: inline-block;
-    vertical-align: middle;
+    vertical-align: top;
     width: $buttonSize;
   }
 

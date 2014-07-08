@@ -9,6 +9,7 @@ function Tool(name, selector, drawTool) {
   this.master = drawTool;
   this.canvas = drawTool.canvas;
   this.active = false;
+  this.singleUse = false;
 
   this.master.tools[selector] = this;
 
@@ -19,6 +20,10 @@ function Tool(name, selector, drawTool) {
 
 Tool.prototype.setActive = function (active) {
   // console.log(this.name + " active? " +  this.active);
+  if (this.singleUse) {
+    console.warn("This is a single use tool. It was not activated.");
+    return;
+  }
   if (this.active === active) { return active; }
   this.active = active;
   if (active === true){
@@ -47,6 +52,10 @@ Tool.prototype.activate = function () {
 // is already active. It can enable some special behavior.
 // Implement this function in a subclass when needed.
 Tool.prototype.activateAgain = function () {};
+
+// This function will be implemented by singleUse tools that do not need
+// to be activated
+Tool.prototype.use = function() {};
 
 Tool.prototype.deactivate = function () {
   // console.warn(this.name + " at deactivation method");

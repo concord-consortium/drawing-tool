@@ -23,6 +23,7 @@ function DrawingTool(selector, options) {
 
   this._initUI(selector);
   this._initFabricJS();
+  $('.btn').button()
 
   // Tools
   this.tools = {};
@@ -33,32 +34,18 @@ function DrawingTool(selector, options) {
   var squareTool = new SquareTool("Square Tool", "square", this);
   var circleTool = new CircleTool("Circle Tool", "circle", this);
   var freeDrawTool = new FreeDrawTool("Free Draw Tool", "free", this);
-  // var deleteTool = new DeleteTool("Delete Tool", "delete", this);
+  var deleteTool = new DeleteTool("Delete Tool", "trash", this);
+  selectionTool.deleteTool = deleteTool;
 
   var self = this,
       canvas = this.canvas;
   $('.btn').click(function () {
-    var id = $(this).find("input").val();
+    var id = $(this).attr('id');
     self._toolButtonClicked(id);
   });
 
   // Apply a fix that changes native FabricJS rescaling bahvior into resizing.
   rescale2resize(this.canvas);
-
-  // delete the selected object(s)
-  // see: https://www.pivotaltracker.com/story/show/74415780
-  $('.dt-canvas-container').keydown(function(e) {
-    console.log(e);
-    if (e.keyCode === 8) {
-      if (canvas.getActiveObject()) {
-        canvas.remove(canvas.getActiveObject());
-      } else if (self.canvas.getActiveGroup()) {
-        canvas.getActiveGroup().forEachObject(function(o){ canvas.remove(o) });
-        canvas.discardActiveGroup().renderAll();
-      }
-      e.preventDefault();
-    }
-  });
 
   this.chooseTool("select");
 }
@@ -137,12 +124,18 @@ DrawingTool.prototype._toolButtonClicked = function (toolSelector) {
     this.currentTool.activateAgain();
     return;
   }
+
   var newTool = this.tools[toolSelector];
   if (newTool === undefined){
     console.warn("Warning! Could not find tool with selector \"" + toolSelector +
       "\"\nExiting tool chooser.");
     return;
+  } else if (newTool.singleUse === true) {
+    newTool.use();
+    $('#'+toolSelector).button('toggle');
+    return;
   }
+
   if (this.currentTool !== undefined) {
     this.currentTool.setActive(false);
   }

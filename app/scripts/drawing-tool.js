@@ -33,10 +33,25 @@ function DrawingTool(selector, options) {
   var circleTool = new CircleTool("Circle Tool", "circle", this);
   var freeDrawTool = new FreeDrawTool("Free Draw Tool", "free", this);
 
-  var self = this;
+  var self = this,
+      canvas = this.canvas;
   $('.btn').click(function () {
     var id = $(this).find("input").val();
     self._toolButtonClicked(id);
+  });
+
+  // delete the selected object(s)
+  // see: https://www.pivotaltracker.com/story/show/74415780
+  $('.dt-canvas-container').keydown(function(e) {
+    if (e.keyCode === 8) {
+      if (canvas.getActiveObject()) {
+        canvas.remove(canvas.getActiveObject());
+      } else if (self.canvas.getActiveGroup()) {
+        canvas.getActiveGroup().forEachObject(function(o){ canvas.remove(o) });
+        canvas.discardActiveGroup().renderAll();
+      }
+      e.preventDefault();
+    }
   });
 
   // Apply a fix that changes native FabricJS rescaling bahvior into resizing.
@@ -86,6 +101,7 @@ DrawingTool.prototype._initUI = function (selector) {
   this.$tools = $('<div class="dt-tools btn-group-vertical" data-toggle="buttons">')
     .appendTo(this.$element);
   var $canvasContainer = $('<div class="dt-canvas-container">')
+    .attr('tabindex', 0)
     .appendTo(this.$element);
   $('<canvas>')
     .attr('id', CANVAS_ID)

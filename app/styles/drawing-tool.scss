@@ -7,6 +7,7 @@ $buttonFontSize: 36px;
     display: inline-block;
     border-radius: 5px;
     border: 1px solid #999;
+    outline: 0;
   }
 
   .dt-tools {
@@ -24,6 +25,6 @@ $buttonFontSize: 36px;
   }
 
   .locked {
-    background-color: grey;
+    background-color: gray;
   }
 }

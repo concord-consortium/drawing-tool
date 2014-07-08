@@ -33,7 +33,7 @@ function DrawingTool(selector, options) {
   var squareTool = new SquareTool("Square Tool", "square", this);
   var circleTool = new CircleTool("Circle Tool", "circle", this);
   var freeDrawTool = new FreeDrawTool("Free Draw Tool", "free", this);
-  var deleteTool = new DeleteTool("Delete Tool", "delete", this);
+  // var deleteTool = new DeleteTool("Delete Tool", "delete", this);
 
   var self = this,
       canvas = this.canvas;
@@ -42,9 +42,13 @@ function DrawingTool(selector, options) {
     self._toolButtonClicked(id);
   });
 
+  // Apply a fix that changes native FabricJS rescaling bahvior into resizing.
+  rescale2resize(this.canvas);
+
   // delete the selected object(s)
   // see: https://www.pivotaltracker.com/story/show/74415780
   $('.dt-canvas-container').keydown(function(e) {
+    console.log(e);
     if (e.keyCode === 8) {
       if (canvas.getActiveObject()) {
         canvas.remove(canvas.getActiveObject());
@@ -55,11 +59,6 @@ function DrawingTool(selector, options) {
       e.preventDefault();
     }
   });
-
-  $('')
-
-  // Apply a fix that changes native FabricJS rescaling bahvior into resizing.
-  rescale2resize(this.canvas);
 
   this.chooseTool("select");
 }
@@ -147,8 +146,8 @@ DrawingTool.prototype._toolButtonClicked = function (toolSelector) {
   if (this.currentTool !== undefined) {
     this.currentTool.setActive(false);
   }
-  newTool.setActive(true);
   this.currentTool = newTool;
+  newTool.setActive(true);
   this.canvas.renderAll(false);
 };
 

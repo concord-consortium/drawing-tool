@@ -1,6 +1,12 @@
 $buttonSize: 72px;
 $buttonFontSize: 36px;
 
+.container {
+  padding: 0;
+  margin: 0;
+  width: 100%;
+}
+
 .dt-container {
   .dt-canvas-container {
     vertical-align: middle;

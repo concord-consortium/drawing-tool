@@ -13,7 +13,8 @@
   ],
   "dependencies": {
     "fabric": "1.4.7",
-    "bootstrap": "3.1.1"
+    "bootstrap": "3.1.1",
+    "jquery": "2.1.1"
   },
   "overrides": {
     "fabric": {

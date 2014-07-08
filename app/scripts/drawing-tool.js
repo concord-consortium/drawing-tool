@@ -98,20 +98,17 @@ DrawingTool.prototype._initFabricJS = function () {
   this.canvas = new fabric.Canvas(CANVAS_ID);
   this.canvas.perPixelTargetFind = true;
 
+  this.setStrokeWidth(10);
+  this.setStrokeColor("rgba(100,200,200,.75)");
+  this.setFill("");
+
   fabric.Object.prototype.transparentCorners = false;
-  fabric.Object.prototype.selectable = false;
 
   // Custom Variables for Shape resizing
   fabric.Object.prototype.minWidth = 15;
   fabric.Object.prototype.minHeight = 15;
 
   fabric.Object.prototype.perPixelTargetFind = true;
-  this.setStrokeWidth(10);
-  this.setStrokeColor("rgba(100,200,200,.75)");
-  this.setFill("");
-
-  fabric.Line.prototype.hasControls = false;
-  fabric.Line.prototype.hasBorders = false;
 };
 
 DrawingTool.prototype._toolButtonClicked = function (toolSelector) {

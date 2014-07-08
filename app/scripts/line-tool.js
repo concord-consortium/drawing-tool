@@ -2,6 +2,8 @@ var inherit   = require('scripts/inherit');
 var ShapeTool = require('scripts/shape-tool');
 var Util      = require('scripts/util');
 
+var CONTROL_POINT_COLOR = '#bcd2ff';
+
 function LineTool(name, selector, drawTool) {
   ShapeTool.call(this, name, selector, drawTool);
 
@@ -12,15 +14,18 @@ function LineTool(name, selector, drawTool) {
 
   this.setLabel('L');
 
+  fabric.Line.prototype.hasControls = false;
+  fabric.Line.prototype.hasBorders = false;
+
   // Setting up a "deselected" event
   // see https://groups.google.com/d/topic/fabricjs/pcFJOroSkI4/discussion
   // this._selectedObj has already been declared in drawing-tool.js
-  fabric.Line.prototype.is = function(obj) {
+  fabric.Line.prototype.is = function (obj) {
     return this === obj || this.ctp[0] === obj || this.ctp[1] === obj;
   };
 
   // the context for the event is the object (which is why the .call is needed)
-  this.canvas.on.call(this.canvas, "object:selected", function(e){
+  this.canvas.on.call(this.canvas, "object:selected", function (e) {
     // TODO: this can be shortened with a flag on the control rectangles
     //       marking their special status
     if (this._selectedObj !== undefined) {
@@ -40,7 +45,7 @@ function LineTool(name, selector, drawTool) {
   });
 
   // the fabric canvas is the context for a selection cleared
-  this.canvas.on("selection:cleared", function(e) {
+  this.canvas.on("selection:cleared", function (e) {
     if (this._selectedObj && this._selectedObj.type === "line"){
       LineTool.objectDeselected.call(this._selectedObj);
     }
@@ -116,11 +121,11 @@ LineTool.prototype._makePoint = function(l, t, s, source, i){
     width: s,
     height: s,
     strokeWidth: 0,
-    fill: "rgba(102,153,255,0.5)",
+    stroke: CONTROL_POINT_COLOR,
+    fill: CONTROL_POINT_COLOR,
     visible: false,
-    selectable: true,
     hasControls: false,
-    hasBorder: false,
+    hasBorders: false,
     line: source,
     id: i
   });

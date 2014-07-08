@@ -1,5 +1,5 @@
 var inherit   = require('scripts/inherit');
-var ShapeTool = require('scripts/shape-tool');
+var ShapeTool = require('scripts/tools/shape-tool');
 var Util      = require('scripts/util');
 
 var CONTROL_POINT_COLOR = '#bcd2ff';

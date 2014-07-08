@@ -1,5 +1,5 @@
 var inherit   = require('scripts/inherit');
-var ShapeTool = require('scripts/shape-tool');
+var ShapeTool = require('scripts/tools/shape-tool');
 var Util      = require('scripts/util');
 
 function EllipseTool(name, selector, drawTool) {

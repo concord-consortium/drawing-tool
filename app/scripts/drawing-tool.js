@@ -1,12 +1,13 @@
 var Tool           = require('scripts/tool');
-var ShapeTool      = require('scripts/shape-tool');
-var SelectionTool  = require('scripts/select-tool');
-var LineTool       = require('scripts/line-tool');
-var RectangleTool  = require('scripts/rect-tool');
-var EllipseTool    = require('scripts/ellipse-tool');
-var SquareTool     = require('scripts/square-tool');
-var CircleTool     = require('scripts/circle-tool');
-var FreeDrawTool   = require('scripts/free-draw');
+var ShapeTool      = require('scripts/tools/shape-tool');
+var SelectionTool  = require('scripts/tools/select-tool');
+var LineTool       = require('scripts/tools/line-tool');
+var RectangleTool  = require('scripts/tools/rect-tool');
+var EllipseTool    = require('scripts/tools/ellipse-tool');
+var SquareTool     = require('scripts/tools/square-tool');
+var CircleTool     = require('scripts/tools/circle-tool');
+var FreeDrawTool   = require('scripts/tools/free-draw');
+var DeleteTool     = require('scripts/tools/delete-tool');
 var Util           = require('scripts/util');
 var rescale2resize = require('scripts/rescale-2-resize');
 
@@ -32,6 +33,7 @@ function DrawingTool(selector, options) {
   var squareTool = new SquareTool("Square Tool", "square", this);
   var circleTool = new CircleTool("Circle Tool", "circle", this);
   var freeDrawTool = new FreeDrawTool("Free Draw Tool", "free", this);
+  var deleteTool = new DeleteTool("Delete Tool", "delete", this);
 
   var self = this,
       canvas = this.canvas;
@@ -53,6 +55,8 @@ function DrawingTool(selector, options) {
       e.preventDefault();
     }
   });
+
+  $('')
 
   // Apply a fix that changes native FabricJS rescaling bahvior into resizing.
   rescale2resize(this.canvas);
@@ -101,7 +105,7 @@ DrawingTool.prototype._initUI = function (selector) {
   this.$tools = $('<div class="dt-tools btn-group-vertical" data-toggle="buttons">')
     .appendTo(this.$element);
   var $canvasContainer = $('<div class="dt-canvas-container">')
-    .attr('tabindex', 0)
+    .attr('tabindex', 0) // makes the canvas focusable for keyboard events
     .appendTo(this.$element);
   $('<canvas>')
     .attr('id', CANVAS_ID)

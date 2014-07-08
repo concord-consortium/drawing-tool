@@ -1,6 +1,6 @@
 {
   "name": "drawing-tool",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "main": [
     "dist/drawing-tool.js",
     "dist/drawing-tool.css"
@@ -13,7 +13,8 @@
   ],
   "dependencies": {
     "fabric": "1.4.7",
-    "bootstrap": "3.1.1"
+    "bootstrap": "3.1.1",
+    "jquery": "2.1.1"
   },
   "overrides": {
     "fabric": {

@@ -23,31 +23,8 @@ function DrawingTool(selector, options) {
   this._initUI(selector);
   this._initFabricJS();
 
-  fabric.Object.prototype.transparentCorners = false;
-  fabric.Object.prototype.selectable = false;
-
-  // Custom Variables for Shape resizing
-  fabric.Object.prototype.minWidth = 15;
-  fabric.Object.prototype.minHeight = 15;
-
-  fabric.Object.prototype.perPixelTargetFind = true;
-  this.setStrokeWidth(10);
-  this.setStrokeColor("rgba(100,200,200,.75)");
-  this.setFill("");
-
-  fabric.Line.prototype.hasControls = false;
-  fabric.Line.prototype.hasBorders = false;
-
-  // //adding sample shapes
-  // var rect3 = new fabric.Rect({
-  //   width: 200, height: 100, left: 500, top: 150, angle: 45,
-  //   fill: 'rgba(0,0,200,0.5)'
-  // });
-  // this.canvas.add(rect3);
-
-  this.tools = {};
-
   // Tools
+  this.tools = {};
   var selectionTool = new SelectionTool("Selection Tool", "select", this);
   var lineTool = new LineTool("Line Tool", "line", this);
   var rectangleTool = new RectangleTool("Rectangle Tool", "rect", this);
@@ -83,14 +60,14 @@ function DrawingTool(selector, options) {
   this.chooseTool("select");
 }
 
-DrawingTool.prototype.chooseTool = function(toolSelector){
+DrawingTool.prototype.chooseTool = function (toolSelector){
   $("#" + toolSelector).click();
 };
 
 // Changing the current tool out of this current tool
 // to the default tool aka 'select' tool
 // TODO: make this better and less bad... add default as drawingTool property
-DrawingTool.prototype.changeOutOfTool = function(oldToolSelector){
+DrawingTool.prototype.changeOutOfTool = function (oldToolSelector){
   this.chooseTool('select');
 };
 
@@ -103,22 +80,22 @@ DrawingTool.prototype.check = function() {
   }
 };
 
-DrawingTool.prototype.setStrokeColor = function(color) {
+DrawingTool.prototype.setStrokeColor = function (color) {
   fabric.Object.prototype.stroke = color;
   this.canvas.freeDrawingBrush.color = color;
 };
 
-DrawingTool.prototype.setStrokeWidth = function(width) {
+DrawingTool.prototype.setStrokeWidth = function (width) {
   fabric.Object.prototype.strokeWidth = width;
   this.canvas.freeDrawingBrush.width = width;
 };
 
-DrawingTool.prototype.setFill = function(color) {
+DrawingTool.prototype.setFill = function (color) {
   fabric.Object.prototype.fill = color;
 };
 
 
-DrawingTool.prototype._initUI = function(selector) {
+DrawingTool.prototype._initUI = function (selector) {
   $(selector).empty();
   this.$element = $('<div class="dt-container">').appendTo(selector);
   this.$tools = $('<div class="dt-tools btn-group-vertical" data-toggle="buttons">')
@@ -153,7 +130,7 @@ DrawingTool.prototype._initFabricJS = function () {
   fabric.Line.prototype.hasBorders = false;
 };
 
-DrawingTool.prototype._toolButtonClicked = function(toolSelector) {
+DrawingTool.prototype._toolButtonClicked = function (toolSelector) {
   if (this.currentTool !== undefined && this.currentTool.selector === toolSelector) {
     console.log(this.currentTool.name + " is already the current tool");
     // Some tools may implement .activateAgain() method and enable some special behavior.

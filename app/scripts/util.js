@@ -16,7 +16,7 @@ module.exports = {
       return {
         x: e.touches[0].clientX + e.layerX,
         y: e.touches[0].clientY + e.layerY
-      }
+      };
     }
   }
 };

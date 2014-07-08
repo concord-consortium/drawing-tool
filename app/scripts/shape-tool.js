@@ -35,12 +35,12 @@ ShapeTool.prototype.activateAgain = function () {
 ShapeTool.prototype.deactivate = function() {
   ShapeTool.super.deactivate.call(this);
   this.unlock();
-}
+};
 
 ShapeTool.prototype.unlock = function() {
   $('#' + this.selector).removeClass('locked');
   this._locked = false;
-}
+};
 
 ShapeTool.prototype.exit = function () {
   if (this.curr) {
@@ -88,13 +88,16 @@ ShapeTool.prototype.mouseUp = function (e) {
 };
 
 ShapeTool.prototype.actionComplete = function (newObject) {
-  if (this._firstAction && !this._locked) {
+  if (this._locked) {
+    return;
+  }
+  if (this._firstAction) {
     this._firstAction = false;
     // After first action we do want all objects to be selectable,
     // so user can immediately move object that he just created.
     this._setAllObjectsSelectable(true);
   }
-  if (newObject && !this._locked) {
+  if (newObject) {
     newObject.selectable = true;
   }
 };

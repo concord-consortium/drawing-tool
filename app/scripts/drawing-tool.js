@@ -72,14 +72,14 @@ function DrawingTool(selector, options) {
   this.canvas._selectedItem = undefined;
 }
 
-DrawingTool.prototype.chooseTool = function(toolSelector){
+DrawingTool.prototype.chooseTool = function (toolSelector){
   $("#" + toolSelector).click();
 };
 
 // Changing the current tool out of this current tool
 // to the default tool aka 'select' tool
 // TODO: make this better and less bad... add default as drawingTool property
-DrawingTool.prototype.changeOutOfTool = function(oldToolSelector){
+DrawingTool.prototype.changeOutOfTool = function (oldToolSelector){
   this.chooseTool('select');
 };
 
@@ -92,22 +92,22 @@ DrawingTool.prototype.check = function() {
   }
 };
 
-DrawingTool.prototype.setStrokeColor = function(color) {
+DrawingTool.prototype.setStrokeColor = function (color) {
   fabric.Object.prototype.stroke = color;
   this.canvas.freeDrawingBrush.color = color;
 };
 
-DrawingTool.prototype.setStrokeWidth = function(width) {
+DrawingTool.prototype.setStrokeWidth = function (width) {
   fabric.Object.prototype.strokeWidth = width;
   this.canvas.freeDrawingBrush.width = width;
 };
 
-DrawingTool.prototype.setFill = function(color) {
+DrawingTool.prototype.setFill = function (color) {
   fabric.Object.prototype.fill = color;
 };
 
 
-DrawingTool.prototype._initUI = function(selector) {
+DrawingTool.prototype._initUI = function (selector) {
   $(selector).empty();
   this.$element = $('<div class="dt-container">').appendTo(selector);
   this.$tools = $('<div class="dt-tools btn-group-vertical" data-toggle="buttons">')
@@ -141,7 +141,7 @@ DrawingTool.prototype._initFabricJS = function () {
   fabric.Line.prototype.hasBorders = false;
 };
 
-DrawingTool.prototype._toolButtonClicked = function(toolSelector) {
+DrawingTool.prototype._toolButtonClicked = function (toolSelector) {
   if (this.currentTool !== undefined && this.currentTool.selector === toolSelector) {
     console.log(this.currentTool.name + " is already the current tool");
     // Some tools may implement .activateAgain() method and enable some special behavior.

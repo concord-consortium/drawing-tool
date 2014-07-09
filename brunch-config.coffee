@@ -23,7 +23,7 @@ exports.config =
 
   overrides:
     dist:
-      optimize: true
+      optimize: false
       sourceMaps: false
       plugins: autoReload: enabled: false
       plugins:

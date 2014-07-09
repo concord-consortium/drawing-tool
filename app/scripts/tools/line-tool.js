@@ -19,7 +19,8 @@ function LineTool(name, selector, drawTool) {
 
   // Setting up a "deselected" event
   // see https://groups.google.com/d/topic/fabricjs/pcFJOroSkI4/discussion
-  // this._selectedObj has already been declared in drawing-tool.js
+  this._selectedObj;
+
   fabric.Line.prototype.is = function (obj) {
     return this === obj || this.ctp[0] === obj || this.ctp[1] === obj;
   };
@@ -108,6 +109,7 @@ LineTool.prototype.mouseUp = function (e) {
 
   this.curr.on('selected', LineTool.objectSelected);
   this.curr.on('moving', LineTool.objectMoved);
+  this.curr.on('removed', LineTool.lineDeleted);
 
   this.canvas.renderAll(false);
   this.actionComplete(this.curr);
@@ -131,6 +133,7 @@ LineTool.prototype._makePoint = function(l, t, s, source, i){
   });
   source.canvas.add(point);
   point.on("moving", LineTool.updateLine);
+  point.on("removed", LineTool.pointDeleted);
   return point;
 };
 
@@ -153,6 +156,7 @@ LineTool.objectDeselected = function(e) {
   this.canvas.renderAll(false);
 };
 
+// update the points when the line is moved
 LineTool.objectMoved = function(e) {
   var dx = this.left - this.prevLeft;
   var dy = this.top - this.prevTop;
@@ -180,7 +184,7 @@ LineTool.updateControlPoints = function(e) {
 };
 
 // update line based on control point movement
-LineTool.updateLine = function(e) {
+LineTool.updateLine = function (e) {
   var line = this.line;
   line.set('x' + (this.id + 1), this.left);
   line.set('y' + (this.id + 1), this.top);
@@ -191,5 +195,20 @@ LineTool.updateLine = function(e) {
   line.prevTop = line.top;
   line.canvas.renderAll(false);
 };
+
+// update line when the control point is deleted (delete the line as well)
+LineTool.pointDeleted = function (e) {
+  var l = this.line;
+  if (l.ctp[0] !== this) { l.canvas.remove(l.ctp[0]); }
+  else { l.canvas.remove(l.ctp[1]); }
+  l.canvas.remove(l);
+}
+
+// delete the control points after the line has been deleted
+LineTool.lineDeleted = function (e) {
+  // since `pointDeleted` will be triggered on when removing the first point
+  // we don't need to worry about removing the other point as well.
+  this.canvas.remove(this.ctp[0]);
+}
 
 module.exports = LineTool;

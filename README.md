@@ -41,3 +41,9 @@ http://bower.io/search/?q=drawing-tool
 * Make sure that `dist` folder is up to date! Run `brunch build -e dist` to double-check that.
 * Commit all changes and then run: `git tag -a v1.2.3 -m "Release version 1.2.3"`.
 * Push changes remembering about `--tags` option: `git push origin master --tags`.
+
+## Dependencies
+
+* jQuery 
+* FabricJS
+* Bootstrap, CSS only (perhaps it will be removed soon when UI is refined)

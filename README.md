@@ -46,4 +46,3 @@ http://bower.io/search/?q=drawing-tool
 
 * jQuery 
 * FabricJS
-* Bootstrap, CSS only (perhaps it will be removed soon when UI is refined)

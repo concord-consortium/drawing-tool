@@ -44,4 +44,40 @@ module.exports = function rescale2resize(canvas) {
       shape.scaleY = 1;
     }
   });
+
+  fabric.Group.prototype.lockUniScaling = true;
+  canvas.on('before:selection:cleared', function(opt) {
+    console.log(this);
+    var group = opt.target;
+    // if the the selection wasn't on a scaled group, then
+    // this function is not needed --> return
+    if (group.type !== 'group' || group.scaleX === 1) { return; }
+
+    var scale = group.scaleX;
+    var items = group.getObjects();
+    var tempStrokeWidth;
+    for (var i = 0; i < items.length; i++) {
+      if (resizers[items[i].type] !== undefined) {
+
+        // little hack to get adapt the current code
+        // (eliminates the end of lines 2 and 3)
+        tempStrokeWidth = items[i].strokeWidth;
+        items[i].strokeWidth = 0;
+
+        // temporarily apply the group scale to the objects so
+        // the resizers work as intended
+        items[i].scaleX = scale;
+        items[i].scaleY = scale;
+
+        resizers[items[i].type](items[i]);
+
+        items[i].strokeWidth = tempStrokeWidth * scale;
+
+        // setting the scale factor so the scaling applied after
+        // this function will have no effect
+        items[i].scaleX = 1 / scale;
+        items[i].scaleY = 1 / scale;
+      }
+    }
+  });
 };

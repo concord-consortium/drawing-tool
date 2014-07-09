@@ -19,11 +19,10 @@ var DEF_OPTIONS = {
 
 // Constructor function.
 function DrawingTool(selector, options) {
-  this.options = $.extend(true, {}, options, DEF_OPTIONS);
+  this.options = $.extend(true, {}, DEF_OPTIONS, options);
 
   this._initUI(selector);
   this._initFabricJS();
-  $('.btn').button()
 
   // Tools
   this.tools = {};
@@ -37,8 +36,8 @@ function DrawingTool(selector, options) {
   var deleteTool = new DeleteTool("Delete Tool", "trash", this);
   selectionTool.deleteTool = deleteTool;
 
-  var self = this,
-      canvas = this.canvas;
+  var self = this;
+  $('.btn').button();
   $('.btn').click(function () {
     var id = $(this).attr('id');
     self._toolButtonClicked(id);

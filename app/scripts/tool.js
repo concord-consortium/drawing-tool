@@ -46,6 +46,7 @@ Tool.prototype.activate = function () {
     var action = this._listeners[i].action;
     this.canvas.on(trigger, action);
   }
+  this.$element.addClass('dt-active');
 };
 
 // This function will be called when user tries to activate a tool that
@@ -64,6 +65,7 @@ Tool.prototype.deactivate = function () {
     var action = this._listeners[i].action;
     this.canvas.off(trigger);
   }
+  this.$element.removeClass('dt-active');
 };
 
 Tool.prototype.addEventListener = function (eventTrigger, eventHandler) {
@@ -82,12 +84,9 @@ Tool.prototype.removeEventListener = function (trigger) {
 };
 
 Tool.prototype.initUI = function () {
-  this.$element = $('<label class="btn btn-primary">')
+  this.$element = $('<div class="dt-btn">')
     .attr('id', this.selector)
     .appendTo(this.master.$tools);
-  $('<input type="radio" name="options">')
-    .attr('value', this.selector)
-    .appendTo(this.$element);
   $('<span>')
     .appendTo(this.$element);
 };

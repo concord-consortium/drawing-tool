@@ -130,8 +130,7 @@ function DrawingTool(selector, options) {
   selectionTool.deleteTool = deleteTool;
 
   var self = this;
-  $('.btn').button();
-  $('.btn').click(function () {
+  $('.dt-btn').click(function () {
     var id = $(this).attr('id');
     self._toolButtonClicked(id);
   });
@@ -180,7 +179,7 @@ DrawingTool.prototype.setFill = function (color) {
 DrawingTool.prototype._initUI = function (selector) {
   $(selector).empty();
   this.$element = $('<div class="dt-container">').appendTo(selector);
-  this.$tools = $('<div class="dt-tools btn-group-vertical" data-toggle="buttons">')
+  this.$tools = $('<div class="dt-tools" data-toggle="buttons">')
     .appendTo(this.$element);
   var $canvasContainer = $('<div class="dt-canvas-container">')
     .attr('tabindex', 0) // makes the canvas focusable for keyboard events
@@ -220,7 +219,6 @@ DrawingTool.prototype._toolButtonClicked = function (toolSelector) {
     return;
   } else if (newTool.singleUse === true) {
     newTool.use();
-    $('#'+toolSelector).button('toggle');
     return;
   }
 
@@ -408,6 +406,7 @@ Tool.prototype.activate = function () {
     var action = this._listeners[i].action;
     this.canvas.on(trigger, action);
   }
+  this.$element.addClass('dt-active');
 };
 
 // This function will be called when user tries to activate a tool that
@@ -426,6 +425,7 @@ Tool.prototype.deactivate = function () {
     var action = this._listeners[i].action;
     this.canvas.off(trigger);
   }
+  this.$element.removeClass('dt-active');
 };
 
 Tool.prototype.addEventListener = function (eventTrigger, eventHandler) {
@@ -444,12 +444,9 @@ Tool.prototype.removeEventListener = function (trigger) {
 };
 
 Tool.prototype.initUI = function () {
-  this.$element = $('<label class="btn btn-primary">')
+  this.$element = $('<div class="dt-btn">')
     .attr('id', this.selector)
     .appendTo(this.master.$tools);
-  $('<input type="radio" name="options">')
-    .attr('value', this.selector)
-    .appendTo(this.$element);
   $('<span>')
     .appendTo(this.$element);
 };
@@ -583,11 +580,9 @@ function DeleteTool(name, selector, drawTool) {
     }
   });
 
-  this.addEventListener("object:selected", function () { self.show(); });
-  this.addEventListener("selection:cleared", function () { self.hide(); });
-
-  this.activate();
-};
+  this.canvas.on("object:selected", function () { self.show(); });
+  this.canvas.on("selection:cleared", function () { self.hide(); });
+}
 
 inherit(DeleteTool, Tool);
 
@@ -603,10 +598,10 @@ DeleteTool.prototype._delete = function () {
     canvas.getActiveGroup().forEachObject(function(o){ canvas.remove(o); });
     canvas.discardActiveGroup().renderAll();
   }
-}
+};
 
 DeleteTool.prototype.initUI = function () {
-  this.$element = $('<label class="btn btn-primary">')
+  this.$element = $('<div class="dt-btn">')
     .attr('id', this.selector)
     .appendTo(this.master.$tools)
     .hide();
@@ -615,8 +610,8 @@ DeleteTool.prototype.initUI = function () {
     .appendTo(this.$element);
 };
 
-DeleteTool.prototype.show = function () { this.$element.show(); }
-DeleteTool.prototype.hide = function () { this.$element.hide(); }
+DeleteTool.prototype.show = function () { this.$element.show(); };
+DeleteTool.prototype.hide = function () { this.$element.hide(); };
 
 module.exports = DeleteTool;
 
@@ -1093,17 +1088,18 @@ function SelectionTool(name, selector, drawTool) {
   Tool.call(this, name, selector, drawTool);
 
   this.setLabel('S');
-  this.deleteTool;
 }
 
 inherit(SelectionTool, Tool);
 
 SelectionTool.prototype.activate = function () {
+  SelectionTool.super.activate.call(this);
   this.setSelectable(true);
   // if (this.deleteTool) { this.deleteTool.show(); }
 };
 
 SelectionTool.prototype.deactivate = function () {
+  SelectionTool.super.deactivate.call(this);
   this.setSelectable(false);
   this.canvas.deactivateAllWithDispatch();
   // if (this.deleteTool) { this.deleteTool.hide(); }
@@ -1155,7 +1151,7 @@ ShapeTool.prototype.activate = function () {
 ShapeTool.prototype.activateAgain = function () {
   this._setFirstActionMode();
   this._locked = true;
-  $('#' + this.selector).addClass('locked');
+  $('#' + this.selector).addClass('dt-locked');
 };
 
 ShapeTool.prototype.deactivate = function() {
@@ -1164,7 +1160,7 @@ ShapeTool.prototype.deactivate = function() {
 };
 
 ShapeTool.prototype.unlock = function() {
-  $('#' + this.selector).removeClass('locked');
+  $('#' + this.selector).removeClass('dt-locked');
   this._locked = false;
 };
 

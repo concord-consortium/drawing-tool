@@ -1,12 +1,11 @@
-$buttonSize: 62px;
+$buttonSize: 60px;
 $buttonFontSize: 36px;
 
 .dt-container {
   .dt-canvas-container {
     vertical-align: top; // not needed but why not
     display: inline-block;
-    border-radius: 5px;
-    border: 1px solid #999;
+    border: 1px solid #255a88;
     outline: 0;
   }
 
@@ -16,16 +15,36 @@ $buttonFontSize: 36px;
     width: $buttonSize;
   }
 
-  .btn {
+  .dt-btn {
+    font-family: Arial;
     font-size: $buttonFontSize;
     line-height: $buttonSize;
     height: $buttonSize;
+    width: $buttonSize;
+    color: #fff;
+    background: #3e8acc;
     vertical-align: middle;
+    text-align:center;
+    border: 1px solid #255a88;
+    border-top-width: 0px;
+    border-right-width: 0px;
     padding: 0;
-  }
+    cursor: pointer;
+    -moz-user-select: none;
+    -webkit-user-select: none;
+    -ms-user-select: none;
 
-  .locked {
-    background-color: gray;
-    border-color: dimgray;
+    &.dt-active, &:hover {
+      background: #2e75b3;
+    }
+
+    &:first-child {
+      border-top-width: 1px;
+    }
+
+    &.dt-locked {
+      background: #60819d;
+      border-color: dimgray;
+    }
   }
 }

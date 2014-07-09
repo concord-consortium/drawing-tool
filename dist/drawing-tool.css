@@ -1,20 +1,35 @@
 .dt-container .dt-canvas-container {
   vertical-align: top;
   display: inline-block;
-  border-radius: 5px;
-  border: 1px solid #999;
+  border: 1px solid #255a88;
   outline: 0; }
 .dt-container .dt-tools {
   display: inline-block;
   vertical-align: top;
-  width: 62px; }
-.dt-container .btn {
+  width: 60px; }
+.dt-container .dt-btn {
+  font-family: Arial;
   font-size: 36px;
-  line-height: 62px;
-  height: 62px;
+  line-height: 60px;
+  height: 60px;
+  width: 60px;
+  color: #fff;
+  background: #3e8acc;
   vertical-align: middle;
-  padding: 0; }
-.dt-container .locked {
-  background-color: gray;
-  border-color: dimgray; }
+  text-align: center;
+  border: 1px solid #255a88;
+  border-top-width: 0px;
+  border-right-width: 0px;
+  padding: 0;
+  cursor: pointer;
+  -moz-user-select: none;
+  -webkit-user-select: none;
+  -ms-user-select: none; }
+  .dt-container .dt-btn.dt-active, .dt-container .dt-btn:hover {
+    background: #2e75b3; }
+  .dt-container .dt-btn:first-child {
+    border-top-width: 1px; }
+  .dt-container .dt-btn.dt-locked {
+    background: #60819d;
+    border-color: dimgray; }
 

@@ -37,8 +37,7 @@ function DrawingTool(selector, options) {
   selectionTool.deleteTool = deleteTool;
 
   var self = this;
-  $('.btn').button();
-  $('.btn').click(function () {
+  $('.dt-btn').click(function () {
     var id = $(this).attr('id');
     self._toolButtonClicked(id);
   });
@@ -87,7 +86,7 @@ DrawingTool.prototype.setFill = function (color) {
 DrawingTool.prototype._initUI = function (selector) {
   $(selector).empty();
   this.$element = $('<div class="dt-container">').appendTo(selector);
-  this.$tools = $('<div class="dt-tools btn-group-vertical" data-toggle="buttons">')
+  this.$tools = $('<div class="dt-tools" data-toggle="buttons">')
     .appendTo(this.$element);
   var $canvasContainer = $('<div class="dt-canvas-container">')
     .attr('tabindex', 0) // makes the canvas focusable for keyboard events
@@ -127,7 +126,6 @@ DrawingTool.prototype._toolButtonClicked = function (toolSelector) {
     return;
   } else if (newTool.singleUse === true) {
     newTool.use();
-    $('#'+toolSelector).button('toggle');
     return;
   }
 

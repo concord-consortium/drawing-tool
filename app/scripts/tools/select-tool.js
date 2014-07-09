@@ -5,17 +5,18 @@ function SelectionTool(name, selector, drawTool) {
   Tool.call(this, name, selector, drawTool);
 
   this.setLabel('S');
-  this.deleteTool;
 }
 
 inherit(SelectionTool, Tool);
 
 SelectionTool.prototype.activate = function () {
+  SelectionTool.super.activate.call(this);
   this.setSelectable(true);
   // if (this.deleteTool) { this.deleteTool.show(); }
 };
 
 SelectionTool.prototype.deactivate = function () {
+  SelectionTool.super.deactivate.call(this);
   this.setSelectable(false);
   this.canvas.deactivateAllWithDispatch();
   // if (this.deleteTool) { this.deleteTool.hide(); }

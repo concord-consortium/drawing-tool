@@ -29,7 +29,7 @@ ShapeTool.prototype.activate = function () {
 ShapeTool.prototype.activateAgain = function () {
   this._setFirstActionMode();
   this._locked = true;
-  $('#' + this.selector).addClass('locked');
+  $('#' + this.selector).addClass('dt-locked');
 };
 
 ShapeTool.prototype.deactivate = function() {
@@ -38,7 +38,7 @@ ShapeTool.prototype.deactivate = function() {
 };
 
 ShapeTool.prototype.unlock = function() {
-  $('#' + this.selector).removeClass('locked');
+  $('#' + this.selector).removeClass('dt-locked');
   this._locked = false;
 };
 

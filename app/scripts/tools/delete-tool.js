@@ -16,11 +16,9 @@ function DeleteTool(name, selector, drawTool) {
     }
   });
 
-  this.addEventListener("object:selected", function () { self.show(); });
-  this.addEventListener("selection:cleared", function () { self.hide(); });
-
-  this.activate();
-};
+  this.canvas.on("object:selected", function () { self.show(); });
+  this.canvas.on("selection:cleared", function () { self.hide(); });
+}
 
 inherit(DeleteTool, Tool);
 
@@ -36,10 +34,10 @@ DeleteTool.prototype._delete = function () {
     canvas.getActiveGroup().forEachObject(function(o){ canvas.remove(o); });
     canvas.discardActiveGroup().renderAll();
   }
-}
+};
 
 DeleteTool.prototype.initUI = function () {
-  this.$element = $('<label class="btn btn-primary">')
+  this.$element = $('<div class="dt-btn">')
     .attr('id', this.selector)
     .appendTo(this.master.$tools)
     .hide();
@@ -48,7 +46,7 @@ DeleteTool.prototype.initUI = function () {
     .appendTo(this.$element);
 };
 
-DeleteTool.prototype.show = function () { this.$element.show(); }
-DeleteTool.prototype.hide = function () { this.$element.hide(); }
+DeleteTool.prototype.show = function () { this.$element.show(); };
+DeleteTool.prototype.hide = function () { this.$element.hide(); };
 
 module.exports = DeleteTool;

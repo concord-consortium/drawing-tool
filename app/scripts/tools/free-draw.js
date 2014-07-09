@@ -37,14 +37,21 @@ FreeDrawTool.prototype.mouseDown = function (opt) {
 
 FreeDrawTool.prototype.mouseUp = function (opt) {
   FreeDrawTool.super.mouseUp.call(this, opt);
-  this.canvas.isDrawingMode = false;
+  if (!this._locked) {
+    this.canvas.isDrawingMode = false;
+  }
   var objects = this.canvas.getObjects();
   var lastObject = objects[objects.length - 1];
   if (!this.active) {
     this.canvas.remove(lastObject);
-    return;
+  } else {
+    this.actionComplete(lastObject);
   }
-  this.actionComplete(lastObject);
 };
+
+FreeDrawTool.prototype.deactivate = function () {
+  FreeDrawTool.super.deactivate.call(this);
+  this.canvas.isDrawingMode = false;
+}
 
 module.exports = FreeDrawTool;

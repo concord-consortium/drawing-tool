@@ -30,7 +30,8 @@ RectangleTool.prototype.mouseDown = function (e) {
     top: y,
     left: x,
     width: 0,
-    height: 0
+    height: 0,
+    selectable: false
   });
   this.canvas.add(this.curr);
 };

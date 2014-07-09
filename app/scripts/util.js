@@ -14,8 +14,8 @@ module.exports = {
       };
     } else if (e instanceof TouchEvent) {
       return {
-        x: e.touches[0].clientX + e.layerX,
-        y: e.touches[0].clientY + e.layerY
+        x: e.touches[0].clientX - $('canvas').offset().left,
+        y: e.touches[0].clientY - $('canvas').offset().top
       };
     }
   }

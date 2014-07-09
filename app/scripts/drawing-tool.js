@@ -110,10 +110,6 @@ DrawingTool.prototype._initFabricJS = function () {
 
   fabric.Object.prototype.transparentCorners = false;
 
-  // Custom Variables for Shape resizing
-  fabric.Object.prototype.minWidth = 15;
-  fabric.Object.prototype.minHeight = 15;
-
   fabric.Object.prototype.perPixelTargetFind = true;
 };
 

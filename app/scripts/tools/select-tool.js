@@ -12,13 +12,13 @@ inherit(SelectionTool, Tool);
 
 SelectionTool.prototype.activate = function () {
   this.setSelectable(true);
-  if (this.deleteTool) { this.deleteTool.show(); }
+  // if (this.deleteTool) { this.deleteTool.show(); }
 };
 
 SelectionTool.prototype.deactivate = function () {
   this.setSelectable(false);
   this.canvas.deactivateAllWithDispatch();
-  if (this.deleteTool) { this.deleteTool.hide(); }
+  // if (this.deleteTool) { this.deleteTool.hide(); }
 };
 
 SelectionTool.prototype.setSelectable = function (selectable) {

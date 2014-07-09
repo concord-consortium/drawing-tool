@@ -15,6 +15,11 @@ function DeleteTool(name, selector, drawTool) {
       self._delete();
     }
   });
+
+  this.addEventListener("object:selected", function () { self.show(); });
+  this.addEventListener("selection:cleared", function () { self.hide(); });
+
+  this.activate();
 };
 
 inherit(DeleteTool, Tool);

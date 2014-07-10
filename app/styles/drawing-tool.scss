@@ -2,6 +2,8 @@ $buttonSize: 60px;
 $buttonFontSize: 36px;
 
 .dt-container {
+  white-space:nowrap;
+
   .dt-canvas-container {
     vertical-align: top; // not needed but why not
     display: inline-block;

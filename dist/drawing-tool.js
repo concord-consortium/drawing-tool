@@ -141,29 +141,10 @@ function DrawingTool(selector, options) {
   this.chooseTool("select");
 }
 
-DrawingTool.prototype.chooseTool = function (toolSelector){
-  $("#" + toolSelector).click();
-};
-
-// Changing the current tool out of this current tool
-// to the default tool aka 'select' tool
-// TODO: make this better and less bad... add default as drawingTool property
-DrawingTool.prototype.changeOutOfTool = function (oldToolSelector){
-  this.chooseTool('select');
-};
-
-
-// debugging method to print out all the items on the canvas
-DrawingTool.prototype.check = function() {
-  var shapes = this.canvas.getObjects();
-  for (var i = 0; i < shapes.length; i++) {
-    console.log(shapes[i]);
-  }
-};
-
 DrawingTool.prototype.setStrokeColor = function (color) {
   fabric.Object.prototype.stroke = color;
   this.canvas.freeDrawingBrush.color = color;
+  fabric.Image.prototype.stroke = null;
 };
 
 DrawingTool.prototype.setStrokeWidth = function (width) {
@@ -175,6 +156,64 @@ DrawingTool.prototype.setFill = function (color) {
   fabric.Object.prototype.fill = color;
 };
 
+DrawingTool.prototype.setBackgroundImage = function (imageSrc, fit) {
+  var self = this;
+  fabric.Image.fromURL(imageSrc, function (img) {
+    img.set({
+      originX: 'center',
+      originY: 'center',
+      top: self.canvas.height / 2,
+      left: self.canvas.width / 2
+    });
+    self.canvas.setBackgroundImage(img, self.canvas.renderAll.bind(self.canvas));
+    self._backgroundImage = img;
+  });
+};
+
+DrawingTool.prototype.resizeBackgroundToCanvas = function () {
+  if (!this._backgroundImage) {
+    return;
+  }
+  this._backgroundImage.set({
+    width: this.canvas.width,
+    height: this.canvas.height
+  });
+  this.canvas.renderAll();
+};
+
+DrawingTool.prototype.resizeCanvasToBackground = function () {
+  if (!this._backgroundImage) {
+    return;
+  }
+  this.canvas.setDimensions({
+    width: this._backgroundImage.width,
+    height: this._backgroundImage.height
+  });
+  this._backgroundImage.set({
+    top: this.canvas.height / 2,
+    left: this.canvas.width / 2
+  });
+  this.canvas.renderAll();
+};
+
+DrawingTool.prototype.chooseTool = function (toolSelector){
+  $("#" + toolSelector).click();
+};
+
+// Changing the current tool out of this current tool
+// to the default tool aka 'select' tool
+// TODO: make this better and less bad... add default as drawingTool property
+DrawingTool.prototype.changeOutOfTool = function (oldToolSelector){
+  this.chooseTool('select');
+};
+
+// debugging method to print out all the items on the canvas
+DrawingTool.prototype.check = function() {
+  var shapes = this.canvas.getObjects();
+  for (var i = 0; i < shapes.length; i++) {
+    console.log(shapes[i]);
+  }
+};
 
 DrawingTool.prototype._initUI = function (selector) {
   $(selector).empty();

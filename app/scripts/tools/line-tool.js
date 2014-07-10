@@ -202,13 +202,13 @@ LineTool.pointDeleted = function (e) {
   if (l.ctp[0] !== this) { l.canvas.remove(l.ctp[0]); }
   else { l.canvas.remove(l.ctp[1]); }
   l.canvas.remove(l);
-}
+};
 
 // delete the control points after the line has been deleted
 LineTool.lineDeleted = function (e) {
   // since `pointDeleted` will be triggered on when removing the first point
   // we don't need to worry about removing the other point as well.
   this.canvas.remove(this.ctp[0]);
-}
+};
 
 module.exports = LineTool;

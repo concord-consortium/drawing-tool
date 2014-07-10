@@ -6,6 +6,7 @@ function FreeDrawTool(name, selector, drawTool) {
 
   var self = this;
   this.addEventListener("mouse:down", function (e) { self.mouseDown(e); });
+  this.addEventListener("mouse:move", function (e) { self.mouseMove(e); });
   this.addEventListener("mouse:up", function (e) { self.mouseUp(e); });
 
   this.setLabel('F');
@@ -36,22 +37,22 @@ FreeDrawTool.prototype.mouseDown = function (opt) {
 };
 
 FreeDrawTool.prototype.mouseUp = function (opt) {
+  var objects = this.canvas.getObjects();
+  var lastObject = objects[objects.length - 1];
+  this.curr = lastObject;
   FreeDrawTool.super.mouseUp.call(this, opt);
   if (!this._locked) {
     this.canvas.isDrawingMode = false;
   }
-  var objects = this.canvas.getObjects();
-  var lastObject = objects[objects.length - 1];
-  if (!this.active) {
-    this.canvas.remove(lastObject);
-  } else {
-    this.actionComplete(lastObject);
-  }
+  if (!this.active) { return; }
+
+  this.actionComplete(lastObject);
+  this.curr = undefined;
 };
 
 FreeDrawTool.prototype.deactivate = function () {
   FreeDrawTool.super.deactivate.call(this);
   this.canvas.isDrawingMode = false;
-}
+};
 
 module.exports = FreeDrawTool;

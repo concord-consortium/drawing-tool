@@ -1,5 +1,6 @@
 .dt-container {
-  white-space: nowrap; }
+  white-space: nowrap;
+  -webkit-tap-highlight-color: rgba(0, 0, 0, 0); }
   .dt-container .dt-canvas-container {
     vertical-align: top;
     display: inline-block;
@@ -27,7 +28,7 @@
     -moz-user-select: none;
     -webkit-user-select: none;
     -ms-user-select: none; }
-    .dt-container .dt-btn.dt-active, .dt-container .dt-btn:hover {
+    .dt-container .dt-btn.dt-active {
       background: #2e75b3; }
     .dt-container .dt-btn:first-child {
       border-top-width: 1px; }

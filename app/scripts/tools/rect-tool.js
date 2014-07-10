@@ -47,8 +47,10 @@ RectangleTool.prototype.mouseMove = function (e) {
   var x1 = this.curr.left;
   var y1 = this.curr.top;
 
-  this.curr.width = x - x1;
-  this.curr.height = y - y1;
+  this.curr.set({
+    width: x - x1,
+    height: y - y1
+  });
 
   this.canvas.renderAll(false);
 };
@@ -68,7 +70,7 @@ RectangleTool.prototype.mouseUp = function (e) {
   }
   this.curr.setCoords();
 
-  this.canvas.renderAll(false);
+  this.canvas.renderAll();
   this.actionComplete(this.curr);
   this.curr = undefined;
 };

@@ -130,9 +130,10 @@ function DrawingTool(selector, options) {
   selectionTool.deleteTool = deleteTool;
 
   var self = this;
-  $('.dt-btn').click(function () {
+  $('.dt-btn').on('click touchstart', function (e) {
     var id = $(this).attr('id');
     self._toolButtonClicked(id);
+    e.preventDefault();
   });
 
   // Apply a fix that changes native FabricJS rescaling behavior into resizing.
@@ -803,6 +804,7 @@ function FreeDrawTool(name, selector, drawTool) {
 
   var self = this;
   this.addEventListener("mouse:down", function (e) { self.mouseDown(e); });
+  this.addEventListener("mouse:move", function (e) { self.mouseMove(e); });
   this.addEventListener("mouse:up", function (e) { self.mouseUp(e); });
 
   this.setLabel('F');
@@ -833,23 +835,23 @@ FreeDrawTool.prototype.mouseDown = function (opt) {
 };
 
 FreeDrawTool.prototype.mouseUp = function (opt) {
+  var objects = this.canvas.getObjects();
+  var lastObject = objects[objects.length - 1];
+  this.curr = lastObject;
   FreeDrawTool.super.mouseUp.call(this, opt);
   if (!this._locked) {
     this.canvas.isDrawingMode = false;
   }
-  var objects = this.canvas.getObjects();
-  var lastObject = objects[objects.length - 1];
-  if (!this.active) {
-    this.canvas.remove(lastObject);
-  } else {
-    this.actionComplete(lastObject);
-  }
+  if (!this.active) { return; }
+
+  this.actionComplete(lastObject);
+  this.curr = undefined;
 };
 
 FreeDrawTool.prototype.deactivate = function () {
   FreeDrawTool.super.deactivate.call(this);
   this.canvas.isDrawingMode = false;
-}
+};
 
 module.exports = FreeDrawTool;
 
@@ -1060,14 +1062,14 @@ LineTool.pointDeleted = function (e) {
   if (l.ctp[0] !== this) { l.canvas.remove(l.ctp[0]); }
   else { l.canvas.remove(l.ctp[1]); }
   l.canvas.remove(l);
-}
+};
 
 // delete the control points after the line has been deleted
 LineTool.lineDeleted = function (e) {
   // since `pointDeleted` will be triggered on when removing the first point
   // we don't need to worry about removing the other point as well.
   this.canvas.remove(this.ctp[0]);
-}
+};
 
 module.exports = LineTool;
 
@@ -1123,8 +1125,10 @@ RectangleTool.prototype.mouseMove = function (e) {
   var x1 = this.curr.left;
   var y1 = this.curr.top;
 
-  this.curr.width = x - x1;
-  this.curr.height = y - y1;
+  this.curr.set({
+    width: x - x1,
+    height: y - y1
+  });
 
   this.canvas.renderAll(false);
 };
@@ -1144,7 +1148,7 @@ RectangleTool.prototype.mouseUp = function (e) {
   }
   this.curr.setCoords();
 
-  this.canvas.renderAll(false);
+  this.canvas.renderAll();
   this.actionComplete(this.curr);
   this.curr = undefined;
 };
@@ -1208,7 +1212,7 @@ function ShapeTool(name, selector, drawTool) {
 
 inherit(ShapeTool, Tool);
 
-ShapeTool.prototype.minimumSize = 10;
+ShapeTool.prototype.minimumSize = 15;
 
 ShapeTool.prototype.activate = function () {
   // console.warn(this.name + " at shape tool activation");
@@ -1257,6 +1261,7 @@ ShapeTool.prototype.exit = function () {
 // set that object as active and change into selection mode
 ShapeTool.prototype.mouseDown = function (e) {
   this.down = true;
+  this.mouseMoved = false;
   if (this._firstAction === false && e.target !== undefined) {
     // Note that in #mouseUp handler we already set all objects to be
     // selectable. Interaction with an object will be handled by Fabric.
@@ -1270,16 +1275,20 @@ ShapeTool.prototype.mouseDown = function (e) {
 };
 
 ShapeTool.prototype.mouseMove = function (e) {
-
+  // Assume that mouse moved only if the motion was actually bigger than a given threshold.
+  if (!this.mouseMoved) {
+    var loc = Util.getLoc(e.e);
+    if (Util.dist(this.__startX - loc.x, this.__startY - loc.y) > this.minimumSize) {
+       this.mouseMoved = true;
+    }
+  }
 };
 
 ShapeTool.prototype.mouseUp = function (e) {
   this.down = false;
-  var loc = Util.getLoc(e.e);
-  if (Util.dist(this.__startX - loc.x, this.__startY - loc.y) < this.minimumSize) {
-    this.exit();
+  if (!this.mouseMoved || !this.isShapeValid(this.curr)) {
+     this.exit();
   }
-
 };
 
 ShapeTool.prototype.actionComplete = function (newObject) {
@@ -1296,6 +1305,12 @@ ShapeTool.prototype.actionComplete = function (newObject) {
     newObject.selectable = true;
   }
 };
+
+ShapeTool.prototype.isShapeValid = function (object) {
+  object.setCoords(); // otherwise bounding box won't be up to date!
+  return Math.max(object.getBoundingRectWidth(), object.getBoundingRectHeight()) > this.minimumSize;
+};
+
 
 // This is a special mode which ensures that first action of the shape tool
 // always draws an object, even if user starts drawing over existing object.

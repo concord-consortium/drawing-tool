@@ -135,11 +135,28 @@ function DrawingTool(selector, options) {
     self._toolButtonClicked(id);
   });
 
-  // Apply a fix that changes native FabricJS rescaling bahvior into resizing.
+  // Apply a fix that changes native FabricJS rescaling behavior into resizing.
   rescale2resize(this.canvas);
 
   this.chooseTool("select");
 }
+
+DrawingTool.prototype.save = function () {
+  return JSON.stringify(this.canvas.toJSON());
+};
+
+DrawingTool.prototype.load = function (jsonString) {
+  // Note that we remove background definition before we call #loadFromJSON
+  // and then add the same background manually. Otherwise, the background
+  // won't be loaded due to CORS error (FabricJS bug?).
+  var state = JSON.parse(jsonString);
+  var backgroundImage = state.backgroundImage;
+  delete state.backgroundImage;
+  this.canvas.loadFromJSON(state);
+  var imageSrc = backgroundImage.src;
+  delete backgroundImage.src;
+  this._setBackgroundImage(imageSrc, backgroundImage);
+};
 
 DrawingTool.prototype.setStrokeColor = function (color) {
   fabric.Object.prototype.stroke = color;
@@ -156,18 +173,8 @@ DrawingTool.prototype.setFill = function (color) {
   fabric.Object.prototype.fill = color;
 };
 
-DrawingTool.prototype.setBackgroundImage = function (imageSrc, fit) {
-  var self = this;
-  fabric.Image.fromURL(imageSrc, function (img) {
-    img.set({
-      originX: 'center',
-      originY: 'center',
-      top: self.canvas.height / 2,
-      left: self.canvas.width / 2
-    });
-    self.canvas.setBackgroundImage(img, self.canvas.renderAll.bind(self.canvas));
-    self._backgroundImage = img;
-  });
+DrawingTool.prototype.setBackgroundImage = function (imageSrc) {
+  this._setBackgroundImage(imageSrc);
 };
 
 DrawingTool.prototype.resizeBackgroundToCanvas = function () {
@@ -213,6 +220,21 @@ DrawingTool.prototype.check = function() {
   for (var i = 0; i < shapes.length; i++) {
     console.log(shapes[i]);
   }
+};
+
+DrawingTool.prototype._setBackgroundImage = function (imageSrc, options) {
+  options = options || {
+    originX: 'center',
+    originY: 'center',
+    top: this.canvas.height / 2,
+    left: this.canvas.width / 2
+  };
+  var self = this;
+  fabric.Image.fromURL(imageSrc, function (img) {
+    img.set(options);
+    self.canvas.setBackgroundImage(img, self.canvas.renderAll.bind(self.canvas));
+    self._backgroundImage = img;
+  });
 };
 
 DrawingTool.prototype._initUI = function (selector) {

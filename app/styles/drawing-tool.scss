@@ -3,6 +3,7 @@ $buttonFontSize: 36px;
 
 .dt-container {
   white-space:nowrap;
+  -webkit-tap-highlight-color:rgba(0,0,0,0);
 
   .dt-canvas-container {
     vertical-align: top; // not needed but why not
@@ -36,7 +37,7 @@ $buttonFontSize: 36px;
     -webkit-user-select: none;
     -ms-user-select: none;
 
-    &.dt-active, &:hover {
+    &.dt-active {
       background: #2e75b3;
     }
 

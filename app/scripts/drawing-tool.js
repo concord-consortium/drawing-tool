@@ -37,9 +37,10 @@ function DrawingTool(selector, options) {
   selectionTool.deleteTool = deleteTool;
 
   var self = this;
-  $('.dt-btn').click(function () {
+  $('.dt-btn').on('click touchstart', function (e) {
     var id = $(this).attr('id');
     self._toolButtonClicked(id);
+    e.preventDefault();
   });
 
   // Apply a fix that changes native FabricJS rescaling behavior into resizing.

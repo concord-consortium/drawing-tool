@@ -15,14 +15,46 @@
       padding: 0;
       margin: 0;
       width: 100%;">
-        <h1 id="hero">HTML5 Drawing Tool</h1>
-        <div id="drawing-tool">
+        <h1>HTML5 Drawing Tool</h1>
+        <div id="drawing-tool"></div>
+        <h2>API examples:</h2>
+        <div>
+          <button id="set-background">Set background</button>
+          <input type="text" id="background-src" value="https://ccshutterbugtest.s3.amazonaws.com/7a72684bb7e.png" size="70"></input>
+          <button id="resize-background">Resize background to canvas</button>
+          <button id="resize-canvas">Resize cavas to background</button>
         </div>
+        <div>
+          <button id="clear">Clear</button>
+          <button id="save">Save</button>
+          <button id="load" disabled>Load</button>
+        <div>
     </div>
   <script src="../vendor.js"></script>
   <script src="../drawing-tool.js"></script>
   <script>
   	var drawingTool = new DrawingTool("#drawing-tool");
+    var state = null;
+    $("#set-background").on("click", function () {
+      drawingTool.setBackgroundImage($("#background-src").val());
+    });
+    $("#resize-background").on("click", function () {
+      drawingTool.resizeBackgroundToCanvas();
+    });
+    $("#resize-canvas").on("click", function () {
+      drawingTool.resizeCanvasToBackground();
+    });
+    $("#clear").on("click", function () {
+      drawingTool.clear(true);
+    });
+    $("#save").on("click", function () {
+      state = drawingTool.save();
+      $("#load").removeAttr("disabled");
+    });
+    $("#load").on("click", function () {
+      if (state === null) return;
+      drawingTool.load(state);
+    });
   </script>
   </body>
 </html>

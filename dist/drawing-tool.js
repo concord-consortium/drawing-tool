@@ -141,6 +141,15 @@ function DrawingTool(selector, options) {
   this.chooseTool("select");
 }
 
+DrawingTool.prototype.clear = function (clearBackground) {
+  this.canvas.clear();
+  if (clearBackground) {
+    this.canvas.setBackgroundImage(null);
+    this._backgroundImage = null;
+  }
+  this.canvas.renderAll();
+};
+
 DrawingTool.prototype.save = function () {
   return JSON.stringify(this.canvas.toJSON());
 };
@@ -153,9 +162,12 @@ DrawingTool.prototype.load = function (jsonString) {
   var backgroundImage = state.backgroundImage;
   delete state.backgroundImage;
   this.canvas.loadFromJSON(state);
-  var imageSrc = backgroundImage.src;
-  delete backgroundImage.src;
-  this._setBackgroundImage(imageSrc, backgroundImage);
+  if (backgroundImage !== undefined) {
+    var imageSrc = backgroundImage.src;
+    delete backgroundImage.src;
+    this._setBackgroundImage(imageSrc, backgroundImage);
+  }
+  this.canvas.renderAll();
 };
 
 DrawingTool.prototype.setStrokeColor = function (color) {
@@ -288,7 +300,7 @@ DrawingTool.prototype._toolButtonClicked = function (toolSelector) {
   }
   this.currentTool = newTool;
   newTool.setActive(true);
-  this.canvas.renderAll(false);
+  this.canvas.renderAll();
 };
 
 module.exports = DrawingTool;

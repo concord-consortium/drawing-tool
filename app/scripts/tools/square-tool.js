@@ -21,7 +21,7 @@ SquareTool.prototype.mouseDown = function (e) {
 
   if (!this.active) { return; }
 
-  var loc = Util.getLoc(e.e);
+  var loc = this.canvas.getPointer(e.e);
   var x = loc.x;
   var y = loc.y;
 
@@ -40,7 +40,7 @@ SquareTool.prototype.mouseMove = function (e) {
   SquareTool.super.mouseMove.call(this, e);
   if (this.down === false) { return; }
 
-  var loc = Util.getLoc(e.e);
+  var loc = this.canvas.getPointer(e.e);
   var width = loc.x - this.curr.left;
   var height = loc.y - this.curr.top;
 
@@ -56,21 +56,26 @@ SquareTool.prototype.mouseMove = function (e) {
 SquareTool.prototype.mouseUp = function (e) {
   console.log("square up");
   SquareTool.super.mouseUp.call(this, e);
-  if (!this.active) { return; }
-
-  if (this.curr.width < 0) {
-    this.curr.left = this.curr.left + this.curr.width;
-    this.curr.width = - this.curr.width;
-  }
-  if (this.curr.height < 0) {
-    this.curr.top = this.curr.top + this.curr.height;
-    this.curr.height = - this.curr.height;
-  }
-  this.curr.setCoords();
-
-  this.canvas.renderAll(false);
+  this._processNewShape(this.curr);
+  this.canvas.renderAll();
   this.actionComplete(this.curr);
   this.curr = undefined;
+};
+
+SquareTool.prototype._processNewShape = function (s) {
+  if (s.width < 0) {
+    s.left = s.left + s.width;
+    s.width = - s.width;
+  }
+  if (s.height < 0) {
+    s.top = s.top + s.height;
+    s.height = - s.height;
+  }
+  if (Math.max(s.width, s.height) < this.minSize) {
+    s.set('width', this.defSize);
+    s.set('height', this.defSize);
+  }
+  s.setCoords();
 };
 
 module.exports = SquareTool;

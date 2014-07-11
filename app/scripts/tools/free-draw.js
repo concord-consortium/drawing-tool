@@ -44,8 +44,6 @@ FreeDrawTool.prototype.mouseUp = function (opt) {
   if (!this._locked) {
     this.canvas.isDrawingMode = false;
   }
-  if (!this.active) { return; }
-
   this.actionComplete(lastObject);
   this.curr = undefined;
 };

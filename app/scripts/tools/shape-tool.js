@@ -13,7 +13,8 @@ function ShapeTool(name, selector, drawTool) {
 
 inherit(ShapeTool, Tool);
 
-ShapeTool.prototype.minimumSize = 15;
+ShapeTool.prototype.minSize = 7;
+ShapeTool.prototype.defSize = 30;
 
 ShapeTool.prototype.activate = function () {
   // console.warn(this.name + " at shape tool activation");
@@ -62,34 +63,19 @@ ShapeTool.prototype.exit = function () {
 // set that object as active and change into selection mode
 ShapeTool.prototype.mouseDown = function (e) {
   this.down = true;
-  this.mouseMoved = false;
   if (this._firstAction === false && e.target !== undefined) {
     // Note that in #mouseUp handler we already set all objects to be
     // selectable. Interaction with an object will be handled by Fabric.
     // We have to exit to avoid drawing a new shape.
     this.exit();
   }
-
-  var loc = Util.getLoc(e.e);
-  this.__startX = loc.x;
-  this.__startY = loc.y;
 };
 
 ShapeTool.prototype.mouseMove = function (e) {
-  // Assume that mouse moved only if the motion was actually bigger than a given threshold.
-  if (!this.mouseMoved) {
-    var loc = Util.getLoc(e.e);
-    if (Util.dist(this.__startX - loc.x, this.__startY - loc.y) > this.minimumSize) {
-       this.mouseMoved = true;
-    }
-  }
 };
 
 ShapeTool.prototype.mouseUp = function (e) {
   this.down = false;
-  if (!this.mouseMoved || !this.isShapeValid(this.curr)) {
-     this.exit();
-  }
 };
 
 ShapeTool.prototype.actionComplete = function (newObject) {
@@ -106,12 +92,6 @@ ShapeTool.prototype.actionComplete = function (newObject) {
     newObject.selectable = true;
   }
 };
-
-ShapeTool.prototype.isShapeValid = function (object) {
-  object.setCoords(); // otherwise bounding box won't be up to date!
-  return Math.max(object.getBoundingRectWidth(), object.getBoundingRectHeight()) > this.minimumSize;
-};
-
 
 // This is a special mode which ensures that first action of the shape tool
 // always draws an object, even if user starts drawing over existing object.

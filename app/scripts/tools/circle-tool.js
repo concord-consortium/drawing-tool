@@ -21,7 +21,7 @@ CircleTool.prototype.mouseDown = function (e) {
 
   if (!this.active) { return; }
 
-  var loc = Util.getLoc(e.e);
+  var loc = this.canvas.getPointer(e.e);
   var x = loc.x;
   var y = loc.y;
 
@@ -39,7 +39,7 @@ CircleTool.prototype.mouseMove = function (e) {
   CircleTool.super.mouseMove.call(this, e);
   if (this.down === false) { return; }
 
-  var loc = Util.getLoc(e.e);
+  var loc = this.canvas.getPointer(e.e);
   var x = loc.x;
   var y = loc.y;
   var x1 = this.curr.left;
@@ -70,29 +70,35 @@ CircleTool.prototype.mouseMove = function (e) {
   this.curr.set('width', radius * 2);
   this.curr.set('height', radius * 2);
 
-  this.canvas.renderAll(false);
+  this.canvas.renderAll();
 };
 
 CircleTool.prototype.mouseUp = function (e) {
   console.log("Circle up");
   CircleTool.super.mouseUp.call(this, e);
-  if (!this.active) { return; }
-
-  if (this.curr.originX === "right") {
-    // "- this.curr.strokeWidth" eliminates the small position shift
-    // that would otherwise occur on mouseup
-    this.curr.left = this.curr.left - this.curr.width - this.curr.strokeWidth;
-    this.curr.originX = "left";
-  }
-  if (this.curr.originY === "bottom") {
-    this.curr.top = this.curr.top - this.curr.height - this.curr.strokeWidth;
-    this.curr.originY = "top";
-  }
-
-  this.curr.setCoords();
-  this.canvas.renderAll(false);
+  this._processNewShape(this.curr);
+  this.canvas.renderAll();
   this.actionComplete(this.curr);
   this.curr = undefined;
+};
+
+CircleTool.prototype._processNewShape = function (s) {
+  if (s.originX === "right") {
+    // "- s.strokeWidth" eliminates the small position shift
+    // that would otherwise occur on mouseup
+    s.left = s.left - s.width - s.strokeWidth;
+    s.originX = "left";
+  }
+  if (s.originY === "bottom") {
+    s.top = s.top - s.height - s.strokeWidth;
+    s.originY = "top";
+  }
+  if (Math.max(s.width, s.height) < this.minSize) {
+    s.set('radius', this.defSize / 2);
+    s.set('width', this.defSize);
+    s.set('height', this.defSize);
+  }
+  s.setCoords();
 };
 
 module.exports = CircleTool;

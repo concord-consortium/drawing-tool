@@ -64,7 +64,7 @@ LineTool.prototype.mouseDown = function (e) {
 
   if ( !this.active ) { return; }
 
-  var loc = Util.getLoc(e.e);
+  var loc = this.canvas.getPointer(e.e);
   var x = loc.x;
   var y = loc.y;
 
@@ -76,7 +76,7 @@ LineTool.prototype.mouseMove = function (e) {
   LineTool.super.mouseMove.call(this, e);
   if (this.down === false) { return; }
 
-  var loc = Util.getLoc(e.e);
+  var loc = this.canvas.getPointer(e.e);
   var x = loc.x;
   var y = loc.y;
 
@@ -88,33 +88,41 @@ LineTool.prototype.mouseMove = function (e) {
 LineTool.prototype.mouseUp = function (e) {
   console.log("line up");
   LineTool.super.mouseUp.call(this, e);
-  if (!this.active) { return; }
+  this._processNewShape(this.curr);
+  this.canvas.renderAll();
+  this.actionComplete(this.curr);
+  this.curr = undefined;
+};
 
-  var x1 = this.curr.get('x1'),
-      y1 = this.curr.get('y1'),
-      x2 = this.curr.get('x2'),
-      y2 = this.curr.get('y2');
-  this.curr.setCoords();
-  console.log("new line constructed");
+LineTool.prototype._processNewShape = function (s) {
+  var x1 = s.get('x1');
+  var y1 = s.get('y1');
+  var x2 = s.get('x2');
+  var y2 = s.get('y2');
 
-  this.curr.set('prevTop', this.curr.get('top'));
-  this.curr.set('prevLeft', this.curr.get('left'));
-  this.curr.set('selectable', false);
+  if (Util.dist(x1 - x2, y1 - y2) < this.minSize) {
+    x2 = x1 + this.defSize;
+    y2 = y1 + this.defSize;
+    s.set('x2', x2);
+    s.set('y2', y2);
+  }
+
+  s.setCoords();
+
+  s.set('prevTop', s.get('top'));
+  s.set('prevLeft', s.get('left'));
+  s.set('selectable', false);
 
   // control point
   var sidelen = fabric.Line.prototype.cornerSize;
-  this.curr.ctp = [
-    this._makePoint(x1, y1, sidelen, this.curr, 0),
-    this._makePoint(x2, y2, sidelen, this.curr, 1)
+  s.ctp = [
+    this._makePoint(x1, y1, sidelen, s, 0),
+    this._makePoint(x2, y2, sidelen, s, 1)
   ];
 
-  this.curr.on('selected', LineTool.objectSelected);
-  this.curr.on('moving', LineTool.objectMoved);
-  this.curr.on('removed', LineTool.lineDeleted);
-
-  this.canvas.renderAll(false);
-  this.actionComplete(this.curr);
-  this.curr = undefined;
+  s.on('selected', LineTool.objectSelected);
+  s.on('moving', LineTool.objectMoved);
+  s.on('removed', LineTool.lineDeleted);
 };
 
 // TODO: fix this to control the line endpoints from the

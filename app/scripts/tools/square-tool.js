@@ -21,7 +21,7 @@ SquareTool.prototype.mouseDown = function (e) {
 
   if (!this.active) { return; }
 
-  var loc = Util.getLoc(e.e);
+  var loc = this.canvas.getPointer(e.e);
   var x = loc.x;
   var y = loc.y;
 
@@ -40,7 +40,7 @@ SquareTool.prototype.mouseMove = function (e) {
   SquareTool.super.mouseMove.call(this, e);
   if (this.down === false) { return; }
 
-  var loc = Util.getLoc(e.e);
+  var loc = this.canvas.getPointer(e.e);
   var width = loc.x - this.curr.left;
   var height = loc.y - this.curr.top;
 

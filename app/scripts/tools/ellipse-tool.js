@@ -22,7 +22,7 @@ EllipseTool.prototype.mouseDown = function (e) {
   // if this tool is no longer active, stop current action!
   if (!this.active) { return; }
 
-  var loc = Util.getLoc(e.e);
+  var loc = this.canvas.getPointer(e.e);
   var x = loc.x;
   var y = loc.y;
 
@@ -39,7 +39,7 @@ EllipseTool.prototype.mouseDown = function (e) {
 EllipseTool.prototype.mouseMove = function (e) {
   EllipseTool.super.mouseMove.call(this, e);
   if (this.down === false) { return; }
-  var loc = Util.getLoc(e.e);
+  var loc = this.canvas.getPointer(e.e);
   var x = loc.x;
   var y = loc.y;
   var x1 = this.curr.left;

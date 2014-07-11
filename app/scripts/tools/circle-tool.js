@@ -21,7 +21,7 @@ CircleTool.prototype.mouseDown = function (e) {
 
   if (!this.active) { return; }
 
-  var loc = Util.getLoc(e.e);
+  var loc = this.canvas.getPointer(e.e);
   var x = loc.x;
   var y = loc.y;
 
@@ -39,7 +39,7 @@ CircleTool.prototype.mouseMove = function (e) {
   CircleTool.super.mouseMove.call(this, e);
   if (this.down === false) { return; }
 
-  var loc = Util.getLoc(e.e);
+  var loc = this.canvas.getPointer(e.e);
   var x = loc.x;
   var y = loc.y;
   var x1 = this.curr.left;

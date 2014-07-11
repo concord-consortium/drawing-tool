@@ -63,7 +63,7 @@ LineTool.prototype.mouseDown = function (e) {
 
   if ( !this.active ) { return; }
 
-  var loc = Util.getLoc(e.e);
+  var loc = this.canvas.getPointer(e.e);
   var x = loc.x;
   var y = loc.y;
 
@@ -75,7 +75,7 @@ LineTool.prototype.mouseMove = function (e) {
   LineTool.super.mouseMove.call(this, e);
   if (this.down === false) { return; }
 
-  var loc = Util.getLoc(e.e);
+  var loc = this.canvas.getPointer(e.e);
   var x = loc.x;
   var y = loc.y;
 

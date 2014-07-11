@@ -21,7 +21,7 @@ RectangleTool.prototype.mouseDown = function (e) {
 
   if (!this.active) { return; }
 
-  var loc = Util.getLoc(e.e);
+  var loc = this.canvas.getPointer(e.e);
 
   var x = loc.x;
   var y = loc.y;
@@ -40,7 +40,7 @@ RectangleTool.prototype.mouseMove = function (e) {
   RectangleTool.super.mouseMove.call(this, e);
   if (this.down === false) { return; }
 
-  var loc = Util.getLoc(e.e);
+  var loc = this.canvas.getPointer(e.e);
 
   var x = loc.x;
   var y = loc.y;

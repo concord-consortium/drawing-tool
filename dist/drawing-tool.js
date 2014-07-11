@@ -557,7 +557,7 @@ CircleTool.prototype.mouseDown = function (e) {
 
   if (!this.active) { return; }
 
-  var loc = Util.getLoc(e.e);
+  var loc = this.canvas.getPointer(e.e);
   var x = loc.x;
   var y = loc.y;
 
@@ -575,7 +575,7 @@ CircleTool.prototype.mouseMove = function (e) {
   CircleTool.super.mouseMove.call(this, e);
   if (this.down === false) { return; }
 
-  var loc = Util.getLoc(e.e);
+  var loc = this.canvas.getPointer(e.e);
   var x = loc.x;
   var y = loc.y;
   var x1 = this.curr.left;
@@ -722,7 +722,7 @@ EllipseTool.prototype.mouseDown = function (e) {
   // if this tool is no longer active, stop current action!
   if (!this.active) { return; }
 
-  var loc = Util.getLoc(e.e);
+  var loc = this.canvas.getPointer(e.e);
   var x = loc.x;
   var y = loc.y;
 
@@ -739,7 +739,7 @@ EllipseTool.prototype.mouseDown = function (e) {
 EllipseTool.prototype.mouseMove = function (e) {
   EllipseTool.super.mouseMove.call(this, e);
   if (this.down === false) { return; }
-  var loc = Util.getLoc(e.e);
+  var loc = this.canvas.getPointer(e.e);
   var x = loc.x;
   var y = loc.y;
   var x1 = this.curr.left;
@@ -933,7 +933,7 @@ LineTool.prototype.mouseDown = function (e) {
 
   if ( !this.active ) { return; }
 
-  var loc = Util.getLoc(e.e);
+  var loc = this.canvas.getPointer(e.e);
   var x = loc.x;
   var y = loc.y;
 
@@ -945,7 +945,7 @@ LineTool.prototype.mouseMove = function (e) {
   LineTool.super.mouseMove.call(this, e);
   if (this.down === false) { return; }
 
-  var loc = Util.getLoc(e.e);
+  var loc = this.canvas.getPointer(e.e);
   var x = loc.x;
   var y = loc.y;
 
@@ -1117,7 +1117,7 @@ RectangleTool.prototype.mouseDown = function (e) {
 
   if (!this.active) { return; }
 
-  var loc = Util.getLoc(e.e);
+  var loc = this.canvas.getPointer(e.e);
 
   var x = loc.x;
   var y = loc.y;
@@ -1136,7 +1136,7 @@ RectangleTool.prototype.mouseMove = function (e) {
   RectangleTool.super.mouseMove.call(this, e);
   if (this.down === false) { return; }
 
-  var loc = Util.getLoc(e.e);
+  var loc = this.canvas.getPointer(e.e);
 
   var x = loc.x;
   var y = loc.y;
@@ -1359,7 +1359,7 @@ SquareTool.prototype.mouseDown = function (e) {
 
   if (!this.active) { return; }
 
-  var loc = Util.getLoc(e.e);
+  var loc = this.canvas.getPointer(e.e);
   var x = loc.x;
   var y = loc.y;
 
@@ -1378,7 +1378,7 @@ SquareTool.prototype.mouseMove = function (e) {
   SquareTool.super.mouseMove.call(this, e);
   if (this.down === false) { return; }
 
-  var loc = Util.getLoc(e.e);
+  var loc = this.canvas.getPointer(e.e);
   var width = loc.x - this.curr.left;
   var height = loc.y - this.curr.top;
 
@@ -1426,21 +1426,6 @@ module.exports = {
     var dx2 = Math.pow(dx, 2);
     var dy2 = Math.pow(dy, 2);
     return Math.sqrt(dx2 + dy2);
-  },
-
-  // e is the mouse/touch event
-  getLoc: function getLoc(e) {
-    if (e instanceof MouseEvent) {
-      return {
-        x: e.layerX,
-        y: e.layerY
-      };
-    } else if (e instanceof TouchEvent) {
-      return {
-        x: e.touches[0].clientX - $('canvas').offset().left,
-        y: e.touches[0].clientY - $('canvas').offset().top
-      };
-    }
   }
 };
 

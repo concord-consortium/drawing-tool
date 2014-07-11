@@ -606,29 +606,35 @@ CircleTool.prototype.mouseMove = function (e) {
   this.curr.set('width', radius * 2);
   this.curr.set('height', radius * 2);
 
-  this.canvas.renderAll(false);
+  this.canvas.renderAll();
 };
 
 CircleTool.prototype.mouseUp = function (e) {
   console.log("Circle up");
   CircleTool.super.mouseUp.call(this, e);
-  if (!this.active) { return; }
-
-  if (this.curr.originX === "right") {
-    // "- this.curr.strokeWidth" eliminates the small position shift
-    // that would otherwise occur on mouseup
-    this.curr.left = this.curr.left - this.curr.width - this.curr.strokeWidth;
-    this.curr.originX = "left";
-  }
-  if (this.curr.originY === "bottom") {
-    this.curr.top = this.curr.top - this.curr.height - this.curr.strokeWidth;
-    this.curr.originY = "top";
-  }
-
-  this.curr.setCoords();
-  this.canvas.renderAll(false);
+  this._processNewShape(this.curr);
+  this.canvas.renderAll();
   this.actionComplete(this.curr);
   this.curr = undefined;
+};
+
+CircleTool.prototype._processNewShape = function (s) {
+  if (s.originX === "right") {
+    // "- s.strokeWidth" eliminates the small position shift
+    // that would otherwise occur on mouseup
+    s.left = s.left - s.width - s.strokeWidth;
+    s.originX = "left";
+  }
+  if (s.originY === "bottom") {
+    s.top = s.top - s.height - s.strokeWidth;
+    s.originY = "top";
+  }
+  if (Math.max(s.width, s.height) < this.minSize) {
+    s.set('radius', this.defSize / 2);
+    s.set('width', this.defSize);
+    s.set('height', this.defSize);
+  }
+  s.setCoords();
 };
 
 module.exports = CircleTool;
@@ -751,7 +757,7 @@ EllipseTool.prototype.mouseMove = function (e) {
 
   if (height < 0) {
     this.curr.originY = "bottom";
-    height = - height;
+    height = -height;
   } else {
     this.curr.originY = "top";
   }
@@ -762,33 +768,39 @@ EllipseTool.prototype.mouseMove = function (e) {
   this.curr.set('width', width);
   this.curr.set('height', height);
 
-  this.canvas.renderAll(false);
+  this.canvas.renderAll();
 };
 
 EllipseTool.prototype.mouseUp = function (e) {
   console.log("ellipse up");
-
   EllipseTool.super.mouseUp.call(this, e);
-  if (!this.active) { return; }
-
-  var width = this.curr.width,
-      height = this.curr.height;
-
-  if (this.curr.originX === "right") {
-    // "- this.curr.strokeWidth" eliminates the small position shift
-    // that would otherwise occur on mouseup
-    this.curr.left = this.curr.left - this.curr.width - this.curr.strokeWidth;
-    this.curr.originX = "left";
-  }
-  if (this.curr.originY === "bottom") {
-    this.curr.top = this.curr.top - this.curr.height - this.curr.strokeWidth;
-    this.curr.originY = "top";
-  }
-
-  this.curr.setCoords();
-  this.canvas.renderAll(false);
+  this._processNewShape(this.curr);
+  this.canvas.renderAll();
   this.actionComplete(this.curr);
   this.curr = undefined;
+};
+
+EllipseTool.prototype._processNewShape = function (s) {
+  var width = s.width;
+  var height = s.height;
+
+  if (s.originX === "right") {
+    // "- s.strokeWidth" eliminates the small position shift
+    // that would otherwise occur on mouseup
+    s.left = s.left - s.width - s.strokeWidth;
+    s.originX = "left";
+  }
+  if (s.originY === "bottom") {
+    s.top = s.top - s.height - s.strokeWidth;
+    s.originY = "top";
+  }
+  if (Math.max(s.width, s.height) < this.minSize) {
+    s.set('rx', this.defSize / 2);
+    s.set('ry', this.defSize / 2);
+    s.set('width', this.defSize);
+    s.set('height', this.defSize);
+  }
+  s.setCoords();
 };
 
 module.exports = EllipseTool;
@@ -842,8 +854,6 @@ FreeDrawTool.prototype.mouseUp = function (opt) {
   if (!this._locked) {
     this.canvas.isDrawingMode = false;
   }
-  if (!this.active) { return; }
-
   this.actionComplete(lastObject);
   this.curr = undefined;
 };
@@ -947,33 +957,41 @@ LineTool.prototype.mouseMove = function (e) {
 LineTool.prototype.mouseUp = function (e) {
   console.log("line up");
   LineTool.super.mouseUp.call(this, e);
-  if (!this.active) { return; }
+  this._processNewShape(this.curr);
+  this.canvas.renderAll();
+  this.actionComplete(this.curr);
+  this.curr = undefined;
+};
 
-  var x1 = this.curr.get('x1'),
-      y1 = this.curr.get('y1'),
-      x2 = this.curr.get('x2'),
-      y2 = this.curr.get('y2');
-  this.curr.setCoords();
-  console.log("new line constructed");
+LineTool.prototype._processNewShape = function (s) {
+  var x1 = s.get('x1');
+  var y1 = s.get('y1');
+  var x2 = s.get('x2');
+  var y2 = s.get('y2');
 
-  this.curr.set('prevTop', this.curr.get('top'));
-  this.curr.set('prevLeft', this.curr.get('left'));
-  this.curr.set('selectable', false);
+  if (Util.dist(x1 - x2, y1 - y2) < this.minSize) {
+    x2 = x1 + this.defSize;
+    y2 = y1 + this.defSize;
+    s.set('x2', x2);
+    s.set('y2', y2);
+  }
+
+  s.setCoords();
+
+  s.set('prevTop', s.get('top'));
+  s.set('prevLeft', s.get('left'));
+  s.set('selectable', false);
 
   // control point
   var sidelen = fabric.Line.prototype.cornerSize;
-  this.curr.ctp = [
-    this._makePoint(x1, y1, sidelen, this.curr, 0),
-    this._makePoint(x2, y2, sidelen, this.curr, 1)
+  s.ctp = [
+    this._makePoint(x1, y1, sidelen, s, 0),
+    this._makePoint(x2, y2, sidelen, s, 1)
   ];
 
-  this.curr.on('selected', LineTool.objectSelected);
-  this.curr.on('moving', LineTool.objectMoved);
-  this.curr.on('removed', LineTool.lineDeleted);
-
-  this.canvas.renderAll(false);
-  this.actionComplete(this.curr);
-  this.curr = undefined;
+  s.on('selected', LineTool.objectSelected);
+  s.on('moving', LineTool.objectMoved);
+  s.on('removed', LineTool.lineDeleted);
 };
 
 LineTool.prototype._makePoint = function(l, t, s, source, i){
@@ -1136,21 +1154,26 @@ RectangleTool.prototype.mouseMove = function (e) {
 RectangleTool.prototype.mouseUp = function (e) {
   console.log("rect up");
   RectangleTool.super.mouseUp.call(this, e);
-  if (!this.active) { return; }
-
-  if (this.curr.width < 0) {
-    this.curr.left = this.curr.left + this.curr.width;
-    this.curr.width = - this.curr.width;
-  }
-  if (this.curr.height < 0) {
-    this.curr.top = this.curr.top + this.curr.height;
-    this.curr.height = - this.curr.height;
-  }
-  this.curr.setCoords();
-
+  this._processNewShape(this.curr);
   this.canvas.renderAll();
   this.actionComplete(this.curr);
   this.curr = undefined;
+};
+
+RectangleTool.prototype._processNewShape = function (s) {
+  if (s.width < 0) {
+    s.left = s.left + s.width;
+    s.width = -s.width;
+  }
+  if (s.height < 0) {
+    s.top = s.top + s.height;
+    s.height = -s.height;
+  }
+  if (Math.max(s.width, s.height) < this.minSize) {
+    s.set('width', this.defSize);
+    s.set('height', this.defSize);
+  }
+  s.setCoords();
 };
 
 module.exports = RectangleTool;
@@ -1212,7 +1235,8 @@ function ShapeTool(name, selector, drawTool) {
 
 inherit(ShapeTool, Tool);
 
-ShapeTool.prototype.minimumSize = 15;
+ShapeTool.prototype.minSize = 7;
+ShapeTool.prototype.defSize = 30;
 
 ShapeTool.prototype.activate = function () {
   // console.warn(this.name + " at shape tool activation");
@@ -1261,34 +1285,19 @@ ShapeTool.prototype.exit = function () {
 // set that object as active and change into selection mode
 ShapeTool.prototype.mouseDown = function (e) {
   this.down = true;
-  this.mouseMoved = false;
   if (this._firstAction === false && e.target !== undefined) {
     // Note that in #mouseUp handler we already set all objects to be
     // selectable. Interaction with an object will be handled by Fabric.
     // We have to exit to avoid drawing a new shape.
     this.exit();
   }
-
-  var loc = Util.getLoc(e.e);
-  this.__startX = loc.x;
-  this.__startY = loc.y;
 };
 
 ShapeTool.prototype.mouseMove = function (e) {
-  // Assume that mouse moved only if the motion was actually bigger than a given threshold.
-  if (!this.mouseMoved) {
-    var loc = Util.getLoc(e.e);
-    if (Util.dist(this.__startX - loc.x, this.__startY - loc.y) > this.minimumSize) {
-       this.mouseMoved = true;
-    }
-  }
 };
 
 ShapeTool.prototype.mouseUp = function (e) {
   this.down = false;
-  if (!this.mouseMoved || !this.isShapeValid(this.curr)) {
-     this.exit();
-  }
 };
 
 ShapeTool.prototype.actionComplete = function (newObject) {
@@ -1305,12 +1314,6 @@ ShapeTool.prototype.actionComplete = function (newObject) {
     newObject.selectable = true;
   }
 };
-
-ShapeTool.prototype.isShapeValid = function (object) {
-  object.setCoords(); // otherwise bounding box won't be up to date!
-  return Math.max(object.getBoundingRectWidth(), object.getBoundingRectHeight()) > this.minimumSize;
-};
-
 
 // This is a special mode which ensures that first action of the shape tool
 // always draws an object, even if user starts drawing over existing object.
@@ -1391,21 +1394,26 @@ SquareTool.prototype.mouseMove = function (e) {
 SquareTool.prototype.mouseUp = function (e) {
   console.log("square up");
   SquareTool.super.mouseUp.call(this, e);
-  if (!this.active) { return; }
-
-  if (this.curr.width < 0) {
-    this.curr.left = this.curr.left + this.curr.width;
-    this.curr.width = - this.curr.width;
-  }
-  if (this.curr.height < 0) {
-    this.curr.top = this.curr.top + this.curr.height;
-    this.curr.height = - this.curr.height;
-  }
-  this.curr.setCoords();
-
-  this.canvas.renderAll(false);
+  this._processNewShape(this.curr);
+  this.canvas.renderAll();
   this.actionComplete(this.curr);
   this.curr = undefined;
+};
+
+SquareTool.prototype._processNewShape = function (s) {
+  if (s.width < 0) {
+    s.left = s.left + s.width;
+    s.width = - s.width;
+  }
+  if (s.height < 0) {
+    s.top = s.top + s.height;
+    s.height = - s.height;
+  }
+  if (Math.max(s.width, s.height) < this.minSize) {
+    s.set('width', this.defSize);
+    s.set('height', this.defSize);
+  }
+  s.setCoords();
 };
 
 module.exports = SquareTool;

@@ -57,7 +57,7 @@ EllipseTool.prototype.mouseMove = function (e) {
 
   if (height < 0) {
     this.curr.originY = "bottom";
-    height = - height;
+    height = -height;
   } else {
     this.curr.originY = "top";
   }
@@ -68,33 +68,39 @@ EllipseTool.prototype.mouseMove = function (e) {
   this.curr.set('width', width);
   this.curr.set('height', height);
 
-  this.canvas.renderAll(false);
+  this.canvas.renderAll();
 };
 
 EllipseTool.prototype.mouseUp = function (e) {
   console.log("ellipse up");
-
   EllipseTool.super.mouseUp.call(this, e);
-  if (!this.active) { return; }
-
-  var width = this.curr.width,
-      height = this.curr.height;
-
-  if (this.curr.originX === "right") {
-    // "- this.curr.strokeWidth" eliminates the small position shift
-    // that would otherwise occur on mouseup
-    this.curr.left = this.curr.left - this.curr.width - this.curr.strokeWidth;
-    this.curr.originX = "left";
-  }
-  if (this.curr.originY === "bottom") {
-    this.curr.top = this.curr.top - this.curr.height - this.curr.strokeWidth;
-    this.curr.originY = "top";
-  }
-
-  this.curr.setCoords();
-  this.canvas.renderAll(false);
+  this._processNewShape(this.curr);
+  this.canvas.renderAll();
   this.actionComplete(this.curr);
   this.curr = undefined;
+};
+
+EllipseTool.prototype._processNewShape = function (s) {
+  var width = s.width;
+  var height = s.height;
+
+  if (s.originX === "right") {
+    // "- s.strokeWidth" eliminates the small position shift
+    // that would otherwise occur on mouseup
+    s.left = s.left - s.width - s.strokeWidth;
+    s.originX = "left";
+  }
+  if (s.originY === "bottom") {
+    s.top = s.top - s.height - s.strokeWidth;
+    s.originY = "top";
+  }
+  if (Math.max(s.width, s.height) < this.minSize) {
+    s.set('rx', this.defSize / 2);
+    s.set('ry', this.defSize / 2);
+    s.set('width', this.defSize);
+    s.set('height', this.defSize);
+  }
+  s.setCoords();
 };
 
 module.exports = EllipseTool;

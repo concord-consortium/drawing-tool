@@ -58,21 +58,26 @@ RectangleTool.prototype.mouseMove = function (e) {
 RectangleTool.prototype.mouseUp = function (e) {
   console.log("rect up");
   RectangleTool.super.mouseUp.call(this, e);
-  if (!this.active) { return; }
-
-  if (this.curr.width < 0) {
-    this.curr.left = this.curr.left + this.curr.width;
-    this.curr.width = - this.curr.width;
-  }
-  if (this.curr.height < 0) {
-    this.curr.top = this.curr.top + this.curr.height;
-    this.curr.height = - this.curr.height;
-  }
-  this.curr.setCoords();
-
+  this._processNewShape(this.curr);
   this.canvas.renderAll();
   this.actionComplete(this.curr);
   this.curr = undefined;
+};
+
+RectangleTool.prototype._processNewShape = function (s) {
+  if (s.width < 0) {
+    s.left = s.left + s.width;
+    s.width = -s.width;
+  }
+  if (s.height < 0) {
+    s.top = s.top + s.height;
+    s.height = -s.height;
+  }
+  if (Math.max(s.width, s.height) < this.minSize) {
+    s.set('width', this.defSize);
+    s.set('height', this.defSize);
+  }
+  s.setCoords();
 };
 
 module.exports = RectangleTool;

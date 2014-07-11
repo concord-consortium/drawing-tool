@@ -272,10 +272,6 @@ DrawingTool.prototype._initFabricJS = function () {
   this.setStrokeWidth(10);
   this.setStrokeColor("rgba(100,200,200,.75)");
   this.setFill("");
-
-  fabric.Object.prototype.transparentCorners = false;
-
-  fabric.Object.prototype.perPixelTargetFind = true;
 };
 
 DrawingTool.prototype._toolButtonClicked = function (toolSelector) {
@@ -831,7 +827,6 @@ function FreeDrawTool(name, selector, drawTool) {
 
   var self = this;
   this.addEventListener("mouse:down", function (e) { self.mouseDown(e); });
-  this.addEventListener("mouse:move", function (e) { self.mouseMove(e); });
   this.addEventListener("mouse:up", function (e) { self.mouseUp(e); });
 
   this.setLabel('F');
@@ -1246,13 +1241,17 @@ var inherit = require('scripts/inherit');
 var Tool    = require('scripts/tool');
 var Util    = require('scripts/util');
 
+var BASIC_SHAPE_PROPERTIES = {
+  cornerSize: fabric.isTouchSupported ? 22 : 12,
+  transparentCorners: false
+};
+
 function ShapeTool(name, selector, drawTool) {
   Tool.call(this, name, selector, drawTool);
 
   this.down = false; // mouse down
   this._firstAction = false; // special behavior on first action
   this._locked = false; // locked into first action mode
-  this.curr = undefined; // current shape being manipulated
 }
 
 inherit(ShapeTool, Tool);
@@ -1277,24 +1276,20 @@ ShapeTool.prototype.activateAgain = function () {
   $('#' + this.selector).addClass('dt-locked');
 };
 
-ShapeTool.prototype.deactivate = function() {
+ShapeTool.prototype.deactivate = function () {
   ShapeTool.super.deactivate.call(this);
   this.unlock();
 };
 
-ShapeTool.prototype.unlock = function() {
+ShapeTool.prototype.unlock = function () {
   $('#' + this.selector).removeClass('dt-locked');
   this._locked = false;
 };
 
 ShapeTool.prototype.exit = function () {
-  if (this.curr) {
-    this.canvas.remove(this.curr);
+  if (this._locked) {
+    return;
   }
-
-  if (this._locked) { return; }
-
-  console.info("changing out of " + this.name);
   this.down = false;
   this.master.changeOutOfTool(this.selector);
   // Changes cursor back to default
@@ -1323,6 +1318,8 @@ ShapeTool.prototype.mouseUp = function (e) {
 };
 
 ShapeTool.prototype.actionComplete = function (newObject) {
+  newObject.set(BASIC_SHAPE_PROPERTIES);
+
   if (this._locked) {
     return;
   }

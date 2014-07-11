@@ -179,10 +179,6 @@ DrawingTool.prototype._initFabricJS = function () {
   this.setStrokeWidth(10);
   this.setStrokeColor("rgba(100,200,200,.75)");
   this.setFill("");
-
-  fabric.Object.prototype.transparentCorners = false;
-
-  fabric.Object.prototype.perPixelTargetFind = true;
 };
 
 DrawingTool.prototype._toolButtonClicked = function (toolSelector) {

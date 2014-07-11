@@ -2,13 +2,17 @@ var inherit = require('scripts/inherit');
 var Tool    = require('scripts/tool');
 var Util    = require('scripts/util');
 
+var BASIC_SHAPE_PROPERTIES = {
+  cornerSize: fabric.isTouchSupported ? 22 : 12,
+  transparentCorners: false
+};
+
 function ShapeTool(name, selector, drawTool) {
   Tool.call(this, name, selector, drawTool);
 
   this.down = false; // mouse down
   this._firstAction = false; // special behavior on first action
   this._locked = false; // locked into first action mode
-  this.curr = undefined; // current shape being manipulated
 }
 
 inherit(ShapeTool, Tool);
@@ -33,24 +37,20 @@ ShapeTool.prototype.activateAgain = function () {
   $('#' + this.selector).addClass('dt-locked');
 };
 
-ShapeTool.prototype.deactivate = function() {
+ShapeTool.prototype.deactivate = function () {
   ShapeTool.super.deactivate.call(this);
   this.unlock();
 };
 
-ShapeTool.prototype.unlock = function() {
+ShapeTool.prototype.unlock = function () {
   $('#' + this.selector).removeClass('dt-locked');
   this._locked = false;
 };
 
 ShapeTool.prototype.exit = function () {
-  if (this.curr) {
-    this.canvas.remove(this.curr);
+  if (this._locked) {
+    return;
   }
-
-  if (this._locked) { return; }
-
-  console.info("changing out of " + this.name);
   this.down = false;
   this.master.changeOutOfTool(this.selector);
   // Changes cursor back to default
@@ -79,6 +79,8 @@ ShapeTool.prototype.mouseUp = function (e) {
 };
 
 ShapeTool.prototype.actionComplete = function (newObject) {
+  newObject.set(BASIC_SHAPE_PROPERTIES);
+
   if (this._locked) {
     return;
   }

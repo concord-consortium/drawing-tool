@@ -345,6 +345,8 @@ module.exports = function inherit(Child, Parent) {
 });
 
 require.register("scripts/rescale-2-resize", function(exports, require, module) {
+var LineTool = require('scripts/tools/line-tool');
+
 function basicWidthHeightTransform(s) {
   s.width = s.width * s.scaleX + s.strokeWidth * (s.scaleX - 1);
   s.height = s.height * s.scaleY + s.strokeWidth * (s.scaleY - 1);
@@ -374,6 +376,19 @@ var resizers = {
   },
   square: function (s) {
     uniformWidthHeightTransform(s);
+  }
+  ,
+  line: function (s) {
+    basicWidthHeightTransform(s);
+
+    s.prevTop = s.top;
+    s.prevLeft = s.left;
+
+    if (s.x1 > s.x2) { s.x1 = s.left + s.width; s.x2 = s.left; }
+    else { s.x2 = s.left + s.width; s.x1 = s.left; }
+
+    if (s.y1 > s.y2) { s.y1 = s.top + s.height; s.y2 = s.top; }
+    else { s.y2 = s.top + s.height; s.y1 = s.top; }
   }
 };
 
@@ -886,6 +901,7 @@ function LineTool(name, selector, drawTool) {
   };
 
   // the context for the event is the object (which is why the .call is needed)
+  // TODO: make this code more read-able
   this.canvas.on.call(this.canvas, "object:selected", function (e) {
     // TODO: this can be shortened with a flag on the control rectangles
     //       marking their special status
@@ -999,8 +1015,10 @@ LineTool.prototype._makePoint = function(l, t, s, source, i){
 
 // When the line is selected, show control points
 LineTool.objectSelected = function(e) {
-  var self = this;
-  LineTool.updateControlPoints.call(self, e);
+  if (this.prevLeft !== this.left && this.prevTop !== this.top) {
+    LineTool.objectMoved.call(this, e);
+  }
+  LineTool.updateControlPoints.call(this, e);
 
   this.ctp[0].visible = true;
   this.ctp[1].visible = true;
@@ -1033,6 +1051,7 @@ LineTool.objectMoved = function(e) {
   LineTool.updateControlPoints.call(self, e);
 };
 
+// update the control points with coordinates from the line
 LineTool.updateControlPoints = function(e) {
   // `this` is the object/line
   this.ctp[0].set('top', this.y1);

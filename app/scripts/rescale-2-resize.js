@@ -1,3 +1,5 @@
+var LineTool = require('scripts/tools/line-tool');
+
 function basicWidthHeightTransform(s) {
   s.width = s.width * s.scaleX + s.strokeWidth * (s.scaleX - 1);
   s.height = s.height * s.scaleY + s.strokeWidth * (s.scaleY - 1);
@@ -27,6 +29,19 @@ var resizers = {
   },
   square: function (s) {
     uniformWidthHeightTransform(s);
+  }
+  ,
+  line: function (s) {
+    basicWidthHeightTransform(s);
+
+    s.prevTop = s.top;
+    s.prevLeft = s.left;
+
+    if (s.x1 > s.x2) { s.x1 = s.left + s.width; s.x2 = s.left; }
+    else { s.x2 = s.left + s.width; s.x1 = s.left; }
+
+    if (s.y1 > s.y2) { s.y1 = s.top + s.height; s.y2 = s.top; }
+    else { s.y2 = s.top + s.height; s.y1 = s.top; }
   }
 };
 

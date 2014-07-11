@@ -1201,8 +1201,17 @@ require.register("scripts/tools/select-tool", function(exports, require, module)
 var inherit = require('scripts/inherit');
 var Tool    = require('scripts/tool');
 
+var BASIC_SELECTION_PROPERTIES = {
+  cornerSize: fabric.isTouchSupported ? 22 : 12,
+  transparentCorners: false
+};
+
 function SelectionTool(name, selector, drawTool) {
   Tool.call(this, name, selector, drawTool);
+
+  this.canvas.on("object:selected", function (opt) {
+    opt.target.set(BASIC_SELECTION_PROPERTIES);
+  });
 
   this.setLabel('S');
 }
@@ -1240,11 +1249,6 @@ require.register("scripts/tools/shape-tool", function(exports, require, module) 
 var inherit = require('scripts/inherit');
 var Tool    = require('scripts/tool');
 var Util    = require('scripts/util');
-
-var BASIC_SHAPE_PROPERTIES = {
-  cornerSize: fabric.isTouchSupported ? 22 : 12,
-  transparentCorners: false
-};
 
 function ShapeTool(name, selector, drawTool) {
   Tool.call(this, name, selector, drawTool);
@@ -1318,8 +1322,6 @@ ShapeTool.prototype.mouseUp = function (e) {
 };
 
 ShapeTool.prototype.actionComplete = function (newObject) {
-  newObject.set(BASIC_SHAPE_PROPERTIES);
-
   if (this._locked) {
     return;
   }

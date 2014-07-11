@@ -1,8 +1,17 @@
 var inherit = require('scripts/inherit');
 var Tool    = require('scripts/tool');
 
+var BASIC_SELECTION_PROPERTIES = {
+  cornerSize: fabric.isTouchSupported ? 22 : 12,
+  transparentCorners: false
+};
+
 function SelectionTool(name, selector, drawTool) {
   Tool.call(this, name, selector, drawTool);
+
+  this.canvas.on("object:selected", function (opt) {
+    opt.target.set(BASIC_SELECTION_PROPERTIES);
+  });
 
   this.setLabel('S');
 }

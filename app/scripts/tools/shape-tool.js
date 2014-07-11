@@ -88,6 +88,15 @@ ShapeTool.prototype.actionComplete = function (newObject) {
   }
 };
 
+ShapeTool.prototype.setCentralOrigin = function (object) {
+  object.set({
+    left: object.left + (object.width + object.strokeWidth) / 2,
+    top: object.top + (object.height + object.strokeWidth) / 2,
+    originX: 'center',
+    originY: 'center'
+  });
+};
+
 // This is a special mode which ensures that first action of the shape tool
 // always draws an object, even if user starts drawing over existing object.
 // Later that will cause interaction with the existing object unless user reselects

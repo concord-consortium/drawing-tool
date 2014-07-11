@@ -73,6 +73,7 @@ RectangleTool.prototype._processNewShape = function (s) {
     s.top = s.top + s.height;
     s.height = -s.height;
   }
+  this.setCentralOrigin(s);
   if (Math.max(s.width, s.height) < this.minSize) {
     s.set('width', this.defSize);
     s.set('height', this.defSize);

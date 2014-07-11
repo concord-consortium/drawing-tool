@@ -1,15 +1,16 @@
-var Tool           = require('scripts/tool');
-var ShapeTool      = require('scripts/tools/shape-tool');
-var SelectionTool  = require('scripts/tools/select-tool');
-var LineTool       = require('scripts/tools/line-tool');
-var RectangleTool  = require('scripts/tools/rect-tool');
-var EllipseTool    = require('scripts/tools/ellipse-tool');
-var SquareTool     = require('scripts/tools/square-tool');
-var CircleTool     = require('scripts/tools/circle-tool');
-var FreeDrawTool   = require('scripts/tools/free-draw');
-var DeleteTool     = require('scripts/tools/delete-tool');
-var Util           = require('scripts/util');
-var rescale2resize = require('scripts/rescale-2-resize');
+var Tool              = require('scripts/tool');
+var ShapeTool         = require('scripts/tools/shape-tool');
+var SelectionTool     = require('scripts/tools/select-tool');
+var LineTool          = require('scripts/tools/line-tool');
+var RectangleTool     = require('scripts/tools/rect-tool');
+var EllipseTool       = require('scripts/tools/ellipse-tool');
+var SquareTool        = require('scripts/tools/square-tool');
+var CircleTool        = require('scripts/tools/circle-tool');
+var FreeDrawTool      = require('scripts/tools/free-draw');
+var DeleteTool        = require('scripts/tools/delete-tool');
+var Util              = require('scripts/util');
+var rescale2resize    = require('scripts/rescale-2-resize');
+var multitouchSupport = require('scripts/multi-touch-support');
 
 var CANVAS_ID = 'dt-drawing-area';
 var DEF_OPTIONS = {
@@ -45,6 +46,7 @@ function DrawingTool(selector, options) {
 
   // Apply a fix that changes native FabricJS rescaling behavior into resizing.
   rescale2resize(this.canvas);
+  multitouchSupport(this.canvas);
 
   this.chooseTool("select");
 }
@@ -174,7 +176,8 @@ DrawingTool.prototype._initUI = function (selector) {
 
 DrawingTool.prototype._initFabricJS = function () {
   this.canvas = new fabric.Canvas(CANVAS_ID);
-  this.canvas.perPixelTargetFind = true;
+  // Target find would be more tolerant on touch devices.
+  this.canvas.perPixelTargetFind = !fabric.isTouchSupported;
 
   this.setStrokeWidth(10);
   this.setStrokeColor("rgba(100,200,200,.75)");

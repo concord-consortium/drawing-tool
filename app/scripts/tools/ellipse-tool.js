@@ -100,6 +100,7 @@ EllipseTool.prototype._processNewShape = function (s) {
     s.set('width', this.defSize);
     s.set('height', this.defSize);
   }
+  this.setCentralOrigin(s);
   s.setCoords();
 };
 

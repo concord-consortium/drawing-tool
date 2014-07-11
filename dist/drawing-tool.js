@@ -103,6 +103,7 @@ var FreeDrawTool   = require('scripts/tools/free-draw');
 var DeleteTool     = require('scripts/tools/delete-tool');
 var Util           = require('scripts/util');
 var rescale2resize = require('scripts/rescale-2-resize');
+var multitouchSupport = require('scripts/multi-touch-support');
 
 var CANVAS_ID = 'dt-drawing-area';
 var DEF_OPTIONS = {
@@ -138,6 +139,7 @@ function DrawingTool(selector, options) {
 
   // Apply a fix that changes native FabricJS rescaling behavior into resizing.
   rescale2resize(this.canvas);
+  multitouchSupport(this.canvas);
 
   this.chooseTool("select");
 }
@@ -267,7 +269,8 @@ DrawingTool.prototype._initUI = function (selector) {
 
 DrawingTool.prototype._initFabricJS = function () {
   this.canvas = new fabric.Canvas(CANVAS_ID);
-  this.canvas.perPixelTargetFind = true;
+  // Target find would be more tolerant on touch devices.
+  this.canvas.perPixelTargetFind = !fabric.isTouchSupported;
 
   this.setStrokeWidth(10);
   this.setStrokeColor("rgba(100,200,200,.75)");
@@ -336,6 +339,68 @@ module.exports = function inherit(Child, Parent) {
   Child.prototype = Object.create(Parent.prototype);
   Child.prototype.constructor = Child;
   Child.super = Parent.prototype;
+};
+
+});
+
+require.register("scripts/multi-touch-support", function(exports, require, module) {
+module.exports = function addMultiTouchSupport(canvas) {
+  if (typeof Hammer === 'undefined' || !fabric.isTouchSupported) {
+    return;
+  }
+  var mc = new Hammer.Manager(canvas.upperCanvasEl);
+  mc.add(new Hammer.Pinch());
+
+  var initialAngle;
+  var initialScale;
+
+  mc.on('pinchstart', function (e) {
+    var target = getTarget();
+    if (!target || target.type === 'line') {
+      return;
+    }
+    setLocked(target, true);
+    initialAngle = target.get('angle');
+    initialScale = target.get('scaleX');
+  });
+
+  mc.on('pinchmove', function (e) {
+    var target = getTarget();
+    if (!target || target.type === 'line') {
+      return;
+    }
+    target.set({
+      scaleX: e.scale * initialScale,
+      scaleY: e.scale * initialScale,
+      angle: initialAngle + e.rotation
+    });
+    canvas.fire('object:scaling', {target: target, e: e.srcEvent});
+    if (target.get('scaleX') !== e.scale * initialScale) {
+      // rescale-2-resize mod used.
+      initialScale = 1 / e.scale;
+    }
+  });
+
+  mc.on('pinchend', function (e) {
+    var target = getTarget();
+    if (!target || target.type === 'line') {
+      return;
+    }
+    setLocked(target, false);
+  });
+
+  function getTarget() {
+    return canvas.getActiveObject() || canvas.getActiveGroup();
+  }
+
+  function setLocked(target, v) {
+    target.set({
+      lockMovementX: v,
+      lockMovementY: v,
+      lockScalingX: v,
+      lockScalingY: v
+    });
+  }
 };
 
 });
@@ -645,6 +710,7 @@ CircleTool.prototype._processNewShape = function (s) {
     s.set('width', this.defSize);
     s.set('height', this.defSize);
   }
+  this.setCentralOrigin(s);
   s.setCoords();
 };
 
@@ -811,6 +877,7 @@ EllipseTool.prototype._processNewShape = function (s) {
     s.set('width', this.defSize);
     s.set('height', this.defSize);
   }
+  this.setCentralOrigin(s);
   s.setCoords();
 };
 
@@ -1186,6 +1253,7 @@ RectangleTool.prototype._processNewShape = function (s) {
     s.top = s.top + s.height;
     s.height = -s.height;
   }
+  this.setCentralOrigin(s);
   if (Math.max(s.width, s.height) < this.minSize) {
     s.set('width', this.defSize);
     s.set('height', this.defSize);
@@ -1336,6 +1404,15 @@ ShapeTool.prototype.actionComplete = function (newObject) {
   }
 };
 
+ShapeTool.prototype.setCentralOrigin = function (object) {
+  object.set({
+    left: object.left + (object.width + object.strokeWidth) / 2,
+    top: object.top + (object.height + object.strokeWidth) / 2,
+    originX: 'center',
+    originY: 'center'
+  });
+};
+
 // This is a special mode which ensures that first action of the shape tool
 // always draws an object, even if user starts drawing over existing object.
 // Later that will cause interaction with the existing object unless user reselects
@@ -1434,6 +1511,7 @@ SquareTool.prototype._processNewShape = function (s) {
     s.set('width', this.defSize);
     s.set('height', this.defSize);
   }
+  this.setCentralOrigin(s);
   s.setCoords();
 };
 

@@ -13,6 +13,7 @@
   ],
   "dependencies": {
     "fabric": "1.4.7",
+    "hammerjs": "2.0.0",
     "jquery": "2.1.1"
   },
   "overrides": {

@@ -992,6 +992,9 @@ LineTool.prototype.mouseUp = function (e) {
   this.curr = undefined;
 };
 
+// TODO: fix this to control the line endpoints from the
+//       CENTER of the control point (not the edge)
+//       This is visible on larger width lines.
 LineTool.prototype._makePoint = function(l, t, s, source, i){
   var point = new fabric.Rect({
     left: l,

@@ -115,8 +115,8 @@ var DEF_OPTIONS = {
 // Constructor function.
 function DrawingTool(selector, options) {
   this.options = $.extend(true, {}, DEF_OPTIONS, options);
-  
-  this._initUI(selector);
+
+  this.ui = new UI(this, selector, CANVAS_ID, this.options);
   this._initFabricJS();
 
   // Tools
@@ -130,12 +130,12 @@ function DrawingTool(selector, options) {
   var freeDrawTool = new FreeDrawTool("Free Draw Tool", "free", this);
   var deleteTool = new DeleteTool("Delete Tool", "trash", this);
 
+  this.ui.initTools();
+
+
   // Apply a fix that changes native FabricJS rescaling behavior into resizing.
   rescale2resize(this.canvas);
   multitouchSupport(this.canvas);
-
-  this.ui = new UI(this);
-  // selectionTool.addStateListener(ui.updateUI);
 
   this.chooseTool("select");
 }
@@ -241,20 +241,7 @@ DrawingTool.prototype._setBackgroundImage = function (imageSrc, options) {
   });
 };
 
-DrawingTool.prototype._initUI = function (selector) {
-  $(selector).empty();
-  this.$element = $('<div class="dt-container">').appendTo(selector);
-  this.$tools = $('<div class="dt-tools" data-toggle="buttons">')
-    .appendTo(this.$element);
-  var $canvasContainer = $('<div class="dt-canvas-container">')
-    .attr('tabindex', 0) // makes the canvas focusable for keyboard events
-    .appendTo(this.$element);
-  $('<canvas>')
-    .attr('id', CANVAS_ID)
-    .attr('width', this.options.width + 'px')
-    .attr('height', this.options.height + 'px')
-    .appendTo($canvasContainer);
-};
+
 
 DrawingTool.prototype._initFabricJS = function () {
   this.canvas = new fabric.Canvas(CANVAS_ID);
@@ -1499,18 +1486,25 @@ module.exports = SquareTool;
 });
 
 require.register("scripts/ui", function(exports, require, module) {
-function UI (master) {
+function UI (master, selector, CANVAS_ID, options) {
   this.master = master;
-  this.tools = master.tools;
+  this.CANVAS_ID = CANVAS_ID;
+  this.options = options;
 
-  this.initUI();
+  this._initUI(selector);
+}
+
+UI.prototype.initTools = function() {
+  this.tools = this.master.tools;
+  this._initToolUI();
   this._initButtonUpdates();
+
+  var test = new BtnGroup("d");
 
   var trash = this.buttons.trash;
   trash.hide();
   this.master.canvas.on("object:selected", function () { trash.show(); });
   this.master.canvas.on("selection:cleared", function () { trash.hide(); });
-
 }
 
 UI.prototype._initButtonUpdates = function () {
@@ -1537,7 +1531,22 @@ UI.prototype.updateUI = function (e) {
   else { $element.removeClass('dt-locked'); }
 }
 
-UI.prototype.initUI = function () {
+UI.prototype._initUI = function (selector) {
+  $(selector).empty();
+  this.$element = $('<div class="dt-container">').appendTo(selector);
+  this.$tools = $('<div class="dt-tools" data-toggle="buttons">')
+    .appendTo(this.$element);
+  var $canvasContainer = $('<div class="dt-canvas-container">')
+    .attr('tabindex', 0) // makes the canvas focusable for keyboard events
+    .appendTo(this.$element);
+  $('<canvas>')
+    .attr('id', this.CANVAS_ID)
+    .attr('width', this.options.width + 'px')
+    .attr('height', this.options.height + 'px')
+    .appendTo($canvasContainer);
+};
+
+UI.prototype._initToolUI = function () {
   this.buttons = {};
   for (var tool in this.tools) {
     this.buttons[tool] = this._initBtn(tool);
@@ -1547,10 +1556,16 @@ UI.prototype.initUI = function () {
 UI.prototype._initBtn = function (toolId) {
   var $element = $('<div class="dt-btn">')
     .attr('id', toolId)
-    .appendTo(this.master.$tools);
+    .appendTo(this.$tools);
   $('<span>')
-    .appendTo(this.$element);
+    .appendTo($element);
   return $element;
+}
+
+function BtnGroup () {
+  if (arguments.length <= 0) { return; }
+  this._buttons = arguments;
+  console.log(this.__buttons);
 }
 
 module.exports = UI;

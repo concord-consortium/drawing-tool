@@ -91,18 +91,18 @@
   globals.require.brunch = true;
 })();
 require.register("scripts/drawing-tool", function(exports, require, module) {
-var Tool           = require('scripts/tool');
-var ShapeTool      = require('scripts/tools/shape-tool');
-var SelectionTool  = require('scripts/tools/select-tool');
-var LineTool       = require('scripts/tools/line-tool');
-var RectangleTool  = require('scripts/tools/rect-tool');
-var EllipseTool    = require('scripts/tools/ellipse-tool');
-var SquareTool     = require('scripts/tools/square-tool');
-var CircleTool     = require('scripts/tools/circle-tool');
-var FreeDrawTool   = require('scripts/tools/free-draw');
-var DeleteTool     = require('scripts/tools/delete-tool');
-var Util           = require('scripts/util');
-var rescale2resize = require('scripts/rescale-2-resize');
+var Tool              = require('scripts/tool');
+var ShapeTool         = require('scripts/tools/shape-tool');
+var SelectionTool     = require('scripts/tools/select-tool');
+var LineTool          = require('scripts/tools/line-tool');
+var RectangleTool     = require('scripts/tools/rect-tool');
+var EllipseTool       = require('scripts/tools/ellipse-tool');
+var SquareTool        = require('scripts/tools/square-tool');
+var CircleTool        = require('scripts/tools/circle-tool');
+var FreeDrawTool      = require('scripts/tools/free-draw');
+var DeleteTool        = require('scripts/tools/delete-tool');
+var Util              = require('scripts/util');
+var rescale2resize    = require('scripts/rescale-2-resize');
 var multitouchSupport = require('scripts/multi-touch-support');
 
 var CANVAS_ID = 'dt-drawing-area';
@@ -945,9 +945,10 @@ module.exports = FreeDrawTool;
 });
 
 require.register("scripts/tools/line-tool", function(exports, require, module) {
-var inherit   = require('scripts/inherit');
-var ShapeTool = require('scripts/tools/shape-tool');
-var Util      = require('scripts/util');
+var inherit    = require('scripts/inherit');
+var ShapeTool  = require('scripts/tools/shape-tool');
+var SelectTool = require('scripts/tools/select-tool');
+var Util       = require('scripts/util');
 
 var CONTROL_POINT_COLOR = '#bcd2ff';
 
@@ -960,13 +961,6 @@ function LineTool(name, selector, drawTool) {
   this.addEventListener("mouse:up", function (e) { self.mouseUp(e); });
 
   this.setLabel('L');
-
-  fabric.Line.prototype.hasControls = false;
-  fabric.Line.prototype.hasBorders = false;
-
-  // Setting up a "deselected" event
-  // see https://groups.google.com/d/topic/fabricjs/pcFJOroSkI4/discussion
-  this._selectedObj;
 
   fabric.Line.prototype.is = function (obj) {
     return this === obj || this.ctp[0] === obj || this.ctp[1] === obj;
@@ -1015,7 +1009,11 @@ LineTool.prototype.mouseDown = function (e) {
   var x = loc.x;
   var y = loc.y;
 
-  this.curr = new fabric.Line([x,y,x,y],{ selectable: false });
+  this.curr = new fabric.Line([x,y,x,y], {
+    selectable: false,
+    hasControls: false,
+    hasBorders: false
+  });
   this.canvas.add(this.curr);
 };
 
@@ -1061,7 +1059,7 @@ LineTool.prototype._processNewShape = function (s) {
   s.set('selectable', false);
 
   // control point
-  var sidelen = fabric.Line.prototype.cornerSize;
+  var sidelen = SelectTool.BASIC_SELECTION_PROPERTIES.cornerSize;
   s.ctp = [
     this._makePoint(x1, y1, sidelen, s, 0),
     this._makePoint(x2, y2, sidelen, s, 1)
@@ -1285,6 +1283,8 @@ function SelectionTool(name, selector, drawTool) {
 }
 
 inherit(SelectionTool, Tool);
+
+SelectionTool.BASIC_SELECTION_PROPERTIES = BASIC_SELECTION_PROPERTIES;
 
 SelectionTool.prototype.activate = function () {
   SelectionTool.super.activate.call(this);

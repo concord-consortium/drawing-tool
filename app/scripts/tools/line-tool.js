@@ -1,6 +1,7 @@
-var inherit   = require('scripts/inherit');
-var ShapeTool = require('scripts/tools/shape-tool');
-var Util      = require('scripts/util');
+var inherit    = require('scripts/inherit');
+var ShapeTool  = require('scripts/tools/shape-tool');
+var SelectTool = require('scripts/tools/select-tool');
+var Util       = require('scripts/util');
 
 var CONTROL_POINT_COLOR = '#bcd2ff';
 
@@ -13,13 +14,6 @@ function LineTool(name, selector, drawTool) {
   this.addEventListener("mouse:up", function (e) { self.mouseUp(e); });
 
   this.setLabel('L');
-
-  fabric.Line.prototype.hasControls = false;
-  fabric.Line.prototype.hasBorders = false;
-
-  // Setting up a "deselected" event
-  // see https://groups.google.com/d/topic/fabricjs/pcFJOroSkI4/discussion
-  this._selectedObj;
 
   fabric.Line.prototype.is = function (obj) {
     return this === obj || this.ctp[0] === obj || this.ctp[1] === obj;
@@ -68,7 +62,11 @@ LineTool.prototype.mouseDown = function (e) {
   var x = loc.x;
   var y = loc.y;
 
-  this.curr = new fabric.Line([x,y,x,y],{ selectable: false });
+  this.curr = new fabric.Line([x,y,x,y], {
+    selectable: false,
+    hasControls: false,
+    hasBorders: false
+  });
   this.canvas.add(this.curr);
 };
 
@@ -114,7 +112,7 @@ LineTool.prototype._processNewShape = function (s) {
   s.set('selectable', false);
 
   // control point
-  var sidelen = fabric.Line.prototype.cornerSize;
+  var sidelen = SelectTool.BASIC_SELECTION_PROPERTIES.cornerSize;
   s.ctp = [
     this._makePoint(x1, y1, sidelen, s, 0),
     this._makePoint(x2, y2, sidelen, s, 1)

@@ -18,6 +18,8 @@ function SelectionTool(name, selector, drawTool) {
 
 inherit(SelectionTool, Tool);
 
+SelectionTool.BASIC_SELECTION_PROPERTIES = BASIC_SELECTION_PROPERTIES;
+
 SelectionTool.prototype.activate = function () {
   SelectionTool.super.activate.call(this);
   this.setSelectable(true);

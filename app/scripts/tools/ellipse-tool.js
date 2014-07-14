@@ -16,7 +16,6 @@ function EllipseTool(name, selector, drawTool) {
 inherit(EllipseTool, ShapeTool);
 
 EllipseTool.prototype.mouseDown = function (e) {
-  console.log("ellipse down");
   EllipseTool.super.mouseDown.call(this, e);
 
   // if this tool is no longer active, stop current action!
@@ -72,7 +71,6 @@ EllipseTool.prototype.mouseMove = function (e) {
 };
 
 EllipseTool.prototype.mouseUp = function (e) {
-  console.log("ellipse up");
   EllipseTool.super.mouseUp.call(this, e);
   this._processNewShape(this.curr);
   this.canvas.renderAll();

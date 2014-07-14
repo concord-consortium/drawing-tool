@@ -16,7 +16,6 @@ function RectangleTool(name, selector, drawTool) {
 inherit(RectangleTool, ShapeTool);
 
 RectangleTool.prototype.mouseDown = function (e) {
-  console.log("down");
   RectangleTool.super.mouseDown.call(this, e);
 
   if (!this.active) { return; }
@@ -56,7 +55,6 @@ RectangleTool.prototype.mouseMove = function (e) {
 };
 
 RectangleTool.prototype.mouseUp = function (e) {
-  console.log("rect up");
   RectangleTool.super.mouseUp.call(this, e);
   this._processNewShape(this.curr);
   this.canvas.renderAll();

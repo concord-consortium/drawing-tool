@@ -53,7 +53,6 @@ function LineTool(name, selector, drawTool) {
 inherit(LineTool, ShapeTool);
 
 LineTool.prototype.mouseDown = function (e) {
-  console.log("down");
   LineTool.super.mouseDown.call(this, e);
 
   if ( !this.active ) { return; }
@@ -84,7 +83,6 @@ LineTool.prototype.mouseMove = function (e) {
 };
 
 LineTool.prototype.mouseUp = function (e) {
-  console.log("line up");
   LineTool.super.mouseUp.call(this, e);
   this._processNewShape(this.curr);
   this.canvas.renderAll();

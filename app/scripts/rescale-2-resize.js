@@ -62,7 +62,6 @@ module.exports = function rescale2resize(canvas) {
 
   fabric.Group.prototype.lockUniScaling = true;
   canvas.on('before:selection:cleared', function(opt) {
-    console.log(this);
     var group = opt.target;
     // if the the selection wasn't on a scaled group, then
     // this function is not needed --> return

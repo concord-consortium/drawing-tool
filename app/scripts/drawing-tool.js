@@ -136,14 +136,6 @@ DrawingTool.prototype.changeOutOfTool = function (oldToolSelector){
   this.chooseTool('select');
 };
 
-// debugging method to print out all the items on the canvas
-DrawingTool.prototype.check = function() {
-  var shapes = this.canvas.getObjects();
-  for (var i = 0; i < shapes.length; i++) {
-    console.log(shapes[i]);
-  }
-};
-
 DrawingTool.prototype._setBackgroundImage = function (imageSrc, options) {
   options = options || {
     originX: 'center',
@@ -186,7 +178,6 @@ DrawingTool.prototype._initFabricJS = function () {
 
 DrawingTool.prototype._toolButtonClicked = function (toolSelector) {
   if (this.currentTool !== undefined && this.currentTool.selector === toolSelector) {
-    console.log(this.currentTool.name + " is already the current tool");
     // Some tools may implement .activateAgain() method and enable some special behavior.
     this.currentTool.activateAgain();
     return;

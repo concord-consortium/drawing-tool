@@ -16,7 +16,6 @@ function SquareTool(name, selector, drawTool) {
 inherit(SquareTool, ShapeTool);
 
 SquareTool.prototype.mouseDown = function (e) {
-  console.log("square down");
   SquareTool.super.mouseDown.call(this, e);
 
   if (!this.active) { return; }
@@ -54,7 +53,6 @@ SquareTool.prototype.mouseMove = function (e) {
 };
 
 SquareTool.prototype.mouseUp = function (e) {
-  console.log("square up");
   SquareTool.super.mouseUp.call(this, e);
   this._processNewShape(this.curr);
   this.canvas.renderAll();

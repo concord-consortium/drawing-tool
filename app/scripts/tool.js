@@ -2,8 +2,6 @@
  * Tool "Class"
  */
 function Tool(name, selector, drawTool) {
-  console.info(name);
-
   this.name = name || "Tool";
   this.selector = selector || "";
   this.master = drawTool;
@@ -19,7 +17,6 @@ function Tool(name, selector, drawTool) {
 }
 
 Tool.prototype.setActive = function (active) {
-  // console.log(this.name + " active? " +  this.active);
   if (this.singleUse) {
     console.warn("This is a single use tool. It was not activated.");
     return;
@@ -27,12 +24,8 @@ Tool.prototype.setActive = function (active) {
   if (this.active === active) { return active; }
   this.active = active;
   if (active === true){
-    // this tool is now active
-    console.log("Activating " + this.name);
     this.activate();
   } else {
-    // this tool has been deselected
-    console.log("Deactivating " + this.name);
     this.deactivate();
   }
 
@@ -40,7 +33,6 @@ Tool.prototype.setActive = function (active) {
 };
 
 Tool.prototype.activate = function () {
-  // console.warn(this.name + " at tool activation method");
   for (var i = 0; i < this._listeners.length; i++) {
     var trigger = this._listeners[i].trigger;
     var action = this._listeners[i].action;
@@ -59,7 +51,6 @@ Tool.prototype.activateAgain = function () {};
 Tool.prototype.use = function() {};
 
 Tool.prototype.deactivate = function () {
-  // console.warn(this.name + " at deactivation method");
   for (var i = 0; i < this._listeners.length; i++) {
     var trigger = this._listeners[i].trigger;
     var action = this._listeners[i].action;

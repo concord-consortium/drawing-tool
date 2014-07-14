@@ -16,7 +16,6 @@ function CircleTool(name, selector, drawTool) {
 inherit(CircleTool, ShapeTool);
 
 CircleTool.prototype.mouseDown = function (e) {
-  console.log("Circle down");
   CircleTool.super.mouseDown.call(this, e);
 
   if (!this.active) { return; }
@@ -74,7 +73,6 @@ CircleTool.prototype.mouseMove = function (e) {
 };
 
 CircleTool.prototype.mouseUp = function (e) {
-  console.log("Circle up");
   CircleTool.super.mouseUp.call(this, e);
   this._processNewShape(this.curr);
   this.canvas.renderAll();

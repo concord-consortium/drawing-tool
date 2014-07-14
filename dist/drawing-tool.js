@@ -229,14 +229,6 @@ DrawingTool.prototype.changeOutOfTool = function (oldToolSelector){
   this.chooseTool('select');
 };
 
-// debugging method to print out all the items on the canvas
-DrawingTool.prototype.check = function() {
-  var shapes = this.canvas.getObjects();
-  for (var i = 0; i < shapes.length; i++) {
-    console.log(shapes[i]);
-  }
-};
-
 DrawingTool.prototype._setBackgroundImage = function (imageSrc, options) {
   options = options || {
     originX: 'center',
@@ -279,7 +271,6 @@ DrawingTool.prototype._initFabricJS = function () {
 
 DrawingTool.prototype._toolButtonClicked = function (toolSelector) {
   if (this.currentTool !== undefined && this.currentTool.selector === toolSelector) {
-    console.log(this.currentTool.name + " is already the current tool");
     // Some tools may implement .activateAgain() method and enable some special behavior.
     this.currentTool.activateAgain();
     return;
@@ -470,7 +461,6 @@ module.exports = function rescale2resize(canvas) {
 
   fabric.Group.prototype.lockUniScaling = true;
   canvas.on('before:selection:cleared', function(opt) {
-    console.log(this);
     var group = opt.target;
     // if the the selection wasn't on a scaled group, then
     // this function is not needed --> return
@@ -512,8 +502,6 @@ require.register("scripts/tool", function(exports, require, module) {
  * Tool "Class"
  */
 function Tool(name, selector, drawTool) {
-  console.info(name);
-
   this.name = name || "Tool";
   this.selector = selector || "";
   this.master = drawTool;
@@ -529,7 +517,6 @@ function Tool(name, selector, drawTool) {
 }
 
 Tool.prototype.setActive = function (active) {
-  // console.log(this.name + " active? " +  this.active);
   if (this.singleUse) {
     console.warn("This is a single use tool. It was not activated.");
     return;
@@ -537,12 +524,8 @@ Tool.prototype.setActive = function (active) {
   if (this.active === active) { return active; }
   this.active = active;
   if (active === true){
-    // this tool is now active
-    console.log("Activating " + this.name);
     this.activate();
   } else {
-    // this tool has been deselected
-    console.log("Deactivating " + this.name);
     this.deactivate();
   }
 
@@ -550,7 +533,6 @@ Tool.prototype.setActive = function (active) {
 };
 
 Tool.prototype.activate = function () {
-  // console.warn(this.name + " at tool activation method");
   for (var i = 0; i < this._listeners.length; i++) {
     var trigger = this._listeners[i].trigger;
     var action = this._listeners[i].action;
@@ -569,7 +551,6 @@ Tool.prototype.activateAgain = function () {};
 Tool.prototype.use = function() {};
 
 Tool.prototype.deactivate = function () {
-  // console.warn(this.name + " at deactivation method");
   for (var i = 0; i < this._listeners.length; i++) {
     var trigger = this._listeners[i].trigger;
     var action = this._listeners[i].action;
@@ -628,7 +609,6 @@ function CircleTool(name, selector, drawTool) {
 inherit(CircleTool, ShapeTool);
 
 CircleTool.prototype.mouseDown = function (e) {
-  console.log("Circle down");
   CircleTool.super.mouseDown.call(this, e);
 
   if (!this.active) { return; }
@@ -686,7 +666,6 @@ CircleTool.prototype.mouseMove = function (e) {
 };
 
 CircleTool.prototype.mouseUp = function (e) {
-  console.log("Circle up");
   CircleTool.super.mouseUp.call(this, e);
   this._processNewShape(this.curr);
   this.canvas.renderAll();
@@ -793,7 +772,6 @@ function EllipseTool(name, selector, drawTool) {
 inherit(EllipseTool, ShapeTool);
 
 EllipseTool.prototype.mouseDown = function (e) {
-  console.log("ellipse down");
   EllipseTool.super.mouseDown.call(this, e);
 
   // if this tool is no longer active, stop current action!
@@ -849,7 +827,6 @@ EllipseTool.prototype.mouseMove = function (e) {
 };
 
 EllipseTool.prototype.mouseUp = function (e) {
-  console.log("ellipse up");
   EllipseTool.super.mouseUp.call(this, e);
   this._processNewShape(this.curr);
   this.canvas.renderAll();
@@ -1000,7 +977,6 @@ function LineTool(name, selector, drawTool) {
 inherit(LineTool, ShapeTool);
 
 LineTool.prototype.mouseDown = function (e) {
-  console.log("down");
   LineTool.super.mouseDown.call(this, e);
 
   if ( !this.active ) { return; }
@@ -1031,7 +1007,6 @@ LineTool.prototype.mouseMove = function (e) {
 };
 
 LineTool.prototype.mouseUp = function (e) {
-  console.log("line up");
   LineTool.super.mouseUp.call(this, e);
   this._processNewShape(this.curr);
   this.canvas.renderAll();
@@ -1194,7 +1169,6 @@ function RectangleTool(name, selector, drawTool) {
 inherit(RectangleTool, ShapeTool);
 
 RectangleTool.prototype.mouseDown = function (e) {
-  console.log("down");
   RectangleTool.super.mouseDown.call(this, e);
 
   if (!this.active) { return; }
@@ -1234,7 +1208,6 @@ RectangleTool.prototype.mouseMove = function (e) {
 };
 
 RectangleTool.prototype.mouseUp = function (e) {
-  console.log("rect up");
   RectangleTool.super.mouseUp.call(this, e);
   this._processNewShape(this.curr);
   this.canvas.renderAll();
@@ -1452,7 +1425,6 @@ function SquareTool(name, selector, drawTool) {
 inherit(SquareTool, ShapeTool);
 
 SquareTool.prototype.mouseDown = function (e) {
-  console.log("square down");
   SquareTool.super.mouseDown.call(this, e);
 
   if (!this.active) { return; }
@@ -1490,7 +1462,6 @@ SquareTool.prototype.mouseMove = function (e) {
 };
 
 SquareTool.prototype.mouseUp = function (e) {
-  console.log("square up");
   SquareTool.super.mouseUp.call(this, e);
   this._processNewShape(this.curr);
   this.canvas.renderAll();

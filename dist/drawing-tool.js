@@ -104,6 +104,7 @@ var DeleteTool        = require('scripts/tools/delete-tool');
 var Util              = require('scripts/util');
 var rescale2resize    = require('scripts/rescale-2-resize');
 var multitouchSupport = require('scripts/multi-touch-support');
+var UI                = require('scripts/ui');
 
 var CANVAS_ID = 'dt-drawing-area';
 var DEF_OPTIONS = {
@@ -114,7 +115,7 @@ var DEF_OPTIONS = {
 // Constructor function.
 function DrawingTool(selector, options) {
   this.options = $.extend(true, {}, DEF_OPTIONS, options);
-
+  
   this._initUI(selector);
   this._initFabricJS();
 
@@ -128,18 +129,13 @@ function DrawingTool(selector, options) {
   var circleTool = new CircleTool("Circle Tool", "circle", this);
   var freeDrawTool = new FreeDrawTool("Free Draw Tool", "free", this);
   var deleteTool = new DeleteTool("Delete Tool", "trash", this);
-  selectionTool.deleteTool = deleteTool;
-
-  var self = this;
-  $('.dt-btn').on('click touchstart', function (e) {
-    var id = $(this).attr('id');
-    self._toolButtonClicked(id);
-    e.preventDefault();
-  });
 
   // Apply a fix that changes native FabricJS rescaling behavior into resizing.
   rescale2resize(this.canvas);
   multitouchSupport(this.canvas);
+
+  this.ui = new UI(this);
+  // selectionTool.addStateListener(ui.updateUI);
 
   this.chooseTool("select");
 }
@@ -219,6 +215,7 @@ DrawingTool.prototype.resizeCanvasToBackground = function () {
 };
 
 DrawingTool.prototype.chooseTool = function (toolSelector){
+  console.log(toolSelector);
   $("#" + toolSelector).click();
 };
 
@@ -428,8 +425,7 @@ var resizers = {
   },
   square: function (s) {
     uniformWidthHeightTransform(s);
-  }
-  ,
+  },
   line: function (s) {
     basicWidthHeightTransform(s);
 
@@ -511,9 +507,11 @@ function Tool(name, selector, drawTool) {
 
   this.master.tools[selector] = this;
 
+  // fabric.js listeners of the tool
   this._listeners = [];
 
-  this.initUI();
+  // internal mechanisms that monitor the state of the tool
+  this._stateListeners = [];
 }
 
 Tool.prototype.setActive = function (active) {
@@ -538,7 +536,9 @@ Tool.prototype.activate = function () {
     var action = this._listeners[i].action;
     this.canvas.on(trigger, action);
   }
-  this.$element.addClass('dt-active');
+  this._fireStateEvent();
+  // TODO: add this to the UI class
+  // this.$element.addClass('dt-active');
 };
 
 // This function will be called when user tries to activate a tool that
@@ -548,7 +548,7 @@ Tool.prototype.activateAgain = function () {};
 
 // This function will be implemented by singleUse tools that do not need
 // to be activated
-Tool.prototype.use = function() {};
+Tool.prototype.use = function () {};
 
 Tool.prototype.deactivate = function () {
   for (var i = 0; i < this._listeners.length; i++) {
@@ -556,9 +556,12 @@ Tool.prototype.deactivate = function () {
     var action = this._listeners[i].action;
     this.canvas.off(trigger);
   }
-  this.$element.removeClass('dt-active');
+  this._fireStateEvent()
+  // this.$element.removeClass('dt-active');
 };
 
+// Add the tool's event listeners to a list that will be added
+// to the canvas upon the tool's activation
 Tool.prototype.addEventListener = function (eventTrigger, eventHandler) {
   this._listeners.push({
     trigger: eventTrigger,
@@ -566,6 +569,8 @@ Tool.prototype.addEventListener = function (eventTrigger, eventHandler) {
   });
 };
 
+// Remove tool's event listeners from those to be added to the canvas
+// on tool activation
 Tool.prototype.removeEventListener = function (trigger) {
   for (var i = 0; i < this._listeners.length; i++) {
     if (trigger == this._listeners[i].trigger){
@@ -574,17 +579,34 @@ Tool.prototype.removeEventListener = function (trigger) {
   }
 };
 
-Tool.prototype.initUI = function () {
-  this.$element = $('<div class="dt-btn">')
-    .attr('id', this.selector)
-    .appendTo(this.master.$tools);
-  $('<span>')
-    .appendTo(this.$element);
-};
+// Adds a state listener to the tool
+Tool.prototype.addStateListener = function (stateHandler) {
+  this._stateListeners.push(stateHandler);
+}
 
-Tool.prototype.setLabel = function (label) {
-  this.$element.find('span').text(label);
-};
+// Removes a state listener from the tool
+Tool.prototype.removeStateListener = function (stateHandler) {
+  for (var i = 0; i < this._stateListeners.length; i++) {
+    if (this._stateListeners[i] === stateHandler) {
+      return this._stateListeners.splice(i, 1);
+    }
+  }
+  return false;
+}
+
+Tool.prototype._fireStateEvent = function (extra, self) {
+  var e = {
+    source: self || this,
+    active: this.active
+  };
+  for (var item in extra) {
+    e[item] = extra[item];
+  }
+  for (var i = 0; i < this._stateListeners.length; i++) {
+    // console.log(this._stateListeners[i]);
+    this._stateListeners[i].call(this.master.ui, e)
+  }
+}
 
 module.exports = Tool;
 
@@ -603,7 +625,7 @@ function CircleTool(name, selector, drawTool) {
   this.addEventListener("mouse:move", function (e) { self.mouseMove(e); });
   this.addEventListener("mouse:up", function (e) { self.mouseUp(e); });
 
-  this.setLabel('C');
+  // this.setLabel('C');
 }
 
 inherit(CircleTool, ShapeTool);
@@ -716,8 +738,8 @@ function DeleteTool(name, selector, drawTool) {
     }
   });
 
-  this.canvas.on("object:selected", function () { self.show(); });
-  this.canvas.on("selection:cleared", function () { self.hide(); });
+  // this.canvas.on("object:selected", function () { self.show(); });
+  // this.canvas.on("selection:cleared", function () { self.hide(); });
 }
 
 inherit(DeleteTool, Tool);
@@ -734,16 +756,6 @@ DeleteTool.prototype._delete = function () {
     canvas.getActiveGroup().forEachObject(function(o){ canvas.remove(o); });
     canvas.discardActiveGroup().renderAll();
   }
-};
-
-DeleteTool.prototype.initUI = function () {
-  this.$element = $('<div class="dt-btn">')
-    .attr('id', this.selector)
-    .appendTo(this.master.$tools)
-    .hide();
-  $('<span>')
-    .text('Tr')
-    .appendTo(this.$element);
 };
 
 DeleteTool.prototype.show = function () { this.$element.show(); };
@@ -766,7 +778,7 @@ function EllipseTool(name, selector, drawTool) {
   this.addEventListener("mouse:move", function (e) { self.mouseMove(e); });
   this.addEventListener("mouse:up", function (e) { self.mouseUp(e); });
 
-  this.setLabel('E');
+  // this.setLabel('E');
 }
 
 inherit(EllipseTool, ShapeTool);
@@ -873,7 +885,7 @@ function FreeDrawTool(name, selector, drawTool) {
   this.addEventListener("mouse:down", function (e) { self.mouseDown(e); });
   this.addEventListener("mouse:up", function (e) { self.mouseUp(e); });
 
-  this.setLabel('F');
+  // this.setLabel('F');
 }
 
 inherit(FreeDrawTool, ShapeTool);
@@ -937,7 +949,7 @@ function LineTool(name, selector, drawTool) {
   this.addEventListener("mouse:move", function (e) { self.mouseMove(e); });
   this.addEventListener("mouse:up", function (e) { self.mouseUp(e); });
 
-  this.setLabel('L');
+  // this.setLabel('L');
 
   fabric.Line.prototype.is = function (obj) {
     return this === obj || this.ctp[0] === obj || this.ctp[1] === obj;
@@ -1163,7 +1175,7 @@ function RectangleTool(name, selector, drawTool) {
   this.addEventListener("mouse:move", function (e) { self.mouseMove(e); });
   this.addEventListener("mouse:up", function (e) { self.mouseUp(e); });
 
-  this.setLabel('R');
+   // this.setLabel('R');
 }
 
 inherit(RectangleTool, ShapeTool);
@@ -1252,7 +1264,7 @@ function SelectionTool(name, selector, drawTool) {
     opt.target.set(BASIC_SELECTION_PROPERTIES);
   });
 
-  this.setLabel('S');
+  // this.setLabel('S');
 }
 
 inherit(SelectionTool, Tool);
@@ -1262,14 +1274,12 @@ SelectionTool.BASIC_SELECTION_PROPERTIES = BASIC_SELECTION_PROPERTIES;
 SelectionTool.prototype.activate = function () {
   SelectionTool.super.activate.call(this);
   this.setSelectable(true);
-  // if (this.deleteTool) { this.deleteTool.show(); }
 };
 
 SelectionTool.prototype.deactivate = function () {
   SelectionTool.super.deactivate.call(this);
   this.setSelectable(false);
   this.canvas.deactivateAllWithDispatch();
-  // if (this.deleteTool) { this.deleteTool.hide(); }
 };
 
 SelectionTool.prototype.setSelectable = function (selectable) {
@@ -1278,8 +1288,6 @@ SelectionTool.prototype.setSelectable = function (selectable) {
   for (var i = items.length - 1; i >= 0; i--) {
     items[i].selectable = selectable;
   }
-  // might be needed?
-  // fabric.Group.prototype.selectable = selectable;
 };
 
 module.exports = SelectionTool;
@@ -1318,7 +1326,7 @@ ShapeTool.prototype.activate = function () {
 ShapeTool.prototype.activateAgain = function () {
   this._setFirstActionMode();
   this._locked = true;
-  $('#' + this.selector).addClass('dt-locked');
+  this._fireStateEvent({ state: this.active, locked: true });
 };
 
 ShapeTool.prototype.deactivate = function () {
@@ -1327,8 +1335,8 @@ ShapeTool.prototype.deactivate = function () {
 };
 
 ShapeTool.prototype.unlock = function () {
-  $('#' + this.selector).removeClass('dt-locked');
   this._locked = false;
+  this._fireStateEvent({ state: this.active, locked: false });
 };
 
 ShapeTool.prototype.exit = function () {
@@ -1419,7 +1427,7 @@ function SquareTool(name, selector, drawTool) {
   this.addEventListener("mouse:move", function (e) { self.mouseMove(e); });
   this.addEventListener("mouse:up", function (e) { self.mouseUp(e); });
 
-  this.setLabel('Sq');
+  // this.setLabel('Sq');
 }
 
 inherit(SquareTool, ShapeTool);
@@ -1487,6 +1495,65 @@ SquareTool.prototype._processNewShape = function (s) {
 };
 
 module.exports = SquareTool;
+
+});
+
+require.register("scripts/ui", function(exports, require, module) {
+function UI (master) {
+  this.master = master;
+  this.tools = master.tools;
+
+  this.initUI();
+  this._initButtonUpdates();
+
+  var trash = this.buttons.trash;
+  trash.hide();
+  this.master.canvas.on("object:selected", function () { trash.show(); });
+  this.master.canvas.on("selection:cleared", function () { trash.hide(); });
+
+}
+
+UI.prototype._initButtonUpdates = function () {
+  // update UI when the internal tool state changes
+  for (var toolId in this.tools) {
+    this.tools[toolId].addStateListener(this.updateUI);
+  }
+
+  // update internal state when the UI changes
+  var master = this.master;
+  $('.dt-btn').on('click touchstart', function (e) {
+    var id = $(this).attr('id');
+    master._toolButtonClicked(id);
+    e.preventDefault();
+  });
+}
+
+UI.prototype.updateUI = function (e) {
+  var $element = this.buttons[e.source.selector];
+  if (e.active) { $element.addClass('dt-active') }
+  else { $element.removeClass('dt-active'); }
+
+  if (e.locked) { $element.addClass('dt-locked'); }
+  else { $element.removeClass('dt-locked'); }
+}
+
+UI.prototype.initUI = function () {
+  this.buttons = {};
+  for (var tool in this.tools) {
+    this.buttons[tool] = this._initBtn(tool);
+  }
+}
+
+UI.prototype._initBtn = function (toolId) {
+  var $element = $('<div class="dt-btn">')
+    .attr('id', toolId)
+    .appendTo(this.master.$tools);
+  $('<span>')
+    .appendTo(this.$element);
+  return $element;
+}
+
+module.exports = UI;
 
 });
 

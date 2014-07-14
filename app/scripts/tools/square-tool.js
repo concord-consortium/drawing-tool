@@ -10,7 +10,7 @@ function SquareTool(name, selector, drawTool) {
   this.addEventListener("mouse:move", function (e) { self.mouseMove(e); });
   this.addEventListener("mouse:up", function (e) { self.mouseUp(e); });
 
-  this.setLabel('Sq');
+  // this.setLabel('Sq');
 }
 
 inherit(SquareTool, ShapeTool);

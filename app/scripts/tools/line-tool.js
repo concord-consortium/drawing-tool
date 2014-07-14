@@ -13,7 +13,7 @@ function LineTool(name, selector, drawTool) {
   this.addEventListener("mouse:move", function (e) { self.mouseMove(e); });
   this.addEventListener("mouse:up", function (e) { self.mouseUp(e); });
 
-  this.setLabel('L');
+  // this.setLabel('L');
 
   fabric.Line.prototype.is = function (obj) {
     return this === obj || this.ctp[0] === obj || this.ctp[1] === obj;

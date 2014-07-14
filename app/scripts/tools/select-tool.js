@@ -13,7 +13,7 @@ function SelectionTool(name, selector, drawTool) {
     opt.target.set(BASIC_SELECTION_PROPERTIES);
   });
 
-  this.setLabel('S');
+  // this.setLabel('S');
 }
 
 inherit(SelectionTool, Tool);
@@ -23,14 +23,12 @@ SelectionTool.BASIC_SELECTION_PROPERTIES = BASIC_SELECTION_PROPERTIES;
 SelectionTool.prototype.activate = function () {
   SelectionTool.super.activate.call(this);
   this.setSelectable(true);
-  // if (this.deleteTool) { this.deleteTool.show(); }
 };
 
 SelectionTool.prototype.deactivate = function () {
   SelectionTool.super.deactivate.call(this);
   this.setSelectable(false);
   this.canvas.deactivateAllWithDispatch();
-  // if (this.deleteTool) { this.deleteTool.hide(); }
 };
 
 SelectionTool.prototype.setSelectable = function (selectable) {
@@ -39,8 +37,6 @@ SelectionTool.prototype.setSelectable = function (selectable) {
   for (var i = items.length - 1; i >= 0; i--) {
     items[i].selectable = selectable;
   }
-  // might be needed?
-  // fabric.Group.prototype.selectable = selectable;
 };
 
 module.exports = SelectionTool;

@@ -11,6 +11,7 @@ var DeleteTool        = require('scripts/tools/delete-tool');
 var Util              = require('scripts/util');
 var rescale2resize    = require('scripts/rescale-2-resize');
 var multitouchSupport = require('scripts/multi-touch-support');
+var UI                = require('scripts/ui');
 
 var CANVAS_ID = 'dt-drawing-area';
 var DEF_OPTIONS = {
@@ -21,7 +22,7 @@ var DEF_OPTIONS = {
 // Constructor function.
 function DrawingTool(selector, options) {
   this.options = $.extend(true, {}, DEF_OPTIONS, options);
-
+  
   this._initUI(selector);
   this._initFabricJS();
 
@@ -35,18 +36,13 @@ function DrawingTool(selector, options) {
   var circleTool = new CircleTool("Circle Tool", "circle", this);
   var freeDrawTool = new FreeDrawTool("Free Draw Tool", "free", this);
   var deleteTool = new DeleteTool("Delete Tool", "trash", this);
-  selectionTool.deleteTool = deleteTool;
-
-  var self = this;
-  $('.dt-btn').on('click touchstart', function (e) {
-    var id = $(this).attr('id');
-    self._toolButtonClicked(id);
-    e.preventDefault();
-  });
 
   // Apply a fix that changes native FabricJS rescaling behavior into resizing.
   rescale2resize(this.canvas);
   multitouchSupport(this.canvas);
+
+  this.ui = new UI(this);
+  // selectionTool.addStateListener(ui.updateUI);
 
   this.chooseTool("select");
 }
@@ -126,6 +122,7 @@ DrawingTool.prototype.resizeCanvasToBackground = function () {
 };
 
 DrawingTool.prototype.chooseTool = function (toolSelector){
+  console.log(toolSelector);
   $("#" + toolSelector).click();
 };
 

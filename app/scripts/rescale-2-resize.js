@@ -29,8 +29,7 @@ var resizers = {
   },
   square: function (s) {
     uniformWidthHeightTransform(s);
-  }
-  ,
+  },
   line: function (s) {
     basicWidthHeightTransform(s);
 

@@ -138,17 +138,35 @@ DrawingTool.prototype._setBackgroundImage = function (imageSrc, options) {
     originX: 'center',
     originY: 'center',
     top: this.canvas.height / 2,
-    left: this.canvas.width / 2
+    left: this.canvas.width / 2,
+    crossOrigin: 'anonymous'
   };
+
+  loadImage();
+
+  function loadImage(crossOrigin) {
+    // Note we cannot use fabric.Image.fromURL, as then we would always get
+    // fabric.Image instance and we couldn't guess whether load failed or not.
+    // util.loadImage provides null to callback when loading fails.
+    fabric.util.loadImage(imageSrc, callback, null, options.crossOrigin);
+  }
+
   var self = this;
-  fabric.Image.fromURL(imageSrc, function (img) {
-    img.set(options);
+  function callback (img) {
+    // If image is null and crossOrigin settings are available, it probably means that loading failed
+    // due to lack of CORS headers. Try again without them.
+    if ((options.crossOrigin === 'anonymous' || options.crossOrigin === '') && !img) {
+      options = $.extend(true, {}, options);
+      delete options.crossOrigin;
+      console.log('Background could not be loaded due to lack of CORS headers. Trying to load it again without CORS support.');
+      loadImage();
+      return;
+    }
+    img = new fabric.Image(img, options);
     self.canvas.setBackgroundImage(img, self.canvas.renderAll.bind(self.canvas));
     self._backgroundImage = img;
-  });
+  }
 };
-
-
 
 DrawingTool.prototype._initFabricJS = function () {
   this.canvas = new fabric.Canvas(CANVAS_ID);

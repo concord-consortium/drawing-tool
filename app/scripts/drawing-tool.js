@@ -56,6 +56,11 @@ DrawingTool.prototype.clear = function (clearBackground) {
   this.canvas.renderAll();
 };
 
+DrawingTool.prototype.clearSelection = function () {
+  this.canvas.deactivateAllWithDispatch();
+  this.canvas.renderAll();
+};
+
 DrawingTool.prototype.save = function () {
   return JSON.stringify(this.canvas.toJSON());
 };

@@ -146,7 +146,6 @@ DrawingTool.prototype.resizeCanvasToBackground = function () {
 };
 
 DrawingTool.prototype.chooseTool = function (toolSelector){
-  console.log(toolSelector);
   $("#" + toolSelector).click();
 };
 

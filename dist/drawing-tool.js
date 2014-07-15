@@ -239,7 +239,6 @@ DrawingTool.prototype.resizeCanvasToBackground = function () {
 };
 
 DrawingTool.prototype.chooseTool = function (toolSelector){
-  console.log(toolSelector);
   $("#" + toolSelector).click();
 };
 
@@ -1618,8 +1617,7 @@ UI.prototype._initBtn = function (toolId) {
 
 function BtnGroup () {
   if (arguments.length <= 0) { return; }
-  this._buttons = arguments;
-  console.log(this.__buttons);
+  this._$buttons = arguments;
 }
 
 module.exports = UI;

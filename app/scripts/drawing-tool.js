@@ -39,6 +39,14 @@ function DrawingTool(selector, options) {
 
   this.ui.initTools();
 
+  this.ui.setLabel(selectionTool.selector,  "S");
+  this.ui.setLabel(lineTool.selector,       "L");
+  this.ui.setLabel(rectangleTool.selector,  "R");
+  this.ui.setLabel(ellipseTool.selector,    "E");
+  this.ui.setLabel(squareTool.selector,     "Sq");
+  this.ui.setLabel(circleTool.selector,     "C");
+  this.ui.setLabel(freeDrawTool.selector,   "F");
+  this.ui.setLabel(deleteTool.selector,     "Tr");
 
   // Apply a fix that changes native FabricJS rescaling behavior into resizing.
   rescale2resize(this.canvas);

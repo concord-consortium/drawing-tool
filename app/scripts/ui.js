@@ -19,13 +19,17 @@ UI.prototype.initTools = function() {
   this.master.canvas.on("selection:cleared", function () { trash.hide(); });
 }
 
+UI.prototype.setLabel = function (toolID, label) {
+  this.$tools.find("#"+toolID).find('span').text(label);
+}
+
 UI.prototype._initButtonUpdates = function () {
-  // update UI when the internal tool state changes
+  // handler that updates UI when the internal tool state changes
   for (var toolId in this.tools) {
     this.tools[toolId].addStateListener(this.updateUI);
   }
 
-  // update internal state when the UI changes
+  // handler that updates internal state when the UI changes
   var master = this.master;
   $('.dt-btn').on('click touchstart', function (e) {
     var id = $(this).attr('id');
@@ -34,6 +38,7 @@ UI.prototype._initButtonUpdates = function () {
   });
 }
 
+// Updates the UI when the internal state changes
 UI.prototype.updateUI = function (e) {
   var $element = this.buttons[e.source.selector];
   if (e.active) { $element.addClass('dt-active') }
@@ -43,6 +48,7 @@ UI.prototype.updateUI = function (e) {
   else { $element.removeClass('dt-locked'); }
 }
 
+// initializes the UI (divs and canvas size)
 UI.prototype._initUI = function (selector) {
   $(selector).empty();
   this.$element = $('<div class="dt-container">').appendTo(selector);
@@ -58,6 +64,7 @@ UI.prototype._initUI = function (selector) {
     .appendTo($canvasContainer);
 };
 
+// initializes all the tools
 UI.prototype._initToolUI = function () {
   this.buttons = {};
   for (var tool in this.tools) {
@@ -65,6 +72,7 @@ UI.prototype._initToolUI = function () {
   }
 }
 
+// initializes each button
 UI.prototype._initBtn = function (toolId) {
   var $element = $('<div class="dt-btn">')
     .attr('id', toolId)

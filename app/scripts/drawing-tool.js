@@ -36,7 +36,12 @@ function DrawingTool(selector, options) {
   var freeDrawTool = new FreeDrawTool("Free Draw Tool", "free", this);
   var deleteTool = new DeleteTool("Delete Tool", "trash", this);
 
-  this.ui.initTools();
+  var palettes = {
+    shapes: ['-select', 'rect', 'ellipse', 'square', 'circle'],
+    main: ['select', 'line', '-shapes', 'free', 'trash']
+  }
+
+  this.ui.initTools(palettes);
 
   this.ui.setLabel(selectionTool.selector,  "S");
   this.ui.setLabel(lineTool.selector,       "L");
@@ -46,6 +51,8 @@ function DrawingTool(selector, options) {
   this.ui.setLabel(circleTool.selector,     "C");
   this.ui.setLabel(freeDrawTool.selector,   "F");
   this.ui.setLabel(deleteTool.selector,     "Tr");
+  this.ui.setLabel("-shapes",               "Sh");
+  this.ui.setLabel("-select",               "S");
 
   // Apply a fix that changes native FabricJS rescaling behavior into resizing.
   rescale2resize(this.canvas);
@@ -220,31 +227,6 @@ DrawingTool.prototype._initFabricJS = function () {
   this.setStrokeColor("rgba(100,200,200,.75)");
   this.setFill("");
   this.canvas.setBackgroundColor("#fff");
-};
-
-DrawingTool.prototype._toolButtonClicked = function (toolSelector) {
-  if (this.currentTool !== undefined && this.currentTool.selector === toolSelector) {
-    // Some tools may implement .activateAgain() method and enable some special behavior.
-    this.currentTool.activateAgain();
-    return;
-  }
-
-  var newTool = this.tools[toolSelector];
-  if (newTool === undefined){
-    console.warn("Warning! Could not find tool with selector \"" + toolSelector +
-      "\"\nExiting tool chooser.");
-    return;
-  } else if (newTool.singleUse === true) {
-    newTool.use();
-    return;
-  }
-
-  if (this.currentTool !== undefined) {
-    this.currentTool.setActive(false);
-  }
-  this.currentTool = newTool;
-  newTool.setActive(true);
-  this.canvas.renderAll();
 };
 
 module.exports = DrawingTool;

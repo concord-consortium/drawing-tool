@@ -4,12 +4,13 @@
   .dt-container .dt-canvas-container {
     vertical-align: top;
     display: inline-block;
-    border: 1px solid #255a88;
+    border: 1px solid rgba(0, 0, 0, 0.2);
     outline: 0; }
   .dt-container .dt-tools {
     display: inline-block;
     vertical-align: top;
-    width: 60px; }
+    width: 60px;
+    margin: 0 2px 0 0; }
   .dt-container .dt-btn {
     font-family: Arial;
     font-size: 36px;
@@ -22,7 +23,6 @@
     text-align: center;
     border: 1px solid #255a88;
     border-top-width: 0px;
-    border-right-width: 0px;
     padding: 0;
     cursor: pointer;
     -moz-user-select: none;

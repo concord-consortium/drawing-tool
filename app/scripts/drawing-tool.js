@@ -91,8 +91,14 @@ DrawingTool.prototype.setFill = function (color) {
   fabric.Object.prototype.fill = color;
 };
 
-DrawingTool.prototype.setBackgroundImage = function (imageSrc) {
-  this._setBackgroundImage(imageSrc);
+DrawingTool.prototype.setBackgroundImage = function (imageSrc, fit) {
+  var self = this;
+  this._setBackgroundImage(imageSrc, null, function () {
+    switch (fit) {
+      case "resizeBackgroundToCanvas": self.resizeBackgroundToCanvas(); return;
+      case "resizeCanvasToBackground": self.resizeCanvasToBackground(); return;
+    }
+  });
 };
 
 DrawingTool.prototype.resizeBackgroundToCanvas = function () {
@@ -133,7 +139,7 @@ DrawingTool.prototype.changeOutOfTool = function (oldToolSelector){
   this.chooseTool('select');
 };
 
-DrawingTool.prototype._setBackgroundImage = function (imageSrc, options) {
+DrawingTool.prototype._setBackgroundImage = function (imageSrc, options, backgroundLoadedCallback) {
   options = options || {
     originX: 'center',
     originY: 'center',
@@ -165,6 +171,9 @@ DrawingTool.prototype._setBackgroundImage = function (imageSrc, options) {
     img = new fabric.Image(img, options);
     self.canvas.setBackgroundImage(img, self.canvas.renderAll.bind(self.canvas));
     self._backgroundImage = img;
+    if (typeof backgroundLoadedCallback === 'function') {
+      backgroundLoadedCallback();
+    }
   }
 };
 
@@ -176,6 +185,7 @@ DrawingTool.prototype._initFabricJS = function () {
   this.setStrokeWidth(10);
   this.setStrokeColor("rgba(100,200,200,.75)");
   this.setFill("");
+  this.canvas.setBackgroundColor("#fff");
 };
 
 DrawingTool.prototype._toolButtonClicked = function (toolSelector) {

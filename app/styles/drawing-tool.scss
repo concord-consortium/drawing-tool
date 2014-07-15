@@ -3,12 +3,12 @@ $buttonFontSize: 36px;
 
 .dt-container {
   white-space:nowrap;
-  -webkit-tap-highlight-color:rgba(0,0,0,0);
+  -webkit-tap-highlight-color: rgba(0,0,0,0);
 
   .dt-canvas-container {
     vertical-align: top; // not needed but why not
     display: inline-block;
-    border: 1px solid #255a88;
+    border: 1px solid rgba(0,0,0,0.2);
     outline: 0;
   }
 
@@ -16,6 +16,7 @@ $buttonFontSize: 36px;
     display: inline-block;
     vertical-align: top;
     width: $buttonSize;
+    margin: 0 2px 0 0;
   }
 
   .dt-btn {
@@ -30,7 +31,6 @@ $buttonFontSize: 36px;
     text-align:center;
     border: 1px solid #255a88;
     border-top-width: 0px;
-    border-right-width: 0px;
     padding: 0;
     cursor: pointer;
     -moz-user-select: none;

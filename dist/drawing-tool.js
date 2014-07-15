@@ -162,7 +162,14 @@ DrawingTool.prototype.clearSelection = function () {
 };
 
 DrawingTool.prototype.save = function () {
-  return JSON.stringify(this.canvas.toJSON());
+  return JSON.stringify({
+    dt: {
+      // Drawing Tool specific options.
+      width: this.options.width,
+      height: this.options.height
+    },
+    canvas: this.canvas.toJSON()
+  });
 };
 
 DrawingTool.prototype.load = function (jsonString) {
@@ -171,13 +178,24 @@ DrawingTool.prototype.load = function (jsonString) {
     this.clear(true);
     return;
   }
+
+  var state = JSON.parse(jsonString);
+
+  // Process Drawing Tool specific options.
+  var dtState = state.dt;
+  this.canvas.setDimensions({
+    width: dtState.width,
+    height: dtState.height
+  });
+
+  // Load FabricJS state.
   // Note that we remove background definition before we call #loadFromJSON
   // and then add the same background manually. Otherwise, the background
   // won't be loaded due to CORS error (FabricJS bug?).
-  var state = JSON.parse(jsonString);
-  var backgroundImage = state.backgroundImage;
-  delete state.backgroundImage;
-  this.canvas.loadFromJSON(state);
+  var canvasState = state.canvas;
+  var backgroundImage = canvasState.backgroundImage;
+  delete canvasState.backgroundImage;
+  this.canvas.loadFromJSON(canvasState);
   if (backgroundImage !== undefined) {
     var imageSrc = backgroundImage.src;
     delete backgroundImage.src;

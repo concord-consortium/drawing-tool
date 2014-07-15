@@ -106,7 +106,6 @@ var rescale2resize    = require('scripts/rescale-2-resize');
 var multitouchSupport = require('scripts/multi-touch-support');
 var UI                = require('scripts/ui');
 
-var CANVAS_ID = 'dt-drawing-area';
 var DEF_OPTIONS = {
   width: 700,
   height: 500
@@ -116,7 +115,7 @@ var DEF_OPTIONS = {
 function DrawingTool(selector, options) {
   this.options = $.extend(true, {}, DEF_OPTIONS, options);
 
-  this.ui = new UI(this, selector, CANVAS_ID, this.options);
+  this.ui = new UI(this, selector, this.options);
   this._initFabricJS();
 
   // Tools
@@ -288,7 +287,7 @@ DrawingTool.prototype._setBackgroundImage = function (imageSrc, options, backgro
 };
 
 DrawingTool.prototype._initFabricJS = function () {
-  this.canvas = new fabric.Canvas(CANVAS_ID);
+  this.canvas = new fabric.Canvas(this.ui.$canvas[0]);
   // Target find would be more tolerant on touch devices.
   this.canvas.perPixelTargetFind = !fabric.isTouchSupported;
 
@@ -1531,9 +1530,8 @@ module.exports = SquareTool;
 });
 
 require.register("scripts/ui", function(exports, require, module) {
-function UI (master, selector, CANVAS_ID, options) {
+function UI (master, selector, options) {
   this.master = master;
-  this.CANVAS_ID = CANVAS_ID;
   this.options = options;
 
   this._initUI(selector);
@@ -1590,8 +1588,7 @@ UI.prototype._initUI = function (selector) {
   var $canvasContainer = $('<div class="dt-canvas-container">')
     .attr('tabindex', 0) // makes the canvas focusable for keyboard events
     .appendTo(this.$element);
-  $('<canvas>')
-    .attr('id', this.CANVAS_ID)
+  this.$canvas = $('<canvas>')
     .attr('width', this.options.width + 'px')
     .attr('height', this.options.height + 'px')
     .appendTo($canvasContainer);

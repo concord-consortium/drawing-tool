@@ -1,6 +1,5 @@
-function UI (master, selector, CANVAS_ID, options) {
+function UI (master, selector, options) {
   this.master = master;
-  this.CANVAS_ID = CANVAS_ID;
   this.options = options;
 
   this._initUI(selector);
@@ -57,8 +56,7 @@ UI.prototype._initUI = function (selector) {
   var $canvasContainer = $('<div class="dt-canvas-container">')
     .attr('tabindex', 0) // makes the canvas focusable for keyboard events
     .appendTo(this.$element);
-  $('<canvas>')
-    .attr('id', this.CANVAS_ID)
+  this.$canvas = $('<canvas>')
     .attr('width', this.options.width + 'px')
     .attr('height', this.options.height + 'px')
     .appendTo($canvasContainer);

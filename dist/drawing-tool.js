@@ -165,8 +165,8 @@ DrawingTool.prototype.save = function () {
   return JSON.stringify({
     dt: {
       // Drawing Tool specific options.
-      width: this.options.width,
-      height: this.options.height
+      width: this.canvas.getWidth(),
+      height: this.canvas.getHeight()
     },
     canvas: this.canvas.toJSON()
   });

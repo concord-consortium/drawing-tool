@@ -61,6 +61,11 @@ DrawingTool.prototype.save = function () {
 };
 
 DrawingTool.prototype.load = function (jsonString) {
+  // Undefined, null or empty string just clears drawing tool.
+  if (!jsonString) {
+    this.clear(true);
+    return;
+  }
   // Note that we remove background definition before we call #loadFromJSON
   // and then add the same background manually. Otherwise, the background
   // won't be loaded due to CORS error (FabricJS bug?).

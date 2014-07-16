@@ -91,16 +91,6 @@
   globals.require.brunch = true;
 })();
 require.register("scripts/drawing-tool", function(exports, require, module) {
-var Tool              = require('scripts/tool');
-var ShapeTool         = require('scripts/tools/shape-tool');
-var SelectionTool     = require('scripts/tools/select-tool');
-var LineTool          = require('scripts/tools/line-tool');
-var RectangleTool     = require('scripts/tools/rect-tool');
-var EllipseTool       = require('scripts/tools/ellipse-tool');
-var SquareTool        = require('scripts/tools/square-tool');
-var CircleTool        = require('scripts/tools/circle-tool');
-var FreeDrawTool      = require('scripts/tools/free-draw');
-var DeleteTool        = require('scripts/tools/delete-tool');
 var Util              = require('scripts/util');
 var rescale2resize    = require('scripts/rescale-2-resize');
 var multitouchSupport = require('scripts/multi-touch-support');
@@ -115,37 +105,11 @@ var DEF_OPTIONS = {
 function DrawingTool(selector, options) {
   this.options = $.extend(true, {}, DEF_OPTIONS, options);
 
+  this.tools = {};
+
   this.ui = new UI(this, selector, this.options);
   this._initFabricJS();
-
-  // Tools
-  this.tools = {};
-  var selectionTool = new SelectionTool("Selection Tool", "select", this);
-  var lineTool = new LineTool("Line Tool", "line", this);
-  var rectangleTool = new RectangleTool("Rectangle Tool", "rect", this);
-  var ellipseTool = new EllipseTool("Ellipse Tool", "ellipse", this);
-  var squareTool = new SquareTool("Square Tool", "square", this);
-  var circleTool = new CircleTool("Circle Tool", "circle", this);
-  var freeDrawTool = new FreeDrawTool("Free Draw Tool", "free", this);
-  var deleteTool = new DeleteTool("Delete Tool", "trash", this);
-
-  var palettes = {
-    shapes: ['-select', 'rect', 'ellipse', 'square', 'circle'],
-    main: ['select', 'line', '-shapes', 'free', 'trash']
-  }
-
-  this.ui.initTools(palettes);
-
-  this.ui.setLabel(selectionTool.selector,  "S");
-  this.ui.setLabel(lineTool.selector,       "L");
-  this.ui.setLabel(rectangleTool.selector,  "R");
-  this.ui.setLabel(ellipseTool.selector,    "E");
-  this.ui.setLabel(squareTool.selector,     "Sq");
-  this.ui.setLabel(circleTool.selector,     "C");
-  this.ui.setLabel(freeDrawTool.selector,   "F");
-  this.ui.setLabel(deleteTool.selector,     "Tr");
-  this.ui.setLabel("-shapes",               "Sh");
-  this.ui.setLabel("-select",               "S");
+  this.ui.initTools();
 
   // Apply a fix that changes native FabricJS rescaling behavior into resizing.
   rescale2resize(this.canvas);
@@ -323,6 +287,19 @@ DrawingTool.prototype._initFabricJS = function () {
 };
 
 module.exports = DrawingTool;
+
+});
+
+require.register("scripts/dt-main", function(exports, require, module) {
+var DrawingTool  = require('drawing-tool');
+var UI           = require('ui');
+
+function DTMain (selector) {
+  this.drawingTool = new DrawingTool (selector);
+  this.ui = new UI (drawingTool, selector, options);
+}
+
+module.exports = DTMain;
 
 });
 
@@ -1530,6 +1507,16 @@ module.exports = SquareTool;
 });
 
 require.register("scripts/ui", function(exports, require, module) {
+var Tool              = require('scripts/tool');
+var SelectionTool     = require('scripts/tools/select-tool');
+var LineTool          = require('scripts/tools/line-tool');
+var RectangleTool     = require('scripts/tools/rect-tool');
+var EllipseTool       = require('scripts/tools/ellipse-tool');
+var SquareTool        = require('scripts/tools/square-tool');
+var CircleTool        = require('scripts/tools/circle-tool');
+var FreeDrawTool      = require('scripts/tools/free-draw');
+var DeleteTool        = require('scripts/tools/delete-tool');
+
 function UI (master, selector, options) {
   this.master = master;
   this.options = options;
@@ -1537,9 +1524,33 @@ function UI (master, selector, options) {
   this._initUI(selector);
 }
 
-UI.prototype.initTools = function(palettes) {
+UI.prototype.initTools = function(p) {
+  var selectionTool = new SelectionTool("Selection Tool", "select", this.master);
+  var lineTool = new LineTool("Line Tool", "line", this.master);
+  var rectangleTool = new RectangleTool("Rectangle Tool", "rect", this.master);
+  var ellipseTool = new EllipseTool("Ellipse Tool", "ellipse", this.master);
+  var squareTool = new SquareTool("Square Tool", "square", this.master);
+  var circleTool = new CircleTool("Circle Tool", "circle", this.master);
+  var freeDrawTool = new FreeDrawTool("Free Draw Tool", "free", this.master);
+  var deleteTool = new DeleteTool("Delete Tool", "trash", this.master);
+
+  var palettes = p || {
+    shapes: ['-select', 'rect', 'ellipse', 'square', 'circle'],
+    main: ['select', 'line', '-shapes', 'free', 'trash']
+  };
   this._initToolUI(palettes);
   this._initButtonUpdates();
+
+  this.setLabel(selectionTool.selector,  "S");
+  this.setLabel(lineTool.selector,       "L");
+  this.setLabel(rectangleTool.selector,  "R");
+  this.setLabel(ellipseTool.selector,    "E");
+  this.setLabel(squareTool.selector,     "Sq");
+  this.setLabel(circleTool.selector,     "C");
+  this.setLabel(freeDrawTool.selector,   "F");
+  this.setLabel(deleteTool.selector,     "Tr");
+  this.setLabel("-shapes",               "Sh");
+  this.setLabel("-select",               "S");
 
   this.palettes.main.$palette.show();
 
@@ -1702,11 +1713,6 @@ function BtnGroup (groupName, buttons) {
   for (; j < this.$buttons.length &&
     this.$buttons[j].attr('id').charAt(0) === '-'; j++) {}
   this.currentTool = buttons[j].attr('id');
-};
-
-BtnGroup.prototype.activate = function () {
-  this.$palette.show();
-  return this.$currentTool.attr('id');
 };
 
 module.exports = UI;

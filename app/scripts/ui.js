@@ -1,3 +1,13 @@
+var Tool              = require('scripts/tool');
+var SelectionTool     = require('scripts/tools/select-tool');
+var LineTool          = require('scripts/tools/line-tool');
+var RectangleTool     = require('scripts/tools/rect-tool');
+var EllipseTool       = require('scripts/tools/ellipse-tool');
+var SquareTool        = require('scripts/tools/square-tool');
+var CircleTool        = require('scripts/tools/circle-tool');
+var FreeDrawTool      = require('scripts/tools/free-draw');
+var DeleteTool        = require('scripts/tools/delete-tool');
+
 function UI (master, selector, options) {
   this.master = master;
   this.options = options;
@@ -5,9 +15,33 @@ function UI (master, selector, options) {
   this._initUI(selector);
 }
 
-UI.prototype.initTools = function(palettes) {
+UI.prototype.initTools = function(p) {
+  var selectionTool = new SelectionTool("Selection Tool", "select", this.master);
+  var lineTool = new LineTool("Line Tool", "line", this.master);
+  var rectangleTool = new RectangleTool("Rectangle Tool", "rect", this.master);
+  var ellipseTool = new EllipseTool("Ellipse Tool", "ellipse", this.master);
+  var squareTool = new SquareTool("Square Tool", "square", this.master);
+  var circleTool = new CircleTool("Circle Tool", "circle", this.master);
+  var freeDrawTool = new FreeDrawTool("Free Draw Tool", "free", this.master);
+  var deleteTool = new DeleteTool("Delete Tool", "trash", this.master);
+
+  var palettes = p || {
+    shapes: ['-select', 'rect', 'ellipse', 'square', 'circle'],
+    main: ['select', 'line', '-shapes', 'free', 'trash']
+  };
   this._initToolUI(palettes);
   this._initButtonUpdates();
+
+  this.setLabel(selectionTool.selector,  "S");
+  this.setLabel(lineTool.selector,       "L");
+  this.setLabel(rectangleTool.selector,  "R");
+  this.setLabel(ellipseTool.selector,    "E");
+  this.setLabel(squareTool.selector,     "Sq");
+  this.setLabel(circleTool.selector,     "C");
+  this.setLabel(freeDrawTool.selector,   "F");
+  this.setLabel(deleteTool.selector,     "Tr");
+  this.setLabel("-shapes",               "Sh");
+  this.setLabel("-select",               "S");
 
   this.palettes.main.$palette.show();
 
@@ -170,11 +204,6 @@ function BtnGroup (groupName, buttons) {
   for (; j < this.$buttons.length &&
     this.$buttons[j].attr('id').charAt(0) === '-'; j++) {}
   this.currentTool = buttons[j].attr('id');
-};
-
-BtnGroup.prototype.activate = function () {
-  this.$palette.show();
-  return this.$currentTool.attr('id');
 };
 
 module.exports = UI;

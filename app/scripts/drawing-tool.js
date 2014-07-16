@@ -1,13 +1,3 @@
-var Tool              = require('scripts/tool');
-var ShapeTool         = require('scripts/tools/shape-tool');
-var SelectionTool     = require('scripts/tools/select-tool');
-var LineTool          = require('scripts/tools/line-tool');
-var RectangleTool     = require('scripts/tools/rect-tool');
-var EllipseTool       = require('scripts/tools/ellipse-tool');
-var SquareTool        = require('scripts/tools/square-tool');
-var CircleTool        = require('scripts/tools/circle-tool');
-var FreeDrawTool      = require('scripts/tools/free-draw');
-var DeleteTool        = require('scripts/tools/delete-tool');
 var Util              = require('scripts/util');
 var rescale2resize    = require('scripts/rescale-2-resize');
 var multitouchSupport = require('scripts/multi-touch-support');
@@ -22,37 +12,11 @@ var DEF_OPTIONS = {
 function DrawingTool(selector, options) {
   this.options = $.extend(true, {}, DEF_OPTIONS, options);
 
+  this.tools = {};
+
   this.ui = new UI(this, selector, this.options);
   this._initFabricJS();
-
-  // Tools
-  this.tools = {};
-  var selectionTool = new SelectionTool("Selection Tool", "select", this);
-  var lineTool = new LineTool("Line Tool", "line", this);
-  var rectangleTool = new RectangleTool("Rectangle Tool", "rect", this);
-  var ellipseTool = new EllipseTool("Ellipse Tool", "ellipse", this);
-  var squareTool = new SquareTool("Square Tool", "square", this);
-  var circleTool = new CircleTool("Circle Tool", "circle", this);
-  var freeDrawTool = new FreeDrawTool("Free Draw Tool", "free", this);
-  var deleteTool = new DeleteTool("Delete Tool", "trash", this);
-
-  var palettes = {
-    shapes: ['-select', 'rect', 'ellipse', 'square', 'circle'],
-    main: ['select', 'line', '-shapes', 'free', 'trash']
-  }
-
-  this.ui.initTools(palettes);
-
-  this.ui.setLabel(selectionTool.selector,  "S");
-  this.ui.setLabel(lineTool.selector,       "L");
-  this.ui.setLabel(rectangleTool.selector,  "R");
-  this.ui.setLabel(ellipseTool.selector,    "E");
-  this.ui.setLabel(squareTool.selector,     "Sq");
-  this.ui.setLabel(circleTool.selector,     "C");
-  this.ui.setLabel(freeDrawTool.selector,   "F");
-  this.ui.setLabel(deleteTool.selector,     "Tr");
-  this.ui.setLabel("-shapes",               "Sh");
-  this.ui.setLabel("-select",               "S");
+  this.ui.initTools();
 
   // Apply a fix that changes native FabricJS rescaling behavior into resizing.
   rescale2resize(this.canvas);

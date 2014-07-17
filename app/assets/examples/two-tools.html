@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>HTML5 Drawing Tool Demo</title>
+    <link rel="stylesheet" type="text/css" href="../drawing-tool.css">
+    <style type="text/css">
+      body {
+        font-family: Arial;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container" style="
+      padding: 0;
+      margin: 0;
+      width: 100%;">
+        <h1>HTML5 Drawing Tool</h1>
+        <div id="drawing-tool"></div>
+        <div id="drawing-tool-2"></div>
+    </div>
+  <script src="../vendor.js"></script>
+  <script src="../drawing-tool.js"></script>
+  <script>
+    var drawingTool = new DrawingTool("#drawing-tool");
+    var drawingTool2 = new DrawingTool("#drawing-tool-2");
+  </script>
+  </body>
+</html>

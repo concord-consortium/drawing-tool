@@ -443,6 +443,25 @@ var resizers = {
 
     if (s.y1 > s.y2) { s.y1 = s.top + s.height; s.y2 = s.top; }
     else { s.y2 = s.top + s.height; s.y1 = s.top; }
+  },
+  path: function (s) {
+    // we have two options to adjust width/height:
+
+    // 1) this makes inaccurate bounding box dimensions but
+    //    eliminates "floating" or weird behavior at edges
+    basicWidthHeightTransform(s);
+
+    // 2) this approach "floats" and has strange bugs but
+    //    generates accurate bounding boxes
+    // s.width = s.width * s.scaleX;
+    // s.height = s.height * s.scaleY;
+
+    for (var i = 0; i < s.path.length; i++) {
+      s.path[i][1] *= s.scaleX;
+      s.path[i][2] *= s.scaleY;
+      s.path[i][3] *= s.scaleX;
+      s.path[i][4] *= s.scaleY;
+    }
   }
 };
 
@@ -1521,7 +1540,10 @@ function UI (master, selector, options) {
   this._initUI(selector);
 }
 
+// initialize tools, config palettes, set labels, and setup trash behavior
 UI.prototype.initTools = function(p) {
+
+  // Initialize all the tools, they add themselves to the master.tools list
   var selectionTool = new SelectionTool("Selection Tool", "select", this.master);
   var lineTool = new LineTool("Line Tool", "line", this.master);
   var rectangleTool = new RectangleTool("Rectangle Tool", "rect", this.master);
@@ -1531,13 +1553,16 @@ UI.prototype.initTools = function(p) {
   var freeDrawTool = new FreeDrawTool("Free Draw Tool", "free", this.master);
   var deleteTool = new DeleteTool("Delete Tool", "trash", this.master);
 
+  // tool palettes
+  // TODO: document this portion
   var palettes = p || {
     shapes: ['-select', 'rect', 'ellipse', 'square', 'circle'],
     main: ['select', 'line', '-shapes', 'free', 'trash']
   };
-  this._initToolUI(palettes);
-  this._initButtonUpdates();
+  this._initToolUI(palettes); // initialize the palettes and buttons
+  this._initButtonUpdates(); // set up the listeners
 
+  // set the labels
   this.setLabel(selectionTool.selector,  "S");
   this.setLabel(lineTool.selector,       "L");
   this.setLabel(rectangleTool.selector,  "R");
@@ -1546,15 +1571,17 @@ UI.prototype.initTools = function(p) {
   this.setLabel(circleTool.selector,     "C");
   this.setLabel(freeDrawTool.selector,   "F");
   this.setLabel(deleteTool.selector,     "Tr");
-  this.setLabel("-shapes",               "Sh");
-  this.setLabel("-select",               "S");
+  this.setLabel("-shapes",  "Sh"); // immediately replaced by the currently active shape tool (rect)
+  this.setLabel("-select",  "S");
 
-  this._toolButtonClicked('select');
-
+  // show/hide trash button when objects are selected/deselected
   var trash = this.$buttons.trash;
   trash.hide();
   this.master.canvas.on("object:selected", function () { trash.show(); });
   this.master.canvas.on("selection:cleared", function () { trash.hide(); });
+
+  // start on the select tool and show the main menu
+  this.master.chooseTool('select');
 };
 
 // Note: this function is bypassed in the _paletteButtonClicked function
@@ -1680,18 +1707,20 @@ UI.prototype._initToolUI = function (palettes) {
   this.palettes = {};
 
   for (var palette in palettes) {
-    var buttons = [];
+    var buttons = []; // array to be sent to the `BtnGroup` constructor
     var btnNames = palettes[palette];
 
     for (var i = 0; i < btnNames.length; i++) {
       var $btn;
 
       if (btnNames[i].charAt(0) === '-') {
+
         if (btnNames[i].substring(1) in palettes) {
           $btn = this._initBtn(btnNames[i], 'palette');
         } else {
           $btn = this._initBtn(btnNames[i], 'toolLink');
         }
+
       } else { $btn = this._initBtn(btnNames[i]); }
 
       buttons[i] = $btn;
@@ -1706,25 +1735,27 @@ UI.prototype._initToolUI = function (palettes) {
 // initializes each button
 UI.prototype._initBtn = function (toolId, type) {
   var $element = $('<div class="dt-btn">');
-  if (!type) {
+  if (!type) { // normal button
     $element.attr('id', toolId)
       .data('dt-btn-type', 'tool');
-  } else if (type === 'palette') {
+  } else if (type === 'palette') { // button that links to a subpalette
     $element.data('dt-btn-type', 'palette')
       .data('dt-link-id', toolId.substring(1))
       .addClass('dt-link-'+toolId.substring(1))
       .addClass('dt-link');
-  } else if (type === 'toolLink') {
+  } else if (type === 'toolLink') { // link to tool (ex: selector)
     $element.data('dt-btn-type', 'toolLink')
       .data('dt-link-id', toolId.substring(1))
       .addClass('dt-link-'+toolId.substring(1))
       .addClass('dt-link');
   }
-  $('<span>')
+  $('<span>') // for the label
     .appendTo($element);
   return $element;
 };
 
+// Object contains the jQuery div with the subpalette
+// in addition to other information (name and currently used tool)
 function BtnGroup (groupName, buttons) {
   this.name = groupName;
   this.$buttons = buttons;

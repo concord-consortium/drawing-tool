@@ -43,17 +43,23 @@ UI.prototype.initTools = function(p) {
   this.setLabel("-shapes",               "Sh");
   this.setLabel("-select",               "S");
 
-  this.palettes.main.$palette.show();
+  this._toolButtonClicked('select');
 
   var trash = this.$buttons.trash;
   trash.hide();
   this.master.canvas.on("object:selected", function () { trash.show(); });
   this.master.canvas.on("selection:cleared", function () { trash.hide(); });
-}
+};
 
-UI.prototype.setLabel = function (toolID, label) {
-  this.$tools.find("#"+toolID).find('span').text(label);
-}
+// Note: this function is bypassed in the _paletteButtonClicked function
+UI.prototype.setLabel = function (toolId, label) {
+  if (toolId.charAt(0) === '-') {
+    var id = toolId.substring(1);
+    this.$tools.find('.dt-link-'+id).find('span').text(label);
+  } else {
+    this.$tools.find("#"+toolId).find('span').text(label);
+  }
+};
 
 UI.prototype._initButtonUpdates = function () {
   // handler that updates UI when the internal tool state changes
@@ -64,20 +70,18 @@ UI.prototype._initButtonUpdates = function () {
   // handler that updates internal state when the UI changes
   var self = this;
   $('.dt-btn').on('click touchstart', function (e) {
-    var id = $(this).attr('id');
-    if (id.charAt(0) == "-") {
-      if (id.substring(1) in self.palettes) {
-        self._paletteButtonClicked(id.substring(1));
-      } else {
-        self._toolButtonClicked(id.substring(1));
-      }
+    if ($(this).data('dt-btn-type') === 'palette') {
+      self._paletteButtonClicked($(this).data('dt-link-id'));
+    } else if ($(this).data('dt-btn-type') === 'toolLink') {
+        self._toolButtonClicked($(this).data('dt-link-id'));
     } else {
-      self._toolButtonClicked(id);
+      self._toolButtonClicked($(this).attr('id'));
     }
     e.preventDefault();
   });
 };
 
+// switches active palette
 UI.prototype._paletteButtonClicked = function (selector) {
   for (var p in this.palettes) {
     if (p === selector) {
@@ -85,12 +89,21 @@ UI.prototype._paletteButtonClicked = function (selector) {
       this.master.chooseTool(this.palettes[p].currentTool);
     } else { this.palettes[p].$palette.hide(); }
   }
+  var links = this.palettes[selector].$palette.find('.dt-link');
+  for (var i = 0; i < links.length; i++) {
+    if ($(links[i]).data('dt-btn-type') === 'palette') {
+      var paletteName = $(links[i]).data('dt-link-id');
+      var currToolId = this.palettes[paletteName].currentTool;
+
+      $(links[i]).find('span').text(this.$tools.find('#'+currToolId).find('span').text());
+    }
+  }
 };
 
 // Updates the UI when the internal state changes
 UI.prototype.updateUI = function (e) {
   var $element = this.$buttons[e.source.selector];
-  if (e.active) { $element.addClass('dt-active') }
+  if (e.active) { $element.addClass('dt-active'); }
   else { $element.removeClass('dt-active'); }
 
   if (e.locked) { $element.addClass('dt-locked'); }
@@ -98,6 +111,7 @@ UI.prototype.updateUI = function (e) {
 };
 
 UI.prototype._toolButtonClicked = function (toolSelector) {
+  console.log(toolSelector);
   var newTool = this.master.tools[toolSelector];
   var $newPalette = this.$buttons[newTool.selector].parent();
   // if the palette that the tool belongs to is not visible
@@ -164,10 +178,16 @@ UI.prototype._initToolUI = function (palettes) {
     var btnNames = palettes[palette];
 
     for (var i = 0; i < btnNames.length; i++) {
-      var $btn = this._initBtn(btnNames[i]);
+      var $btn;
+
       if (btnNames[i].charAt(0) === '-') {
-        $btn.addClass('linkToPalette');
-      }
+        if (btnNames[i].substring(1) in palettes) {
+          $btn = this._initBtn(btnNames[i], 'palette');
+        } else {
+          $btn = this._initBtn(btnNames[i], 'toolLink');
+        }
+      } else { $btn = this._initBtn(btnNames[i]); }
+
       buttons[i] = $btn;
       this.$buttons[btnNames[i]] = $btn;
     }
@@ -178,9 +198,22 @@ UI.prototype._initToolUI = function (palettes) {
 };
 
 // initializes each button
-UI.prototype._initBtn = function (toolId) {
-  var $element = $('<div class="dt-btn">')
-    .attr('id', toolId);
+UI.prototype._initBtn = function (toolId, type) {
+  var $element = $('<div class="dt-btn">');
+  if (!type) {
+    $element.attr('id', toolId)
+      .data('dt-btn-type', 'tool');
+  } else if (type === 'palette') {
+    $element.data('dt-btn-type', 'palette')
+      .data('dt-link-id', toolId.substring(1))
+      .addClass('dt-link-'+toolId.substring(1))
+      .addClass('dt-link');
+  } else if (type === 'toolLink') {
+    $element.data('dt-btn-type', 'toolLink')
+      .data('dt-link-id', toolId.substring(1))
+      .addClass('dt-link-'+toolId.substring(1))
+      .addClass('dt-link');
+  }
   $('<span>')
     .appendTo($element);
   return $element;
@@ -202,8 +235,8 @@ function BtnGroup (groupName, buttons) {
   // not 'link' tool
   var j = 0;
   for (; j < this.$buttons.length &&
-    this.$buttons[j].attr('id').charAt(0) === '-'; j++) {}
+    this.$buttons[j].data('dt-btn-type') !== 'tool'; j++) {}
   this.currentTool = buttons[j].attr('id');
-};
+}
 
 module.exports = UI;

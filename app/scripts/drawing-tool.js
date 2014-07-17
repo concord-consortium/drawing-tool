@@ -21,8 +21,6 @@ function DrawingTool(selector, options) {
   // Apply a fix that changes native FabricJS rescaling behavior into resizing.
   rescale2resize(this.canvas);
   multitouchSupport(this.canvas);
-
-  this.chooseTool("select");
 }
 
 DrawingTool.prototype.clear = function (clearBackground) {

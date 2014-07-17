@@ -60,8 +60,7 @@ Tool.prototype.deactivate = function () {
     var action = this._listeners[i].action;
     this.canvas.off(trigger);
   }
-  this._fireStateEvent()
-  // this.$element.removeClass('dt-active');
+  this._fireStateEvent();
 };
 
 // Add the tool's event listeners to a list that will be added
@@ -86,7 +85,7 @@ Tool.prototype.removeEventListener = function (trigger) {
 // Adds a state listener to the tool
 Tool.prototype.addStateListener = function (stateHandler) {
   this._stateListeners.push(stateHandler);
-}
+};
 
 // Removes a state listener from the tool
 Tool.prototype.removeStateListener = function (stateHandler) {
@@ -96,7 +95,7 @@ Tool.prototype.removeStateListener = function (stateHandler) {
     }
   }
   return false;
-}
+};
 
 Tool.prototype._fireStateEvent = function (extra, self) {
   var e = {
@@ -108,8 +107,8 @@ Tool.prototype._fireStateEvent = function (extra, self) {
   }
   for (var i = 0; i < this._stateListeners.length; i++) {
     // console.log(this._stateListeners[i]);
-    this._stateListeners[i].call(this.master.ui, e)
+    this._stateListeners[i].call(this.master.ui, e);
   }
-}
+};
 
 module.exports = Tool;

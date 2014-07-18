@@ -1613,10 +1613,8 @@ UI.prototype._initButtonUpdates = function () {
 UI.prototype._uiClicked = function (target) {
   if ($(target).data('dt-btn-type') === 'palette') {
     this._paletteButtonClicked($(target).data('dt-target-id'));
-  } else if ($(target).data('dt-btn-type') === 'toolLink') {
-    this._toolButtonClicked($(target).data('dt-target-id'));
   } else {
-    this._toolButtonClicked($(target).data('dt-target'));
+    this._toolButtonClicked($(target).data('dt-target-id'));
   }
 };
 
@@ -1747,7 +1745,7 @@ UI.prototype._initBtn = function (toolId, type) {
   if (!type) { // normal button
     $element.addClass(toolId)
       .data('dt-btn-type', 'tool')
-      .data('dt-target', toolId);
+      .data('dt-target-id', toolId);
   } else if (type === 'palette') { // button that links to a subpalette
     $element.data('dt-btn-type', 'palette')
       .data('dt-target-id', toolId.substring(1))
@@ -1783,7 +1781,7 @@ function BtnGroup (groupName, buttons) {
   var j = 0;
   for (; j < this.$buttons.length &&
     this.$buttons[j].data('dt-btn-type') !== 'tool'; j++) {}
-  this.currentTool = buttons[j].data('dt-target');
+  this.currentTool = buttons[j].data('dt-target-id');
 }
 
 module.exports = UI;

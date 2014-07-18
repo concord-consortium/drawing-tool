@@ -103,6 +103,7 @@ var DEF_OPTIONS = {
 
 // Constructor function.
 function DrawingTool(selector, options) {
+  this.selector = selector;
   this.options = $.extend(true, {}, DEF_OPTIONS, options);
 
   this.tools = {};
@@ -225,7 +226,7 @@ DrawingTool.prototype.resizeCanvasToBackground = function () {
 };
 
 DrawingTool.prototype.chooseTool = function (toolSelector){
-  $("#" + toolSelector).click();
+  $(this.selector).find('.'+toolSelector).click();
 };
 
 // Changing the current tool out of this current tool
@@ -1588,9 +1589,9 @@ UI.prototype.initTools = function(p) {
 UI.prototype.setLabel = function (toolId, label) {
   if (toolId.charAt(0) === '-') {
     var id = toolId.substring(1);
-    this.$tools.find('.dt-link-'+id).find('span').text(label);
+    this.$tools.find('.dt-target-'+id).find('span').text(label);
   } else {
-    this.$tools.find("#"+toolId).find('span').text(label);
+    this.$tools.find("."+toolId).find('span').text(label);
   }
 };
 
@@ -1602,16 +1603,20 @@ UI.prototype._initButtonUpdates = function () {
 
   // handler that updates internal state when the UI changes
   var self = this;
-  $('.dt-btn').on('click touchstart', function (e) {
-    if ($(this).data('dt-btn-type') === 'palette') {
-      self._paletteButtonClicked($(this).data('dt-link-id'));
-    } else if ($(this).data('dt-btn-type') === 'toolLink') {
-        self._toolButtonClicked($(this).data('dt-link-id'));
-    } else {
-      self._toolButtonClicked($(this).attr('id'));
-    }
+  this.$tools.find('.dt-btn').on('click touchstart', function (e) {
+    self._uiClicked(this);
     e.preventDefault();
   });
+};
+
+UI.prototype._uiClicked = function (target) {
+  if ($(target).data('dt-btn-type') === 'palette') {
+    this._paletteButtonClicked($(target).data('dt-target-id'));
+  } else if ($(target).data('dt-btn-type') === 'toolLink') {
+    this._toolButtonClicked($(target).data('dt-target-id'));
+  } else {
+    this._toolButtonClicked($(target).data('dt-target'));
+  }
 };
 
 // switches active palette
@@ -1625,27 +1630,17 @@ UI.prototype._paletteButtonClicked = function (selector) {
   var links = this.palettes[selector].$palette.find('.dt-link');
   for (var i = 0; i < links.length; i++) {
     if ($(links[i]).data('dt-btn-type') === 'palette') {
-      var paletteName = $(links[i]).data('dt-link-id');
+      var paletteName = $(links[i]).data('dt-target-id');
       var currToolId = this.palettes[paletteName].currentTool;
-
-      $(links[i]).find('span').text(this.$tools.find('#'+currToolId).find('span').text());
+      $(links[i]).find('span').text(this.$tools.find('.'+currToolId).find('span').text());
     }
   }
-};
-
-// Updates the UI when the internal state changes
-UI.prototype.updateUI = function (e) {
-  var $element = this.$buttons[e.source.selector];
-  if (e.active) { $element.addClass('dt-active'); }
-  else { $element.removeClass('dt-active'); }
-
-  if (e.locked) { $element.addClass('dt-locked'); }
-  else { $element.removeClass('dt-locked'); }
 };
 
 UI.prototype._toolButtonClicked = function (toolSelector) {
   var newTool = this.master.tools[toolSelector];
   var $newPalette = this.$buttons[newTool.selector].parent();
+
   // if the palette that the tool belongs to is not visible
   // then make it visible
   if (!$newPalette.is(':visible')) {
@@ -1683,6 +1678,17 @@ UI.prototype._toolButtonClicked = function (toolSelector) {
   this.palettes[$newPalette.attr('id')].currentTool = newTool.selector;
 
   this.master.canvas.renderAll();
+};
+
+// Updates the UI when the internal state changes
+// object e = {source, active: true/false, locked: true/false}
+UI.prototype.updateUI = function (e) {
+  var $element = this.$buttons[e.source.selector];
+  if (e.active) { $element.addClass('dt-active'); }
+  else { $element.removeClass('dt-active'); }
+
+  if (e.locked) { $element.addClass('dt-locked'); }
+  else { $element.removeClass('dt-locked'); }
 };
 
 // initializes the UI (divs and canvas size)
@@ -1735,17 +1741,18 @@ UI.prototype._initToolUI = function (palettes) {
 UI.prototype._initBtn = function (toolId, type) {
   var $element = $('<div class="dt-btn">');
   if (!type) { // normal button
-    $element.attr('id', toolId)
-      .data('dt-btn-type', 'tool');
+    $element.addClass(toolId)
+      .data('dt-btn-type', 'tool')
+      .data('dt-target', toolId);
   } else if (type === 'palette') { // button that links to a subpalette
     $element.data('dt-btn-type', 'palette')
-      .data('dt-link-id', toolId.substring(1))
-      .addClass('dt-link-'+toolId.substring(1))
+      .data('dt-target-id', toolId.substring(1))
+      .addClass('dt-target-'+toolId.substring(1))
       .addClass('dt-link');
   } else if (type === 'toolLink') { // link to tool (ex: selector)
     $element.data('dt-btn-type', 'toolLink')
-      .data('dt-link-id', toolId.substring(1))
-      .addClass('dt-link-'+toolId.substring(1))
+      .data('dt-target-id', toolId.substring(1))
+      .addClass('dt-target-'+toolId.substring(1))
       .addClass('dt-link');
   }
   $('<span>') // for the label
@@ -1772,7 +1779,7 @@ function BtnGroup (groupName, buttons) {
   var j = 0;
   for (; j < this.$buttons.length &&
     this.$buttons[j].data('dt-btn-type') !== 'tool'; j++) {}
-  this.currentTool = buttons[j].attr('id');
+  this.currentTool = buttons[j].data('dt-target');
 }
 
 module.exports = UI;

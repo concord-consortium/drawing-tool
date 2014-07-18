@@ -10,6 +10,7 @@ var DEF_OPTIONS = {
 
 // Constructor function.
 function DrawingTool(selector, options) {
+  this.selector = selector;
   this.options = $.extend(true, {}, DEF_OPTIONS, options);
 
   this.tools = {};
@@ -132,7 +133,7 @@ DrawingTool.prototype.resizeCanvasToBackground = function () {
 };
 
 DrawingTool.prototype.chooseTool = function (toolSelector){
-  $("#" + toolSelector).click();
+  $(this.selector).find('.'+toolSelector).click();
 };
 
 // Changing the current tool out of this current tool

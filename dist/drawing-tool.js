@@ -1235,8 +1235,6 @@ RectangleTool.prototype.mouseDown = function (e) {
   var x = loc.x;
   var y = loc.y;
 
-  console.log(this.master.state);
-
   this.curr = new fabric.Rect({
     top: y,
     left: x,

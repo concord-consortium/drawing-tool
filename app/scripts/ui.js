@@ -119,7 +119,6 @@ UI.prototype.updateUI = function (e) {
 };
 
 UI.prototype._toolButtonClicked = function (toolSelector) {
-  console.log(toolSelector);
   var newTool = this.master.tools[toolSelector];
   var $newPalette = this.$buttons[newTool.selector].parent();
   // if the palette that the tool belongs to is not visible

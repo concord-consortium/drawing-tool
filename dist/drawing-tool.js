@@ -1582,6 +1582,7 @@ UI.prototype.initTools = function(p) {
   this.master.canvas.on("selection:cleared", function () { trash.hide(); });
 
   // start on the select tool and show the main menu
+  // this.palettes.main.$palette.show();
   this.master.chooseTool('select');
 };
 
@@ -1624,7 +1625,9 @@ UI.prototype._paletteButtonClicked = function (selector) {
   for (var p in this.palettes) {
     if (p === selector) {
       this.palettes[p].$palette.show();
-      this.master.chooseTool(this.palettes[p].currentTool);
+      if (this.master.currentTool.selector !== this.palettes[p].currentTool) {
+        this.master.chooseTool(this.palettes[p].currentTool);
+      }
     } else { this.palettes[p].$palette.hide(); }
   }
   var links = this.palettes[selector].$palette.find('.dt-link');
@@ -1640,12 +1643,6 @@ UI.prototype._paletteButtonClicked = function (selector) {
 UI.prototype._toolButtonClicked = function (toolSelector) {
   var newTool = this.master.tools[toolSelector];
   var $newPalette = this.$buttons[newTool.selector].parent();
-
-  // if the palette that the tool belongs to is not visible
-  // then make it visible
-  if (!$newPalette.is(':visible')) {
-    this._paletteButtonClicked($newPalette.attr('id'));
-  }
 
   if (this.master.currentTool !== undefined &&
     this.master.currentTool.selector === toolSelector) {
@@ -1676,6 +1673,13 @@ UI.prototype._toolButtonClicked = function (toolSelector) {
   newTool.setActive(true);
 
   this.palettes[$newPalette.attr('id')].currentTool = newTool.selector;
+
+  // if the palette that the tool belongs to is not visible
+  // then make it visible
+  if (!$newPalette.is(':visible')) {
+    // TODO: Remove usage of the palette ID
+    this._paletteButtonClicked($newPalette.attr('id'));
+  }
 
   this.master.canvas.renderAll();
 };

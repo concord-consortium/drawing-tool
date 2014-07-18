@@ -13,8 +13,6 @@ function LineTool(name, selector, drawTool) {
   this.addEventListener("mouse:move", function (e) { self.mouseMove(e); });
   this.addEventListener("mouse:up", function (e) { self.mouseUp(e); });
 
-  // this.setLabel('L');
-
   fabric.Line.prototype.is = function (obj) {
     return this === obj || this.ctp[0] === obj || this.ctp[1] === obj;
   };
@@ -64,7 +62,10 @@ LineTool.prototype.mouseDown = function (e) {
   this.curr = new fabric.Line([x,y,x,y], {
     selectable: false,
     hasControls: false,
-    hasBorders: false
+    hasBorders: false,
+    fill: this.master.state.fill,
+    stroke: this.master.state.color,
+    strokeWidth: this.master.state.strokeWidth
   });
   this.canvas.add(this.curr);
 };

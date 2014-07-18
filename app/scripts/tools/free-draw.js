@@ -8,7 +8,10 @@ function FreeDrawTool(name, selector, drawTool) {
   this.addEventListener("mouse:down", function (e) { self.mouseDown(e); });
   this.addEventListener("mouse:up", function (e) { self.mouseUp(e); });
 
-  // this.setLabel('F');
+  this.canvas.freeDrawingBrush.color = this.master.state.color;
+  this.canvas.freeDrawingBrush.width = this.master.state.strokeWidth;
+
+  // TODO: add state listener for color and width
 }
 
 inherit(FreeDrawTool, ShapeTool);

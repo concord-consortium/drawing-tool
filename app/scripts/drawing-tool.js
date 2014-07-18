@@ -8,10 +8,18 @@ var DEF_OPTIONS = {
   height: 500
 };
 
+var DEF_STATE = {
+  color: "rgba(100,200,200,.75)",
+  strokeWidth: 10,
+  fill: ""
+}
+
 // Constructor function.
-function DrawingTool(selector, options) {
+function DrawingTool(selector, options, settings) {
   this.selector = selector;
   this.options = $.extend(true, {}, DEF_OPTIONS, options);
+
+  this.state = $.extend(true, {}, DEF_STATE, settings);
 
   this.tools = {};
 
@@ -82,18 +90,21 @@ DrawingTool.prototype.load = function (jsonString) {
 };
 
 DrawingTool.prototype.setStrokeColor = function (color) {
-  fabric.Object.prototype.stroke = color;
+  // fabric.Object.prototype.stroke = color;
   this.canvas.freeDrawingBrush.color = color;
   fabric.Image.prototype.stroke = null;
+  this.state.color = color;
 };
 
 DrawingTool.prototype.setStrokeWidth = function (width) {
-  fabric.Object.prototype.strokeWidth = width;
-  this.canvas.freeDrawingBrush.width = width;
+  // fabric.Object.prototype.strokeWidth = width;
+  // this.canvas.freeDrawingBrush.width = width;
+  this.state.strokeWidth = width;
 };
 
 DrawingTool.prototype.setFill = function (color) {
-  fabric.Object.prototype.fill = color;
+  // fabric.Object.prototype.fill = color;
+  this.state.fill = color;
 };
 
 DrawingTool.prototype.setBackgroundImage = function (imageSrc, fit) {
@@ -189,6 +200,7 @@ DrawingTool.prototype._initFabricJS = function () {
   this.setStrokeWidth(10);
   this.setStrokeColor("rgba(100,200,200,.75)");
   this.setFill("");
+
   this.canvas.setBackgroundColor("#fff");
 };
 

@@ -101,10 +101,18 @@ var DEF_OPTIONS = {
   height: 500
 };
 
+var DEF_STATE = {
+  color: "rgba(100,200,200,.75)",
+  strokeWidth: 10,
+  fill: ""
+}
+
 // Constructor function.
-function DrawingTool(selector, options) {
+function DrawingTool(selector, options, settings) {
   this.selector = selector;
   this.options = $.extend(true, {}, DEF_OPTIONS, options);
+
+  this.state = $.extend(true, {}, DEF_STATE, settings);
 
   this.tools = {};
 
@@ -175,18 +183,21 @@ DrawingTool.prototype.load = function (jsonString) {
 };
 
 DrawingTool.prototype.setStrokeColor = function (color) {
-  fabric.Object.prototype.stroke = color;
+  // fabric.Object.prototype.stroke = color;
   this.canvas.freeDrawingBrush.color = color;
   fabric.Image.prototype.stroke = null;
+  this.state.color = color;
 };
 
 DrawingTool.prototype.setStrokeWidth = function (width) {
-  fabric.Object.prototype.strokeWidth = width;
-  this.canvas.freeDrawingBrush.width = width;
+  // fabric.Object.prototype.strokeWidth = width;
+  // this.canvas.freeDrawingBrush.width = width;
+  this.state.strokeWidth = width;
 };
 
 DrawingTool.prototype.setFill = function (color) {
-  fabric.Object.prototype.fill = color;
+  // fabric.Object.prototype.fill = color;
+  this.state.fill = color;
 };
 
 DrawingTool.prototype.setBackgroundImage = function (imageSrc, fit) {
@@ -282,6 +293,7 @@ DrawingTool.prototype._initFabricJS = function () {
   this.setStrokeWidth(10);
   this.setStrokeColor("rgba(100,200,200,.75)");
   this.setFill("");
+
   this.canvas.setBackgroundColor("#fff");
 };
 
@@ -669,7 +681,10 @@ CircleTool.prototype.mouseDown = function (e) {
     left: x,
     radius: 0.1,
     lockUniScaling: true,
-    selectable: false
+    selectable: false,
+    fill: this.master.state.fill,
+    stroke: this.master.state.color,
+    strokeWidth: this.master.state.strokeWidth
   });
   this.canvas.add(this.curr);
 };
@@ -823,7 +838,10 @@ EllipseTool.prototype.mouseDown = function (e) {
     left: x,
     rx: 0.1,
     ry: 0.1,
-    selectable: false
+    selectable: false,
+    fill: this.master.state.fill,
+    stroke: this.master.state.color,
+    strokeWidth: this.master.state.strokeWidth
   });
   this.canvas.add(this.curr);
 };
@@ -910,7 +928,10 @@ function FreeDrawTool(name, selector, drawTool) {
   this.addEventListener("mouse:down", function (e) { self.mouseDown(e); });
   this.addEventListener("mouse:up", function (e) { self.mouseUp(e); });
 
-  // this.setLabel('F');
+  this.canvas.freeDrawingBrush.color = this.master.state.color;
+  this.canvas.freeDrawingBrush.width = this.master.state.strokeWidth;
+
+  // TODO: add state listener for color and width
 }
 
 inherit(FreeDrawTool, ShapeTool);
@@ -974,8 +995,6 @@ function LineTool(name, selector, drawTool) {
   this.addEventListener("mouse:move", function (e) { self.mouseMove(e); });
   this.addEventListener("mouse:up", function (e) { self.mouseUp(e); });
 
-  // this.setLabel('L');
-
   fabric.Line.prototype.is = function (obj) {
     return this === obj || this.ctp[0] === obj || this.ctp[1] === obj;
   };
@@ -1025,7 +1044,10 @@ LineTool.prototype.mouseDown = function (e) {
   this.curr = new fabric.Line([x,y,x,y], {
     selectable: false,
     hasControls: false,
-    hasBorders: false
+    hasBorders: false,
+    fill: this.master.state.fill,
+    stroke: this.master.state.color,
+    strokeWidth: this.master.state.strokeWidth
   });
   this.canvas.add(this.curr);
 };
@@ -1199,8 +1221,6 @@ function RectangleTool(name, selector, drawTool) {
   this.addEventListener("mouse:down", function (e) { self.mouseDown(e); });
   this.addEventListener("mouse:move", function (e) { self.mouseMove(e); });
   this.addEventListener("mouse:up", function (e) { self.mouseUp(e); });
-
-   // this.setLabel('R');
 }
 
 inherit(RectangleTool, ShapeTool);
@@ -1215,12 +1235,17 @@ RectangleTool.prototype.mouseDown = function (e) {
   var x = loc.x;
   var y = loc.y;
 
+  console.log(this.master.state);
+
   this.curr = new fabric.Rect({
     top: y,
     left: x,
     width: 0,
     height: 0,
-    selectable: false
+    selectable: false,
+    fill: this.master.state.fill,
+    stroke: this.master.state.color,
+    strokeWidth: this.master.state.strokeWidth
   });
   this.canvas.add(this.curr);
 };
@@ -1451,8 +1476,6 @@ function SquareTool(name, selector, drawTool) {
   this.addEventListener("mouse:down", function (e) { self.mouseDown(e); });
   this.addEventListener("mouse:move", function (e) { self.mouseMove(e); });
   this.addEventListener("mouse:up", function (e) { self.mouseUp(e); });
-
-  // this.setLabel('Sq');
 }
 
 inherit(SquareTool, ShapeTool);
@@ -1473,6 +1496,9 @@ SquareTool.prototype.mouseDown = function (e) {
     height: 0,
     selectable: false,
     lockUniScaling: true, // it's a square!
+    fill: this.master.state.fill,
+    stroke: this.master.state.color,
+    strokeWidth: this.master.state.strokeWidth
   });
   this.canvas.add(this.curr);
 };

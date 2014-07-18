@@ -9,8 +9,6 @@ function SquareTool(name, selector, drawTool) {
   this.addEventListener("mouse:down", function (e) { self.mouseDown(e); });
   this.addEventListener("mouse:move", function (e) { self.mouseMove(e); });
   this.addEventListener("mouse:up", function (e) { self.mouseUp(e); });
-
-  // this.setLabel('Sq');
 }
 
 inherit(SquareTool, ShapeTool);
@@ -31,6 +29,9 @@ SquareTool.prototype.mouseDown = function (e) {
     height: 0,
     selectable: false,
     lockUniScaling: true, // it's a square!
+    fill: this.master.state.fill,
+    stroke: this.master.state.color,
+    strokeWidth: this.master.state.strokeWidth
   });
   this.canvas.add(this.curr);
 };

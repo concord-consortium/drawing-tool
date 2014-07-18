@@ -9,8 +9,6 @@ function RectangleTool(name, selector, drawTool) {
   this.addEventListener("mouse:down", function (e) { self.mouseDown(e); });
   this.addEventListener("mouse:move", function (e) { self.mouseMove(e); });
   this.addEventListener("mouse:up", function (e) { self.mouseUp(e); });
-
-   // this.setLabel('R');
 }
 
 inherit(RectangleTool, ShapeTool);
@@ -25,12 +23,17 @@ RectangleTool.prototype.mouseDown = function (e) {
   var x = loc.x;
   var y = loc.y;
 
+  console.log(this.master.state);
+
   this.curr = new fabric.Rect({
     top: y,
     left: x,
     width: 0,
     height: 0,
-    selectable: false
+    selectable: false,
+    fill: this.master.state.fill,
+    stroke: this.master.state.color,
+    strokeWidth: this.master.state.strokeWidth
   });
   this.canvas.add(this.curr);
 };

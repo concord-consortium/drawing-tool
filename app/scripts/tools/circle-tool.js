@@ -29,7 +29,10 @@ CircleTool.prototype.mouseDown = function (e) {
     left: x,
     radius: 0.1,
     lockUniScaling: true,
-    selectable: false
+    selectable: false,
+    fill: this.master.state.fill,
+    stroke: this.master.state.color,
+    strokeWidth: this.master.state.strokeWidth
   });
   this.canvas.add(this.curr);
 };

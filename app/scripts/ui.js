@@ -43,7 +43,7 @@ UI.prototype.initTools = function(p) {
   // set the labels
   this.setLabel(selectionTool.selector,  "S");
   this.setLabel(lineTool.selector,       "L");
-  this.setLabel(arrowTool.selector,      "A")
+  this.setLabel(arrowTool.selector,      "A");
   this.setLabel(rectangleTool.selector,  "R");
   this.setLabel(ellipseTool.selector,    "E");
   this.setLabel(squareTool.selector,     "Sq");

@@ -632,6 +632,21 @@ module.exports = Tool;
 
 });
 
+require.register("scripts/tools/arrow-tool", function(exports, require, module) {
+var inherit    = require('scripts/inherit');
+var LineTool   = require('scripts/tools/line-tool');
+var Util       = require('scripts/util');
+
+function ArrowTool(name, selector, drawTool) {
+  LineTool.call(this, name, selector, drawTool);
+}
+
+inherit (ArrowTool, LineTool);
+
+module.exports = ArrowTool;
+
+});
+
 require.register("scripts/tools/circle-tool", function(exports, require, module) {
 var inherit   = require('scripts/inherit');
 var ShapeTool = require('scripts/tools/shape-tool');
@@ -1102,7 +1117,9 @@ LineTool.prototype._makePoint = function(l, t, s, source, i){
     hasControls: false,
     hasBorders: false,
     line: source,
-    id: i
+    id: i,
+    originX: "left",
+    originY: "top"
   });
   source.canvas.add(point);
   point.on("moving", LineTool.updateLine);
@@ -1533,6 +1550,7 @@ require.register("scripts/ui", function(exports, require, module) {
 var Tool              = require('scripts/tool');
 var SelectionTool     = require('scripts/tools/select-tool');
 var LineTool          = require('scripts/tools/line-tool');
+var ArrowTool         = require('scripts/tools/arrow-tool');
 var RectangleTool     = require('scripts/tools/rect-tool');
 var EllipseTool       = require('scripts/tools/ellipse-tool');
 var SquareTool        = require('scripts/tools/square-tool');
@@ -1553,6 +1571,7 @@ UI.prototype.initTools = function(p) {
   // Initialize all the tools, they add themselves to the master.tools list
   var selectionTool = new SelectionTool("Selection Tool", "select", this.master);
   var lineTool = new LineTool("Line Tool", "line", this.master);
+  var arrowTool = new ArrowTool("Arrow Tool", "arrow", this.master);
   var rectangleTool = new RectangleTool("Rectangle Tool", "rect", this.master);
   var ellipseTool = new EllipseTool("Ellipse Tool", "ellipse", this.master);
   var squareTool = new SquareTool("Square Tool", "square", this.master);
@@ -1563,8 +1582,9 @@ UI.prototype.initTools = function(p) {
   // tool palettes
   // TODO: document this portion
   var palettes = p || {
+    lines: ['-select', 'line', 'arrow'],
     shapes: ['-select', 'rect', 'ellipse', 'square', 'circle'],
-    main: ['select', 'line', '-shapes', 'free', 'trash']
+    main: ['select', '-lines', '-shapes', 'free', 'trash']
   };
   this._initToolUI(palettes); // initialize the palettes and buttons
   this._initButtonUpdates(); // set up the listeners
@@ -1572,6 +1592,7 @@ UI.prototype.initTools = function(p) {
   // set the labels
   this.setLabel(selectionTool.selector,  "S");
   this.setLabel(lineTool.selector,       "L");
+  this.setLabel(arrowTool.selector,      "A")
   this.setLabel(rectangleTool.selector,  "R");
   this.setLabel(ellipseTool.selector,    "E");
   this.setLabel(squareTool.selector,     "Sq");

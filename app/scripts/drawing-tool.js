@@ -9,7 +9,8 @@ var DEF_OPTIONS = {
 };
 
 var DEF_STATE = {
-  color: "rgba(100,200,200,.75)",
+  stroke: "rgba(50,200,100,.9)",
+  // stroke: 'black',
   strokeWidth: 10,
   fill: ""
 }
@@ -93,7 +94,7 @@ DrawingTool.prototype.setStrokeColor = function (color) {
   // fabric.Object.prototype.stroke = color;
   this.canvas.freeDrawingBrush.color = color;
   fabric.Image.prototype.stroke = null;
-  this.state.color = color;
+  this.state.stroke = color;
 };
 
 DrawingTool.prototype.setStrokeWidth = function (width) {

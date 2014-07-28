@@ -1577,7 +1577,7 @@ UI.prototype.initTools = function(p) {
   this.setLabel(squareTool.selector,     "S");
   this.setLabel(circleTool.selector,     "C");
   this.setLabel(freeDrawTool.selector,   "F");
-  this.setLabel(deleteTool.selector,     "Tr");
+  this.setLabel(deleteTool.selector,     "d");
   this.setLabel("-shapes",  "Sh"); // immediately replaced by the currently active shape tool (rect)
   this.setLabel("-select",  "s");
 

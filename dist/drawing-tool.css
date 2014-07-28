@@ -14,14 +14,14 @@
   .dt-container .dt-tools {
     display: inline-block;
     vertical-align: top;
-    width: 60px;
+    width: 44px;
     margin: 0 2px 0 0; }
   .dt-container .dt-btn {
     font-family: 'Concord Consortium Icons';
-    font-size: 36px;
-    line-height: 60px;
-    height: 60px;
-    width: 60px;
+    font-size: 32px;
+    line-height: 50px;
+    height: 44px;
+    width: 44px;
     color: #fff;
     background: #3e8acc;
     vertical-align: middle;

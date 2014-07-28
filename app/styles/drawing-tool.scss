@@ -1,5 +1,6 @@
-$buttonSize: 60px;
-$buttonFontSize: 36px;
+$buttonSize: 44px;
+$buttonFontSize: 32px;
+$buttonLineHeight: 50px;
 
 @font-face {
   font-family: 'Concord Consortium Icons';
@@ -29,7 +30,7 @@ $buttonFontSize: 36px;
     // font-family: Arial;
     font-family: 'Concord Consortium Icons';
     font-size: $buttonFontSize;
-    line-height: $buttonSize;
+    line-height: $buttonLineHeight;
     height: $buttonSize;
     width: $buttonSize;
     color: #fff;

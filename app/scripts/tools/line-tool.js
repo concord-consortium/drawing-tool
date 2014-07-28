@@ -63,11 +63,10 @@ LineTool.prototype.mouseDown = function (e) {
     selectable: false,
     hasControls: false,
     hasBorders: false,
-    // fill: this.master.state.fill,
-    // stroke: this.master.state.color,
-    // strokeWidth: this.master.state.strokeWidth
+    fill: this.master.state.fill,
+    stroke: this.master.state.color,
+    strokeWidth: this.master.state.strokeWidth
   });
-  this.curr.set(this.master.state);
   this.canvas.add(this.curr);
 };
 

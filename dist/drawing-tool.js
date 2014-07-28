@@ -290,10 +290,27 @@ DrawingTool.prototype._initFabricJS = function () {
   // Target find would be more tolerant on touch devices.
   this.canvas.perPixelTargetFind = !fabric.isTouchSupported;
 
+  this.setStrokeWidth(10);
+  this.setStrokeColor("rgba(100,200,200,.75)");
+  this.setFill("");
+
   this.canvas.setBackgroundColor("#fff");
 };
 
 module.exports = DrawingTool;
+
+});
+
+require.register("scripts/dt-main", function(exports, require, module) {
+var DrawingTool  = require('drawing-tool');
+var UI           = require('ui');
+
+function DTMain (selector) {
+  this.drawingTool = new DrawingTool (selector);
+  this.ui = new UI (drawingTool, selector, options);
+}
+
+module.exports = DTMain;
 
 });
 
@@ -910,15 +927,16 @@ function FreeDrawTool(name, selector, drawTool) {
   var self = this;
   this.addEventListener("mouse:down", function (e) { self.mouseDown(e); });
   this.addEventListener("mouse:up", function (e) { self.mouseUp(e); });
+
+  this.canvas.freeDrawingBrush.color = this.master.state.color;
+  this.canvas.freeDrawingBrush.width = this.master.state.strokeWidth;
+
+  // TODO: add state listener for color and width
 }
 
 inherit(FreeDrawTool, ShapeTool);
 
 FreeDrawTool.prototype.mouseDown = function (opt) {
-
-  this.canvas.freeDrawingBrush.color = this.master.state.color;
-  this.canvas.freeDrawingBrush.width = this.master.state.strokeWidth;
-  
   FreeDrawTool.super.mouseDown.call(this, opt);
   if (!this.active) { return; }
   if (!this.canvas.isDrawingMode) {
@@ -1676,13 +1694,13 @@ UI.prototype._toolButtonClicked = function (toolSelector) {
   this.master.currentTool = newTool;
   newTool.setActive(true);
 
-  this.palettes[$newPalette.data('dt-palette-id')].currentTool = newTool.selector;
+  this.palettes[$newPalette.attr('id')].currentTool = newTool.selector;
 
   // if the palette that the tool belongs to is not visible
   // then make it visible
   if (!$newPalette.is(':visible')) {
     // TODO: Remove usage of the palette ID
-    this._paletteButtonClicked($newPalette.data('dt-palette-id'));
+    this._paletteButtonClicked($newPalette.attr('id'));
   }
 
   this.master.canvas.renderAll();
@@ -1773,9 +1791,7 @@ UI.prototype._initBtn = function (toolId, type) {
 function BtnGroup (groupName, buttons) {
   this.name = groupName;
   this.$buttons = buttons;
-  this.$palette = $('<div class="dt-toolpalette dt-palette-' + this.name + '">')
-    .data('dt-palette-id', this.name)
-    .hide();
+  this.$palette = $('<div class="dt-toolpalette" id="' + this.name + '">').hide();
 
   // append the tools to the palette div
   for (var i = 0; i < this.$buttons.length; i++) {

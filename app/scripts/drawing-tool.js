@@ -197,6 +197,10 @@ DrawingTool.prototype._initFabricJS = function () {
   // Target find would be more tolerant on touch devices.
   this.canvas.perPixelTargetFind = !fabric.isTouchSupported;
 
+  this.setStrokeWidth(10);
+  this.setStrokeColor("rgba(100,200,200,.75)");
+  this.setFill("");
+
   this.canvas.setBackgroundColor("#fff");
 };
 

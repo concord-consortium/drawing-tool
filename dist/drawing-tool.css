@@ -1,3 +1,8 @@
+@font-face {
+  font-family: 'Concord Consortium Icons';
+  src: url('icons/cc-draw-tool-icons.woff') format('woff'), url('icons/cc-draw-tool-icons.ttf') format('truetype');
+  /* Chrome 4+, Firefox 3.5, Opera 10+, Safari 3�5 */ }
+
 .dt-container {
   white-space: nowrap;
   -webkit-tap-highlight-color: rgba(0, 0, 0, 0); }
@@ -12,7 +17,7 @@
     width: 60px;
     margin: 0 2px 0 0; }
   .dt-container .dt-btn {
-    font-family: Arial;
+    font-family: 'Concord Consortium Icons';
     font-size: 36px;
     line-height: 60px;
     height: 60px;

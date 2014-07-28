@@ -38,16 +38,16 @@ UI.prototype.initTools = function(p) {
   this._initButtonUpdates(); // set up the listeners
 
   // set the labels
-  this.setLabel(selectionTool.selector,  "S");
+  this.setLabel(selectionTool.selector,  "s");
   this.setLabel(lineTool.selector,       "L");
   this.setLabel(rectangleTool.selector,  "R");
   this.setLabel(ellipseTool.selector,    "E");
-  this.setLabel(squareTool.selector,     "Sq");
+  this.setLabel(squareTool.selector,     "S");
   this.setLabel(circleTool.selector,     "C");
   this.setLabel(freeDrawTool.selector,   "F");
   this.setLabel(deleteTool.selector,     "Tr");
   this.setLabel("-shapes",  "Sh"); // immediately replaced by the currently active shape tool (rect)
-  this.setLabel("-select",  "S");
+  this.setLabel("-select",  "s");
 
   // show/hide trash button when objects are selected/deselected
   var trash = this.$buttons.trash;

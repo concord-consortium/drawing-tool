@@ -148,13 +148,13 @@ UI.prototype._toolButtonClicked = function (toolSelector) {
   this.master.currentTool = newTool;
   newTool.setActive(true);
 
-  this.palettes[$newPalette.attr('id')].currentTool = newTool.selector;
+  this.palettes[$newPalette.data('dt-palette-id')].currentTool = newTool.selector;
 
   // if the palette that the tool belongs to is not visible
   // then make it visible
   if (!$newPalette.is(':visible')) {
     // TODO: Remove usage of the palette ID
-    this._paletteButtonClicked($newPalette.attr('id'));
+    this._paletteButtonClicked($newPalette.data('dt-palette-id'));
   }
 
   this.master.canvas.renderAll();
@@ -245,7 +245,9 @@ UI.prototype._initBtn = function (toolId, type) {
 function BtnGroup (groupName, buttons) {
   this.name = groupName;
   this.$buttons = buttons;
-  this.$palette = $('<div class="dt-toolpalette" id="' + this.name + '">').hide();
+  this.$palette = $('<div class="dt-toolpalette dt-palette-' + this.name + '">')
+    .data('dt-palette-id', this.name)
+    .hide();
 
   // append the tools to the palette div
   for (var i = 0; i < this.$buttons.length; i++) {

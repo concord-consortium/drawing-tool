@@ -138,9 +138,7 @@ LineTool.prototype._makePoint = function(l, t, s, source, i){
     hasControls: false,
     hasBorders: false,
     line: source,
-    id: i,
-    originX: "left",
-    originY: "top"
+    id: i
   });
   source.canvas.add(point);
   point.on("moving", LineTool.updateLine);

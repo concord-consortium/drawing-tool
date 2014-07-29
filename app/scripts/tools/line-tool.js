@@ -60,9 +60,6 @@ LineTool.prototype.mouseDown = function (e) {
   var y = loc.y;
 
   this.curr = new fabric.Line([x,y,x,y], {
-    selectable: false,
-    hasControls: false,
-    hasBorders: false,
     fill: this.master.state.fill,
     stroke: this.master.state.color,
     strokeWidth: this.master.state.strokeWidth
@@ -105,16 +102,26 @@ LineTool.prototype._processNewShape = function (s) {
   }
 
   s.setCoords();
+  LineTool.setCustomControlPoints(s);
+};
 
-  s.set('prevTop', s.get('top'));
-  s.set('prevLeft', s.get('left'));
-  s.set('selectable', false);
+LineTool.setCustomControlPoints = function (s) {
+  s.set({
+    hasControls: false,
+    hasBorders: false,
+    prevLeft: s.get('left'),
+    prevTop: s.get('top')
+  });
 
   // control point
   var sidelen = SelectTool.BASIC_SELECTION_PROPERTIES.cornerSize;
+  var x1 = s.get('x1');
+  var y1 = s.get('y1');
+  var x2 = s.get('x2');
+  var y2 = s.get('y2');
   s.ctp = [
-    this._makePoint(x1, y1, sidelen, s, 0),
-    this._makePoint(x2, y2, sidelen, s, 1)
+    LineTool.makePoint(x1, y1, sidelen, s, 0),
+    LineTool.makePoint(x2, y2, sidelen, s, 1)
   ];
 
   s.on('selected', LineTool.objectSelected);
@@ -122,10 +129,17 @@ LineTool.prototype._processNewShape = function (s) {
   s.on('removed', LineTool.lineDeleted);
 };
 
+LineTool.prototype.processCanvasAfterDeserialization = function (canvas) {
+  canvas.getObjects().forEach(function (o) {
+    if (o.type !== 'line') return;
+    LineTool.setCustomControlPoints(o);
+  });
+};
+
 // TODO: fix this to control the line endpoints from the
 //       CENTER of the control point (not the edge)
 //       This is visible on larger width lines.
-LineTool.prototype._makePoint = function(l, t, s, source, i){
+LineTool.makePoint = function(l, t, s, source, i){
   var point = new fabric.Rect({
     left: l,
     top: t,

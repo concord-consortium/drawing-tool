@@ -12,7 +12,7 @@ var DEF_STATE = {
   color: "rgba(100,200,200,.75)",
   strokeWidth: 10,
   fill: ""
-}
+};
 
 // Constructor function.
 function DrawingTool(selector, options, settings) {
@@ -47,6 +47,9 @@ DrawingTool.prototype.clearSelection = function () {
 };
 
 DrawingTool.prototype.save = function () {
+  // FIXME: It ensures that all custom control points are hidden before serialization.
+  //        Of course it's totally wrong, temporal workaround.
+  this.clearSelection();
   return JSON.stringify({
     dt: {
       // Drawing Tool specific options.
@@ -86,6 +89,9 @@ DrawingTool.prototype.load = function (jsonString) {
     delete backgroundImage.src;
     this._setBackgroundImage(imageSrc, backgroundImage);
   }
+  // TODO: temporal workaround, find some cleaner and more generic way
+  //       to handle such situations.
+  this.tools.line.processCanvasAfterDeserialization(this.canvas);
   this.canvas.renderAll();
 };
 

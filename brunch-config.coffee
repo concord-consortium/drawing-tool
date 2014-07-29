@@ -25,9 +25,10 @@ exports.config =
     dist:
       optimize: false
       sourceMaps: false
-      plugins: autoReload: enabled: false
       plugins:
+        autoReload:
+          enabled: false
         afterBrunch: [
           'echo "- updating ./dist directory"'
-          'rsync -av public/ dist --include="*.js" --include="*.css" --exclude="*"'
+          'rsync -av --delete public/ dist --include="*.js" --include="*.css" --include="fonts/" --include="fonts/*" --exclude="*"'
         ]

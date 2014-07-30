@@ -42,6 +42,7 @@ DrawingTool.prototype.clear = function (clearBackground) {
 };
 
 DrawingTool.prototype.clearSelection = function () {
+  // Important! It will cause that all custom control points will be removed (e.g. for lines).
   this.canvas.deactivateAllWithDispatch();
   this.canvas.renderAll();
 };
@@ -89,9 +90,6 @@ DrawingTool.prototype.load = function (jsonString) {
     delete backgroundImage.src;
     this._setBackgroundImage(imageSrc, backgroundImage);
   }
-  // TODO: temporal workaround, find some cleaner and more generic way
-  //       to handle such situations.
-  this.tools.line.processCanvasAfterDeserialization(this.canvas);
   this.canvas.renderAll();
 };
 

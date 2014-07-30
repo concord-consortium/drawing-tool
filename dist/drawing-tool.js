@@ -135,6 +135,7 @@ DrawingTool.prototype.clear = function (clearBackground) {
 };
 
 DrawingTool.prototype.clearSelection = function () {
+  // Important! It will cause that all custom control points will be removed (e.g. for lines).
   this.canvas.deactivateAllWithDispatch();
   this.canvas.renderAll();
 };
@@ -182,9 +183,6 @@ DrawingTool.prototype.load = function (jsonString) {
     delete backgroundImage.src;
     this._setBackgroundImage(imageSrc, backgroundImage);
   }
-  // TODO: temporal workaround, find some cleaner and more generic way
-  //       to handle such situations.
-  this.tools.line.processCanvasAfterDeserialization(this.canvas);
   this.canvas.renderAll();
 };
 
@@ -983,39 +981,7 @@ function LineTool(name, selector, drawTool) {
   this.addEventListener("mouse:move", function (e) { self.mouseMove(e); });
   this.addEventListener("mouse:up", function (e) { self.mouseUp(e); });
 
-  fabric.Line.prototype.is = function (obj) {
-    return this === obj || this.ctp[0] === obj || this.ctp[1] === obj;
-  };
-
-  // the context for the event is the object (which is why the .call is needed)
-  // TODO: make this code more read-able
-  this.canvas.on.call(this.canvas, "object:selected", function (e) {
-    // TODO: this can be shortened with a flag on the control rectangles
-    //       marking their special status
-    if (this._selectedObj !== undefined) {
-      if (this._selectedObj.type === "line") {
-        if (!this._selectedObj.is(e.target)) {
-          LineTool.objectDeselected.call(this._selectedObj);
-          this._selectedObj = e.target;
-        } else {
-          // nothing
-        }
-      } else {
-        this._selectedObj = e.target;
-      }
-    } else {
-      this._selectedObj = e.target;
-    }
-  });
-
-  // the fabric canvas is the context for a selection cleared
-  this.canvas.on("selection:cleared", function (e) {
-    if (this._selectedObj && this._selectedObj.type === "line") {
-      LineTool.objectDeselected.call(this._selectedObj);
-    }
-    this._selectedObj = undefined;
-  });
-
+  handleLineSelection(this.canvas);
 }
 
 inherit(LineTool, ShapeTool);
@@ -1023,7 +989,7 @@ inherit(LineTool, ShapeTool);
 LineTool.prototype.mouseDown = function (e) {
   LineTool.super.mouseDown.call(this, e);
 
-  if ( !this.active ) { return; }
+  if (!this.active) return;
 
   var loc = this.canvas.getPointer(e.e);
   var x = loc.x;
@@ -1047,7 +1013,7 @@ LineTool.prototype.mouseMove = function (e) {
 
   this.curr.set('x2', x);
   this.curr.set('y2', y);
-  this.canvas.renderAll(false);
+  this.canvas.renderAll();
 };
 
 LineTool.prototype.mouseUp = function (e) {
@@ -1063,97 +1029,117 @@ LineTool.prototype._processNewShape = function (s) {
   var y1 = s.get('y1');
   var x2 = s.get('x2');
   var y2 = s.get('y2');
-
   if (Util.dist(x1 - x2, y1 - y2) < this.minSize) {
     x2 = x1 + this.defSize;
     y2 = y1 + this.defSize;
     s.set('x2', x2);
     s.set('y2', y2);
   }
-
   s.setCoords();
-  LineTool.setCustomControlPoints(s);
 };
 
-LineTool.setCustomControlPoints = function (s) {
-  s.set({
+function handleLineSelection(canvas) {
+  var selectedObject = null;
+  canvas.on("object:selected", function (e) {
+    var newTarget = e.target;
+    if (selectedObject && selectedObject.type === "line" && !isControlPoint(newTarget, selectedObject)) {
+      lineDeselected.call(selectedObject);
+    }
+    if (!isControlPoint(newTarget, selectedObject)) {
+      selectedObject = newTarget;
+      if (newTarget.type === "line") {
+        lineSelected.call(newTarget);
+      }
+    }
+  });
+  canvas.on("selection:cleared", function (e) {
+    if (selectedObject && selectedObject.type === "line") {
+      lineDeselected.call(selectedObject);
+    }
+    selectedObject = null;
+  });
+}
+
+function isControlPoint(object, line) {
+  return line && line.ctp && (line.ctp[0] === object || line.ctp[1] === object);
+}
+
+// Handlers
+
+function lineSelected() {
+  // Disable typical control points.
+  this.set({
     hasControls: false,
     hasBorders: false
   });
-
-  // control point
+  // Create custom ones.
   var sidelen = SelectTool.BASIC_SELECTION_PROPERTIES.cornerSize;
-  var x1 = s.get('x1');
-  var y1 = s.get('y1');
-  var x2 = s.get('x2');
-  var y2 = s.get('y2');
-  s.ctp = [
-    LineTool.makePoint(x1, y1, sidelen, s, 0),
-    LineTool.makePoint(x2, y2, sidelen, s, 1)
+  this.ctp = [
+    makeControlPoint(sidelen, this, 0),
+    makeControlPoint(sidelen, this, 1)
   ];
+  updateLineControlPoints.call(this);
+  this.on('moving', lineMoved);
+  this.on('removed', lineDeleted);
+  // And finally re-render (perhaps it's redundant).
+  this.canvas.renderAll();
+}
 
-  s.on('selected', LineTool.objectSelected);
-  s.on('moving', LineTool.objectMoved);
-  s.on('removed', LineTool.lineDeleted);
-};
+function lineDeselected() {
+  // Very important - set line property to null / undefined,
+  // as otherwise control point will remove line as well!
+  this.ctp[0].line = null;
+  this.ctp[1].line = null;
+  this.ctp[0].remove();
+  this.ctp[1].remove();
+  this.ctp = undefined;
+  this.off('moving');
+  this.off('removed');
+}
 
-LineTool.prototype.processCanvasAfterDeserialization = function (canvas) {
-  canvas.getObjects().forEach(function (o) {
-    if (o.type !== 'line') return;
-    LineTool.setCustomControlPoints(o);
-  });
-};
+function lineMoved() {
+  updateLineControlPoints.call(this);
+}
+
+function lineDeleted() {
+  // Do nothing if there are no control points.
+  if (!this.ctp) return;
+  // If there are some, just remove one of them
+  // It will cause that the second one will be removed as well.
+  this.ctp[0].remove();
+}
+
+function controlPointMoved() {
+  var line = this.line;
+  line.set('x' + (this.id + 1), this.left);
+  line.set('y' + (this.id + 1), this.top);
+  line.setCoords();
+  line.canvas.renderAll();
+}
+
+function controlPointDeleted() {
+  var line = this.line;
+  // Do nothing if there is no reference to source object (line).
+  if (!line) return;
+  // Otherwise try to remove second point and finally canvas.
+  var secondControlPoint;
+  if (line.ctp[0] !== this) {
+    secondControlPoint = line.ctp[0];
+  } else {
+    secondControlPoint = line.ctp[1];
+  }
+  secondControlPoint.line = null;
+  secondControlPoint.remove();
+  line.remove();
+}
+
+// Helpers
 
 // TODO: fix this to control the line endpoints from the
 //       CENTER of the control point (not the edge)
 //       This is visible on larger width lines.
-LineTool.makePoint = function(l, t, s, source, i){
-  var point = new fabric.Rect({
-    left: l,
-    top: t,
-    width: s,
-    height: s,
-    strokeWidth: 0,
-    stroke: CONTROL_POINT_COLOR,
-    fill: CONTROL_POINT_COLOR,
-    visible: false,
-    hasControls: false,
-    hasBorders: false,
-    line: source,
-    id: i
-  });
-  source.canvas.add(point);
-  point.on("moving", LineTool.updateLine);
-  point.on("removed", LineTool.pointDeleted);
-  return point;
-};
-
-// When the line is selected, show control points
-LineTool.objectSelected = function(e) {
-  LineTool.updateControlPoints.call(this, e);
-
-  this.ctp[0].visible = true;
-  this.ctp[1].visible = true;
-
-  this.canvas.renderAll(false);
-};
-
-// on "deselect", hide control points
-LineTool.objectDeselected = function(e) {
-  this.ctp[0].visible = false;
-  this.ctp[1].visible = false;
-
-  this.canvas.renderAll(false);
-};
-
-// update the points when the line is moved
-LineTool.objectMoved = function(e) {
-  LineTool.updateControlPoints.call(this, e);
-};
-
-// update the control points with coordinates from the line
-LineTool.updateControlPoints = function(e) {
-  // Update (x1, y1) and (x2, y2) points using left / top.
+function updateLineControlPoints() {
+  // First update line itself, (x1, y1) and (x2, y2) points using left / top.
   var dx = this.left - Math.min(this.get('x1'), this.get('x2'));
   var dy = this.top  - Math.min(this.get('y1'), this.get('y2'));
   this.set('x1', dx + this.x1);
@@ -1167,31 +1153,26 @@ LineTool.updateControlPoints = function(e) {
   this.ctp[1].set('left', this.x2);
   this.ctp[0].setCoords();
   this.ctp[1].setCoords();
-};
+}
 
-// update line based on control point movement
-LineTool.updateLine = function (e) {
-  var line = this.line;
-  line.set('x' + (this.id + 1), this.left);
-  line.set('y' + (this.id + 1), this.top);
-  line.setCoords();
-  line.canvas.renderAll(false);
-};
-
-// update line when the control point is deleted (delete the line as well)
-LineTool.pointDeleted = function (e) {
-  var l = this.line;
-  if (l.ctp[0] !== this) { l.canvas.remove(l.ctp[0]); }
-  else { l.canvas.remove(l.ctp[1]); }
-  l.canvas.remove(l);
-};
-
-// delete the control points after the line has been deleted
-LineTool.lineDeleted = function (e) {
-  // since `pointDeleted` will be triggered on when removing the first point
-  // we don't need to worry about removing the other point as well.
-  this.canvas.remove(this.ctp[0]);
-};
+function makeControlPoint(s, source, i) {
+  var point = new fabric.Rect({
+    width: s,
+    height: s,
+    strokeWidth: 0,
+    stroke: CONTROL_POINT_COLOR,
+    fill: CONTROL_POINT_COLOR,
+    hasControls: false,
+    hasBorders: false,
+    // Custom properties:
+    line: source,
+    id: i
+  });
+  source.canvas.add(point);
+  point.on("moving", controlPointMoved);
+  point.on("removed", controlPointDeleted);
+  return point;
+}
 
 module.exports = LineTool;
 

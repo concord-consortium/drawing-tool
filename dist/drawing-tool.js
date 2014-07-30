@@ -1078,9 +1078,7 @@ LineTool.prototype._processNewShape = function (s) {
 LineTool.setCustomControlPoints = function (s) {
   s.set({
     hasControls: false,
-    hasBorders: false,
-    prevLeft: s.get('left'),
-    prevTop: s.get('top')
+    hasBorders: false
   });
 
   // control point
@@ -1177,10 +1175,6 @@ LineTool.updateLine = function (e) {
   line.set('x' + (this.id + 1), this.left);
   line.set('y' + (this.id + 1), this.top);
   line.setCoords();
-  // update the "previous" values so dx and dy don't get wonky
-  // when the control points are manipulated
-  line.prevLeft = line.left;
-  line.prevTop = line.top;
   line.canvas.renderAll(false);
 };
 

@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>HTML5 Drawing Tool Demo</title>
+  	<link rel="stylesheet" type="text/css" href="../drawing-tool.css">
+    <style type="text/css">
+      body {
+        font-family: Arial;
+      }
+      canvas {
+        border: 1px solid #666;
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id="canv" width="700px" height="500px"></canvas>
+  <script src="../vendor.js"></script>
+  <script>
+    var canvas = new fabric.Canvas("canv");
+    canvas.selection = true;
+
+    var line = new fabric.Line([50,50,300,300], {
+        fill: "#333",
+        stroke: "#333",
+        strokeWidth: 5
+    });
+    canvas.add(line);
+  </script>
+  </body>
+</html>

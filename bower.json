@@ -1,6 +1,6 @@
 {
   "name": "drawing-tool",
-  "version": "0.8.4",
+  "version": "0.8.5",
   "main": [
     "dist/drawing-tool.js",
     "dist/drawing-tool.css",
@@ -13,7 +13,7 @@
     "package.json"
   ],
   "dependencies": {
-    "fabric": "1.4.7",
+    "fabric": "1.4.9",
     "hammerjs": "2.0.0",
     "jquery": "2.1.1"
   },

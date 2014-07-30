@@ -162,9 +162,6 @@ LineTool.makePoint = function(l, t, s, source, i){
 
 // When the line is selected, show control points
 LineTool.objectSelected = function(e) {
-  if (this.prevLeft !== this.left && this.prevTop !== this.top) {
-    LineTool.objectMoved.call(this, e);
-  }
   LineTool.updateControlPoints.call(this, e);
 
   this.ctp[0].visible = true;
@@ -183,24 +180,19 @@ LineTool.objectDeselected = function(e) {
 
 // update the points when the line is moved
 LineTool.objectMoved = function(e) {
-  var dx = this.left - this.prevLeft;
-  var dy = this.top - this.prevTop;
+  LineTool.updateControlPoints.call(this, e);
+};
 
+// update the control points with coordinates from the line
+LineTool.updateControlPoints = function(e) {
+  // Update (x1, y1) and (x2, y2) points using left / top.
+  var dx = this.left - Math.min(this.get('x1'), this.get('x2'));
+  var dy = this.top  - Math.min(this.get('y1'), this.get('y2'));
   this.set('x1', dx + this.x1);
   this.set('y1', dy + this.y1);
   this.set('x2', dx + this.x2);
   this.set('y2', dy + this.y2);
 
-  this.prevLeft = this.left;
-  this.prevTop = this.top;
-
-  var self = this;
-  LineTool.updateControlPoints.call(self, e);
-};
-
-// update the control points with coordinates from the line
-LineTool.updateControlPoints = function(e) {
-  // `this` is the object/line
   this.ctp[0].set('top', this.y1);
   this.ctp[0].set('left', this.x1);
   this.ctp[1].set('top', this.y2);

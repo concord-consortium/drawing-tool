@@ -94,20 +94,14 @@ DrawingTool.prototype.load = function (jsonString) {
 };
 
 DrawingTool.prototype.setStrokeColor = function (color) {
-  // fabric.Object.prototype.stroke = color;
-  this.canvas.freeDrawingBrush.color = color;
-  fabric.Image.prototype.stroke = null;
   this.state.color = color;
 };
 
 DrawingTool.prototype.setStrokeWidth = function (width) {
-  // fabric.Object.prototype.strokeWidth = width;
-  // this.canvas.freeDrawingBrush.width = width;
   this.state.strokeWidth = width;
 };
 
 DrawingTool.prototype.setFill = function (color) {
-  // fabric.Object.prototype.fill = color;
   this.state.fill = color;
 };
 

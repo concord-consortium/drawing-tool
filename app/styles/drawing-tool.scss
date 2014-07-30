@@ -2,6 +2,8 @@ $buttonSize: 44px;
 $buttonFontSize: 32px;
 $buttonLineHeight: 50px;
 
+$icons: 'Draw Tool Icons', Arial, sans-serif;
+
 @font-face {
   font-family: 'Draw Tool Icons';
   src: url('fonts/draw-tool-icons.woff') format('woff'),    /* Chrome 6+, Firefox 3.6+, IE 9+, Safari 5.1+ */
@@ -27,7 +29,7 @@ $buttonLineHeight: 50px;
   }
 
   .dt-btn {
-    font-family: 'Draw Tool Icons', Arial;
+    font-family: $icons;
     font-size: $buttonFontSize;
     line-height: $buttonLineHeight;
     height: $buttonSize;

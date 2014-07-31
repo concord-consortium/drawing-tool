@@ -187,20 +187,14 @@ DrawingTool.prototype.load = function (jsonString) {
 };
 
 DrawingTool.prototype.setStrokeColor = function (color) {
-  // fabric.Object.prototype.stroke = color;
-  this.canvas.freeDrawingBrush.color = color;
-  fabric.Image.prototype.stroke = null;
   this.state.color = color;
 };
 
 DrawingTool.prototype.setStrokeWidth = function (width) {
-  // fabric.Object.prototype.strokeWidth = width;
-  // this.canvas.freeDrawingBrush.width = width;
   this.state.strokeWidth = width;
 };
 
 DrawingTool.prototype.setFill = function (color) {
-  // fabric.Object.prototype.fill = color;
   this.state.fill = color;
 };
 
@@ -737,6 +731,8 @@ CircleTool.prototype._processNewShape = function (s) {
     s.set('radius', this.defSize / 2);
     s.set('width', this.defSize);
     s.set('height', this.defSize);
+    s.set('top', s.get('top') - s.get('radius') - s.get('strokeWidth') / 2);
+    s.set('left', s.get('left') - s.get('radius') - s.get('strokeWidth') / 2);
   }
   this.setCentralOrigin(s);
   s.setCoords();
@@ -895,6 +891,8 @@ EllipseTool.prototype._processNewShape = function (s) {
     s.set('ry', this.defSize / 2);
     s.set('width', this.defSize);
     s.set('height', this.defSize);
+    s.set('top', s.get('top') - s.get('ry') - s.get('strokeWidth') / 2);
+    s.set('left', s.get('left') - s.get('rx') - s.get('strokeWidth') / 2);
   }
   this.setCentralOrigin(s);
   s.setCoords();
@@ -1257,6 +1255,8 @@ RectangleTool.prototype._processNewShape = function (s) {
   if (Math.max(s.width, s.height) < this.minSize) {
     s.set('width', this.defSize);
     s.set('height', this.defSize);
+    s.set('top', s.get('top') - (s.get('height') / 2) + s.get('strokeWidth'));
+    s.set('left', s.get('left') - (s.get('width') / 2) + s.get('strokeWidth'));
   }
   s.setCoords();
 };
@@ -1507,6 +1507,8 @@ SquareTool.prototype._processNewShape = function (s) {
   if (Math.max(s.width, s.height) < this.minSize) {
     s.set('width', this.defSize);
     s.set('height', this.defSize);
+    s.set('top', s.get('top') - s.get('height') + s.get('strokeWidth'));
+    s.set('left', s.get('left') - s.get('width') + s.get('strokeWidth'));
   }
   this.setCentralOrigin(s);
   s.setCoords();

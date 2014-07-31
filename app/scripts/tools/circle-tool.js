@@ -98,6 +98,8 @@ CircleTool.prototype._processNewShape = function (s) {
     s.set('radius', this.defSize / 2);
     s.set('width', this.defSize);
     s.set('height', this.defSize);
+    s.set('top', s.get('top') - s.get('radius') - s.get('strokeWidth') / 2);
+    s.set('left', s.get('left') - s.get('radius') - s.get('strokeWidth') / 2);
   }
   this.setCentralOrigin(s);
   s.setCoords();

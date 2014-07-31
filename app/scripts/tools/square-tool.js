@@ -73,6 +73,8 @@ SquareTool.prototype._processNewShape = function (s) {
   if (Math.max(s.width, s.height) < this.minSize) {
     s.set('width', this.defSize);
     s.set('height', this.defSize);
+    s.set('top', s.get('top') - s.get('height') + s.get('strokeWidth'));
+    s.set('left', s.get('left') - s.get('width') + s.get('strokeWidth'));
   }
   this.setCentralOrigin(s);
   s.setCoords();

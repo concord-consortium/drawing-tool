@@ -76,6 +76,8 @@ RectangleTool.prototype._processNewShape = function (s) {
   if (Math.max(s.width, s.height) < this.minSize) {
     s.set('width', this.defSize);
     s.set('height', this.defSize);
+    s.set('top', s.get('top') - (s.get('height') / 2) + s.get('strokeWidth'));
+    s.set('left', s.get('left') - (s.get('width') / 2) + s.get('strokeWidth'));
   }
   s.setCoords();
 };

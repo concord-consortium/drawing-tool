@@ -26,6 +26,13 @@
     type: 'arrow',
 
     /**
+     * Type of the arrow (double or single)
+     * @type Boolean
+     * @default
+     */
+    doubleArrowhead: false,
+
+    /**
      * @private
      * @param {CanvasRenderingContext2D} ctx Context to render on
      */
@@ -63,25 +70,47 @@
             l  = Math.sqrt(dx * dx + dy * dy);
         // Arrow width.
         var s = this.strokeWidth * 0.5;
-        // Arrow head width.
-        var ls = Math.min(s * 3, l * 0.5);
-        // Arrow head position 1 (points close to the line).
-        var xm1 = xe - ls * 2 * dx / l,
-            ym1 = ye - ls * 2 * dy / l;
-        // Arrow head position 2 (the most outer points).
-        var xm2 = xe - ls * 2.3 * dx / l,
-            ym2 = ye - ls * 2.3 * dy / l;
+        // Arrowhead width.
+        var ls = Math.min(s * 3, l * (this.doubleArrowhead ? 0.21 : 0.35));
+        // Arrowhead length.
+        var ahlx = ls * 2 * dx / l,
+            ahly = ls * 2 * dy / l;
+        // Arrowhead position 1 (points close to the line).
+        var xm1 = xe - ahlx,
+            ym1 = ye - ahly;
+        // Arrowhead position 2 (the most outer points).
+        var xm2 = xe - ahlx * 1.1,
+            ym2 = ye - ahly * 1.1;
 
         // Outline of the arrow.
-        var points = [
-          this._perpCoords(xs, ys, xe, ye, xs, ys, s * 0.5, 1),
-          this._perpCoords(xs, ys, xe, ye, xs, ys, s * 0.5, -1),
+        var points;
+        if (!this.doubleArrowhead) {
+          points = [
+            this._perpCoords(xs, ys, xe, ye, xs, ys, s * 0.5, 1),
+            this._perpCoords(xs, ys, xe, ye, xs, ys, s * 0.5, -1),
+          ];
+        } else {
+          // Second arrowhead.
+          var xm3 = xs + ahlx,
+              ym3 = ys + ahly;
+          var xm4 = xs + ahlx * 1.1,
+              ym4 = ys + ahly * 1.1;
+          points = [
+            this._perpCoords(xs, ys, xe, ye, xm3, ym3, s, 1),
+            this._perpCoords(xs, ys, xe, ye, xm4, ym4, ls, 1),
+            [xs, ys],
+            this._perpCoords(xs, ys, xe, ye, xm4, ym4, ls, -1),
+            this._perpCoords(xs, ys, xe, ye, xm3, ym3, s, -1),
+          ];
+        }
+        // Common part of the outline.
+        points.push(
           this._perpCoords(xs, ys, xe, ye, xm1, ym1, s, -1),
           this._perpCoords(xs, ys, xe, ye, xm2, ym2, ls, -1),
           [xe, ye],
           this._perpCoords(xs, ys, xe, ye, xm2, ym2, ls, 1),
           this._perpCoords(xs, ys, xe, ye, xm1, ym1, s, 1)
-        ];
+        );
 
         ctx.moveTo(points[0][0], points[0][1]);
         points.forEach(function (p) {
@@ -110,6 +139,17 @@
           k = l / Math.sqrt(dx * dx + dy * dy);
       return [x + k * -dy * dir, y + k * dx * dir];
     },
+
+    /**
+     * Returns object representation of an instance
+     * @param {Array} [propertiesToInclude] Any properties that you might want to additionally include in the output
+     * @return {Object} object representation of an instance
+     */
+    toObject: function(propertiesToInclude) {
+      return extend(this.callSuper('toObject', propertiesToInclude), {
+        doubleArrowhead: this.get('doubleArrowhead')
+      });
+    }
 
     // WARN:
     // Note that #toSVG now returns LINE representation (as it's not overwritten).

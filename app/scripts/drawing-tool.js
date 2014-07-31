@@ -1,6 +1,6 @@
 var Util              = require('scripts/util');
-var rescale2resize    = require('scripts/rescale-2-resize');
-var multitouchSupport = require('scripts/multi-touch-support');
+var rescale2resize    = require('scripts/fabric-extensions/rescale-2-resize');
+var multitouchSupport = require('scripts/fabric-extensions/multi-touch-support');
 var UI                = require('scripts/ui');
 
 var DEF_OPTIONS = {

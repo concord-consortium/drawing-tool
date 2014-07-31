@@ -1,5 +1,6 @@
-var inherit = require('scripts/inherit');
-var Tool    = require('scripts/tool');
+var inherit                 = require('scripts/inherit');
+var Tool                    = require('scripts/tool');
+var lineCustomControlPoints = require('scripts/fabric-extensions/line-custom-control-points');
 
 var BASIC_SELECTION_PROPERTIES = {
   cornerSize: fabric.isTouchSupported ? 22 : 12,
@@ -13,7 +14,9 @@ function SelectionTool(name, selector, drawTool) {
     opt.target.set(BASIC_SELECTION_PROPERTIES);
   });
 
-  // this.setLabel('S');
+  // Set visual options of custom line control points.
+  lineCustomControlPoints.controlPointColor = '#bcd2ff';
+  lineCustomControlPoints.cornerSize = BASIC_SELECTION_PROPERTIES.cornerSize;
 }
 
 inherit(SelectionTool, Tool);

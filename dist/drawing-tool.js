@@ -92,8 +92,8 @@
 })();
 require.register("scripts/drawing-tool", function(exports, require, module) {
 var Util              = require('scripts/util');
-var rescale2resize    = require('scripts/rescale-2-resize');
-var multitouchSupport = require('scripts/multi-touch-support');
+var rescale2resize    = require('scripts/fabric-extensions/rescale-2-resize');
+var multitouchSupport = require('scripts/fabric-extensions/multi-touch-support');
 var UI                = require('scripts/ui');
 
 var DEF_OPTIONS = {
@@ -295,43 +295,372 @@ module.exports = DrawingTool;
 
 });
 
-require.register("scripts/inherit", function(exports, require, module) {
-/**
- * Inherit the prototype methods from one constructor into another.
- *
- * Usage:
- * function ParentClass(a, b) { }
- * ParentClass.prototype.foo = function(a) { }
- *
- * function ChildClass(a, b, c) {
- *   ParentClass.call(this, a, b);
- * }
- *
- * inherit(ChildClass, ParentClass);
- *
- * var child = new ChildClass('a', 'b', 'see');
- * child.foo(); // works
- *
- * In addition, a superclass' implementation of a method can be invoked
- * as follows:
- *
- * ChildClass.prototype.foo = function(a) {
- *   ChildClass.super.foo.call(this, a);
- *   // other code
- * };
- *
- * @param {Function} Child Child class.
- * @param {Function} Parent Parent class.
- */
-module.exports = function inherit(Child, Parent) {
-  Child.prototype = Object.create(Parent.prototype);
-  Child.prototype.constructor = Child;
-  Child.super = Parent.prototype;
-};
+require.register("scripts/fabric-extensions/arrow", function(exports, require, module) {
+(function(global) {
+
+  'use strict';
+
+  var fabric = global.fabric || (global.fabric = { }),
+      extend = fabric.util.object.extend;
+
+  if (fabric.Arrow) {
+    fabric.warn('fabric.Arrow is already defined');
+    return;
+  }
+
+  /**
+   * Arrow class
+   * @class fabric.Arrow
+   * @extends fabric.Line
+   * @see {@link fabric.Arrow#initialize} for constructor definition
+   */
+  fabric.Arrow = fabric.util.createClass(fabric.Line, /** @lends fabric.Arrow.prototype */ {
+
+    /**
+     * Type of an object
+     * @type String
+     * @default
+     */
+    type: 'arrow',
+
+    /**
+     * Type of the arrow (double or single)
+     * @type Boolean
+     * @default
+     */
+    doubleArrowhead: false,
+
+    /**
+     * @private
+     * @param {CanvasRenderingContext2D} ctx Context to render on
+     */
+    _render: function(ctx) {
+      ctx.beginPath();
+
+      var isInPathGroup = this.group && this.group.type === 'path-group';
+      if (isInPathGroup && !this.transformMatrix) {
+        //  Line coords are distances from left-top of canvas to origin of line.
+        //
+        //  To render line in a path-group, we need to translate them to
+        //  distances from center of path-group to center of line.
+        var cp = this.getCenterPoint();
+        ctx.translate(
+          -this.group.width/2 + cp.x,
+          -this.group.height / 2 + cp.y
+        );
+      }
+
+      if (!this.strokeDashArray) {
+        // Move from center (of virtual box) to its left/top corner,
+        // we can't assume x1, y1 is top left and x2, y2 is bottom right.
+        var xMult = this.x1 <= this.x2 ? -1 : 1,
+            yMult = this.y1 <= this.y2 ? -1 : 1;
+
+        // Arrow start point.
+        var xs = this.width === 1 ? 0 : (xMult * this.width / 2),
+            ys = this.height === 1 ? 0 : (yMult * this.height / 2);
+        // Arrow end point.
+        var xe = this.width === 1 ? 0 : (xMult * -1 * this.width / 2),
+            ye = this.height === 1 ? 0 : (yMult * -1 * this.height / 2);
+        // Helper variables.
+        var dx = xe - xs,
+            dy = ye - ys,
+            l  = Math.sqrt(dx * dx + dy * dy);
+        // Arrow width.
+        var s = this.strokeWidth * 0.5;
+        // Arrowhead width.
+        var ls = Math.min(s * 3, l * (this.doubleArrowhead ? 0.21 : 0.35));
+        // Arrowhead length.
+        var ahlx = ls * 2 * dx / l,
+            ahly = ls * 2 * dy / l;
+        // Arrowhead position 1 (points close to the line).
+        var xm1 = xe - ahlx,
+            ym1 = ye - ahly;
+        // Arrowhead position 2 (the most outer points).
+        var xm2 = xe - ahlx * 1.1,
+            ym2 = ye - ahly * 1.1;
+
+        // Outline of the arrow.
+        var points;
+        if (!this.doubleArrowhead) {
+          points = [
+            this._perpCoords(xs, ys, xe, ye, xs, ys, s * 0.5, 1),
+            this._perpCoords(xs, ys, xe, ye, xs, ys, s * 0.5, -1),
+          ];
+        } else {
+          // Second arrowhead.
+          var xm3 = xs + ahlx,
+              ym3 = ys + ahly;
+          var xm4 = xs + ahlx * 1.1,
+              ym4 = ys + ahly * 1.1;
+          points = [
+            this._perpCoords(xs, ys, xe, ye, xm3, ym3, s, 1),
+            this._perpCoords(xs, ys, xe, ye, xm4, ym4, ls, 1),
+            [xs, ys],
+            this._perpCoords(xs, ys, xe, ye, xm4, ym4, ls, -1),
+            this._perpCoords(xs, ys, xe, ye, xm3, ym3, s, -1),
+          ];
+        }
+        // Common part of the outline.
+        points.push(
+          this._perpCoords(xs, ys, xe, ye, xm1, ym1, s, -1),
+          this._perpCoords(xs, ys, xe, ye, xm2, ym2, ls, -1),
+          [xe, ye],
+          this._perpCoords(xs, ys, xe, ye, xm2, ym2, ls, 1),
+          this._perpCoords(xs, ys, xe, ye, xm1, ym1, s, 1)
+        );
+
+        ctx.moveTo(points[0][0], points[0][1]);
+        points.forEach(function (p) {
+          ctx.lineTo(p[0], p[1]);
+        });
+      }
+
+      if (this.stroke) {
+        // Note that we actually use fill instead of stroke.
+        // Stroke width is included in outline calulcations above.
+        var origFillStyle = ctx.fillStyle;
+        ctx.fillStyle = this.stroke;
+        this._renderFill(ctx);
+        ctx.fillStyle = origFillStyle;
+      }
+    },
+
+    /**
+     * @private
+     * Given coordinates of segment AB and point X, returns coordinates
+     * of point C where CX is prependicular to AB and |CX| = l.
+     */
+    _perpCoords: function (xa, ya, xb, yb, x, y, l, dir) {
+      var dx = xb - xa,
+          dy = yb - ya,
+          k = l / Math.sqrt(dx * dx + dy * dy);
+      return [x + k * -dy * dir, y + k * dx * dir];
+    },
+
+    /**
+     * Returns object representation of an instance
+     * @param {Array} [propertiesToInclude] Any properties that you might want to additionally include in the output
+     * @return {Object} object representation of an instance
+     */
+    toObject: function(propertiesToInclude) {
+      return extend(this.callSuper('toObject', propertiesToInclude), {
+        doubleArrowhead: this.get('doubleArrowhead')
+      });
+    }
+
+    // WARN:
+    // Note that #toSVG now returns LINE representation (as it's not overwritten).
+    // The same applies to #complexity (TODO: what is it used for?).
+  });
+
+  // WARN:
+  // Note that deserialization from SVG element expects LINE element. See above.
+
+  /* _FROM_SVG_START_ */
+  /**
+   * List of attribute names to account for when parsing SVG element (used by {@link fabric.Arrow.fromElement})
+   * @static
+   * @memberOf fabric.Arrow
+   * @see http://www.w3.org/TR/SVG/shapes.html#LineElement
+   */
+  fabric.Arrow.ATTRIBUTE_NAMES = fabric.SHARED_ATTRIBUTES.concat('x1 y1 x2 y2'.split(' '));
+
+  /**
+   * Returns fabric.Arrow instance from an SVG element
+   * @static
+   * @memberOf fabric.Arrow
+   * @param {SVGElement} element Element to parse
+   * @param {Object} [options] Options object
+   * @return {fabric.Arrow} instance of fabric.Arrow
+   */
+  fabric.Arrow.fromElement = function(element, options) {
+    var parsedAttributes = fabric.parseAttributes(element, fabric.Line.ATTRIBUTE_NAMES),
+        points = [
+          parsedAttributes.x1 || 0,
+          parsedAttributes.y1 || 0,
+          parsedAttributes.x2 || 0,
+          parsedAttributes.y2 || 0
+        ];
+    return new fabric.Arrow(points, extend(parsedAttributes, options));
+  };
+  /* _FROM_SVG_END_ */
+
+  /**
+   * Returns fabric.Arrow instance from an object representation
+   * @static
+   * @memberOf fabric.Arrow
+   * @param {Object} object Object to create an instance from
+   * @return {fabric.Arrow} instance of fabric.Arrow
+   */
+  fabric.Arrow.fromObject = function(object) {
+    var points = [object.x1, object.y1, object.x2, object.y2];
+    return new fabric.Arrow(points, object);
+  };
+
+})(this);
 
 });
 
-require.register("scripts/multi-touch-support", function(exports, require, module) {
+require.register("scripts/fabric-extensions/line-custom-control-points", function(exports, require, module) {
+var SUPPORTED_TYPES = ["line", "arrow"];
+
+function lineCustomControlPoints(canvas) {
+  // Make sure that listeners aren't added multiple times.
+  if (canvas.lineCustomControlPointsEnabled) return;
+
+  var selectedObject = null;
+  canvas.on("object:selected", function (e) {
+    var newTarget = e.target;
+    if (selectedObject && isLine(selectedObject) && !isControlPoint(newTarget, selectedObject)) {
+      lineDeselected.call(selectedObject);
+    }
+    if (!isControlPoint(newTarget, selectedObject)) {
+      selectedObject = newTarget;
+      if (isLine(newTarget)) {
+        lineSelected.call(newTarget);
+      }
+    }
+  });
+  canvas.on("selection:cleared", function (e) {
+    if (selectedObject && isLine(selectedObject)) {
+      lineDeselected.call(selectedObject);
+    }
+    selectedObject = null;
+  });
+  canvas.lineCustomControlPointsEnabled = true;
+}
+
+// Options.
+lineCustomControlPoints.controlPointColor = '#bcd2ff';
+lineCustomControlPoints.cornerSize = 12;
+
+function isControlPoint(object, line) {
+  return line && line.ctp && (line.ctp[0] === object || line.ctp[1] === object);
+}
+
+function isLine(object) {
+  for (var i = 0; i < SUPPORTED_TYPES.length; i++) {
+    if (object.type === SUPPORTED_TYPES[i]) return true;
+  }
+  return false;
+}
+
+// Handlers
+
+function lineSelected() {
+  // Disable typical control points.
+  this.set({
+    hasControls: false,
+    hasBorders: false
+  });
+  // Create custom ones.
+  var sidelen = lineCustomControlPoints.cornerSize ;
+  this.ctp = [
+    makeControlPoint(sidelen, this, 0),
+    makeControlPoint(sidelen, this, 1)
+  ];
+  updateLineControlPoints.call(this);
+  this.on('moving', lineMoved);
+  this.on('removed', lineDeleted);
+  // And finally re-render (perhaps it's redundant).
+  this.canvas.renderAll();
+}
+
+function lineDeselected() {
+  // Very important - set line property to null / undefined,
+  // as otherwise control point will remove line as well!
+  this.ctp[0].line = null;
+  this.ctp[1].line = null;
+  this.ctp[0].remove();
+  this.ctp[1].remove();
+  this.ctp = undefined;
+  this.off('moving');
+  this.off('removed');
+}
+
+function lineMoved() {
+  updateLineControlPoints.call(this);
+}
+
+function lineDeleted() {
+  // Do nothing if there are no control points.
+  if (!this.ctp) return;
+  // If there are some, just remove one of them
+  // It will cause that the second one will be removed as well.
+  this.ctp[0].remove();
+}
+
+function controlPointMoved() {
+  var line = this.line;
+  line.set('x' + (this.id + 1), this.left);
+  line.set('y' + (this.id + 1), this.top);
+  line.setCoords();
+  line.canvas.renderAll();
+}
+
+function controlPointDeleted() {
+  var line = this.line;
+  // Do nothing if there is no reference to source object (line).
+  if (!line) return;
+  // Otherwise try to remove second point and finally canvas.
+  var secondControlPoint;
+  if (line.ctp[0] !== this) {
+    secondControlPoint = line.ctp[0];
+  } else {
+    secondControlPoint = line.ctp[1];
+  }
+  secondControlPoint.line = null;
+  secondControlPoint.remove();
+  line.remove();
+}
+
+// Helpers
+
+// TODO: fix this to control the line endpoints from the
+//       CENTER of the control point (not the edge)
+//       This is visible on larger width lines.
+function updateLineControlPoints() {
+  // First update line itself, (x1, y1) and (x2, y2) points using left / top.
+  var dx = this.left - Math.min(this.get('x1'), this.get('x2'));
+  var dy = this.top  - Math.min(this.get('y1'), this.get('y2'));
+  this.set('x1', dx + this.x1);
+  this.set('y1', dy + this.y1);
+  this.set('x2', dx + this.x2);
+  this.set('y2', dy + this.y2);
+
+  this.ctp[0].set('top', this.y1);
+  this.ctp[0].set('left', this.x1);
+  this.ctp[1].set('top', this.y2);
+  this.ctp[1].set('left', this.x2);
+  this.ctp[0].setCoords();
+  this.ctp[1].setCoords();
+}
+
+function makeControlPoint(s, source, i) {
+  var point = new fabric.Rect({
+    width: s,
+    height: s,
+    strokeWidth: 0,
+    stroke: lineCustomControlPoints.controlPointColor,
+    fill: lineCustomControlPoints.controlPointColor,
+    hasControls: false,
+    hasBorders: false,
+    // Custom properties:
+    line: source,
+    id: i
+  });
+  source.canvas.add(point);
+  point.on("moving", controlPointMoved);
+  point.on("removed", controlPointDeleted);
+  return point;
+}
+
+module.exports = lineCustomControlPoints;
+
+});
+
+require.register("scripts/fabric-extensions/multi-touch-support", function(exports, require, module) {
 module.exports = function addMultiTouchSupport(canvas) {
   if (typeof Hammer === 'undefined' || !fabric.isTouchSupported) {
     return;
@@ -393,7 +722,7 @@ module.exports = function addMultiTouchSupport(canvas) {
 
 });
 
-require.register("scripts/rescale-2-resize", function(exports, require, module) {
+require.register("scripts/fabric-extensions/rescale-2-resize", function(exports, require, module) {
 var LineTool = require('scripts/tools/line-tool');
 
 function basicWidthHeightTransform(s) {
@@ -437,6 +766,9 @@ var resizers = {
 
     if (s.y1 > s.y2) { s.y1 = s.top + s.height; s.y2 = s.top; }
     else { s.y2 = s.top + s.height; s.y1 = s.top; }
+  },
+  arrow: function (s) {
+    this.line(s);
   },
   path: function (s) {
     // we have two options to adjust width/height:
@@ -508,6 +840,42 @@ module.exports = function rescale2resize(canvas) {
       }
     }
   });
+};
+
+});
+
+require.register("scripts/inherit", function(exports, require, module) {
+/**
+ * Inherit the prototype methods from one constructor into another.
+ *
+ * Usage:
+ * function ParentClass(a, b) { }
+ * ParentClass.prototype.foo = function(a) { }
+ *
+ * function ChildClass(a, b, c) {
+ *   ParentClass.call(this, a, b);
+ * }
+ *
+ * inherit(ChildClass, ParentClass);
+ *
+ * var child = new ChildClass('a', 'b', 'see');
+ * child.foo(); // works
+ *
+ * In addition, a superclass' implementation of a method can be invoked
+ * as follows:
+ *
+ * ChildClass.prototype.foo = function(a) {
+ *   ChildClass.super.foo.call(this, a);
+ *   // other code
+ * };
+ *
+ * @param {Function} Child Child class.
+ * @param {Function} Parent Parent class.
+ */
+module.exports = function inherit(Child, Parent) {
+  Child.prototype = Object.create(Parent.prototype);
+  Child.prototype.constructor = Child;
+  Child.super = Parent.prototype;
 };
 
 });
@@ -964,14 +1332,18 @@ module.exports = FreeDrawTool;
 });
 
 require.register("scripts/tools/line-tool", function(exports, require, module) {
-var inherit    = require('scripts/inherit');
-var ShapeTool  = require('scripts/tools/shape-tool');
-var SelectTool = require('scripts/tools/select-tool');
-var Util       = require('scripts/util');
+var inherit                 = require('scripts/inherit');
+var ShapeTool               = require('scripts/tools/shape-tool');
+var SelectTool              = require('scripts/tools/select-tool');
+var Util                    = require('scripts/util');
+var lineCustomControlPoints = require('scripts/fabric-extensions/line-custom-control-points');
+require('scripts/fabric-extensions/arrow');
 
-var CONTROL_POINT_COLOR = '#bcd2ff';
+// Note that this tool supports fabric.Line and all its subclasses (defined
+// as part of this code base, not FabricJS itself). Pass 'lineType' argument
+// (e.g. "line" or "arrow").
 
-function LineTool(name, selector, drawTool) {
+function LineTool(name, selector, drawTool, lineType, lineOptions) {
   ShapeTool.call(this, name, selector, drawTool);
 
   var self = this;
@@ -979,7 +1351,11 @@ function LineTool(name, selector, drawTool) {
   this.addEventListener("mouse:move", function (e) { self.mouseMove(e); });
   this.addEventListener("mouse:up", function (e) { self.mouseUp(e); });
 
-  handleLineSelection(this.canvas);
+  lineType = lineType || 'line';
+  this._lineKlass = fabric.util.getKlass(lineType);
+  this._lineOptions = lineOptions;
+
+  lineCustomControlPoints(this.canvas);
 }
 
 inherit(LineTool, ShapeTool);
@@ -993,11 +1369,11 @@ LineTool.prototype.mouseDown = function (e) {
   var x = loc.x;
   var y = loc.y;
 
-  this.curr = new fabric.Line([x,y,x,y], {
-    fill: this.master.state.fill,
+  this.curr = new this._lineKlass([x, y, x, y], $.extend(true, {
+    selectable: false,
     stroke: this.master.state.color,
     strokeWidth: this.master.state.strokeWidth
-  });
+  }, this._lineOptions));
   this.canvas.add(this.curr);
 };
 
@@ -1035,142 +1411,6 @@ LineTool.prototype._processNewShape = function (s) {
   }
   s.setCoords();
 };
-
-function handleLineSelection(canvas) {
-  var selectedObject = null;
-  canvas.on("object:selected", function (e) {
-    var newTarget = e.target;
-    if (selectedObject && selectedObject.type === "line" && !isControlPoint(newTarget, selectedObject)) {
-      lineDeselected.call(selectedObject);
-    }
-    if (!isControlPoint(newTarget, selectedObject)) {
-      selectedObject = newTarget;
-      if (newTarget.type === "line") {
-        lineSelected.call(newTarget);
-      }
-    }
-  });
-  canvas.on("selection:cleared", function (e) {
-    if (selectedObject && selectedObject.type === "line") {
-      lineDeselected.call(selectedObject);
-    }
-    selectedObject = null;
-  });
-}
-
-function isControlPoint(object, line) {
-  return line && line.ctp && (line.ctp[0] === object || line.ctp[1] === object);
-}
-
-// Handlers
-
-function lineSelected() {
-  // Disable typical control points.
-  this.set({
-    hasControls: false,
-    hasBorders: false
-  });
-  // Create custom ones.
-  var sidelen = SelectTool.BASIC_SELECTION_PROPERTIES.cornerSize;
-  this.ctp = [
-    makeControlPoint(sidelen, this, 0),
-    makeControlPoint(sidelen, this, 1)
-  ];
-  updateLineControlPoints.call(this);
-  this.on('moving', lineMoved);
-  this.on('removed', lineDeleted);
-  // And finally re-render (perhaps it's redundant).
-  this.canvas.renderAll();
-}
-
-function lineDeselected() {
-  // Very important - set line property to null / undefined,
-  // as otherwise control point will remove line as well!
-  this.ctp[0].line = null;
-  this.ctp[1].line = null;
-  this.ctp[0].remove();
-  this.ctp[1].remove();
-  this.ctp = undefined;
-  this.off('moving');
-  this.off('removed');
-}
-
-function lineMoved() {
-  updateLineControlPoints.call(this);
-}
-
-function lineDeleted() {
-  // Do nothing if there are no control points.
-  if (!this.ctp) return;
-  // If there are some, just remove one of them
-  // It will cause that the second one will be removed as well.
-  this.ctp[0].remove();
-}
-
-function controlPointMoved() {
-  var line = this.line;
-  line.set('x' + (this.id + 1), this.left);
-  line.set('y' + (this.id + 1), this.top);
-  line.setCoords();
-  line.canvas.renderAll();
-}
-
-function controlPointDeleted() {
-  var line = this.line;
-  // Do nothing if there is no reference to source object (line).
-  if (!line) return;
-  // Otherwise try to remove second point and finally canvas.
-  var secondControlPoint;
-  if (line.ctp[0] !== this) {
-    secondControlPoint = line.ctp[0];
-  } else {
-    secondControlPoint = line.ctp[1];
-  }
-  secondControlPoint.line = null;
-  secondControlPoint.remove();
-  line.remove();
-}
-
-// Helpers
-
-// TODO: fix this to control the line endpoints from the
-//       CENTER of the control point (not the edge)
-//       This is visible on larger width lines.
-function updateLineControlPoints() {
-  // First update line itself, (x1, y1) and (x2, y2) points using left / top.
-  var dx = this.left - Math.min(this.get('x1'), this.get('x2'));
-  var dy = this.top  - Math.min(this.get('y1'), this.get('y2'));
-  this.set('x1', dx + this.x1);
-  this.set('y1', dy + this.y1);
-  this.set('x2', dx + this.x2);
-  this.set('y2', dy + this.y2);
-
-  this.ctp[0].set('top', this.y1);
-  this.ctp[0].set('left', this.x1);
-  this.ctp[1].set('top', this.y2);
-  this.ctp[1].set('left', this.x2);
-  this.ctp[0].setCoords();
-  this.ctp[1].setCoords();
-}
-
-function makeControlPoint(s, source, i) {
-  var point = new fabric.Rect({
-    width: s,
-    height: s,
-    strokeWidth: 0,
-    stroke: CONTROL_POINT_COLOR,
-    fill: CONTROL_POINT_COLOR,
-    hasControls: false,
-    hasBorders: false,
-    // Custom properties:
-    line: source,
-    id: i
-  });
-  source.canvas.add(point);
-  point.on("moving", controlPointMoved);
-  point.on("removed", controlPointDeleted);
-  return point;
-}
 
 module.exports = LineTool;
 
@@ -1266,8 +1506,9 @@ module.exports = RectangleTool;
 });
 
 require.register("scripts/tools/select-tool", function(exports, require, module) {
-var inherit = require('scripts/inherit');
-var Tool    = require('scripts/tool');
+var inherit                 = require('scripts/inherit');
+var Tool                    = require('scripts/tool');
+var lineCustomControlPoints = require('scripts/fabric-extensions/line-custom-control-points');
 
 var BASIC_SELECTION_PROPERTIES = {
   cornerSize: fabric.isTouchSupported ? 22 : 12,
@@ -1281,7 +1522,9 @@ function SelectionTool(name, selector, drawTool) {
     opt.target.set(BASIC_SELECTION_PROPERTIES);
   });
 
-  // this.setLabel('S');
+  // Set visual options of custom line control points.
+  lineCustomControlPoints.controlPointColor = '#bcd2ff';
+  lineCustomControlPoints.cornerSize = BASIC_SELECTION_PROPERTIES.cornerSize;
 }
 
 inherit(SelectionTool, Tool);
@@ -1542,6 +1785,8 @@ UI.prototype.initTools = function(p) {
   // Initialize all the tools, they add themselves to the master.tools list
   var selectionTool = new SelectionTool("Selection Tool", "select", this.master);
   var lineTool = new LineTool("Line Tool", "line", this.master);
+  var arrowTool = new LineTool("Arrow Tool", "arrow", this.master, "arrow");
+  var doubleArrowTool = new LineTool("Double Arrow Tool", "doubleArrow", this.master, "arrow", {doubleArrowhead: true});
   var rectangleTool = new RectangleTool("Rectangle Tool", "rect", this.master);
   var ellipseTool = new EllipseTool("Ellipse Tool", "ellipse", this.master);
   var squareTool = new SquareTool("Square Tool", "square", this.master);
@@ -1553,22 +1798,26 @@ UI.prototype.initTools = function(p) {
   // TODO: document this portion
   var palettes = p || {
     shapes: ['-select', 'rect', 'ellipse', 'square', 'circle'],
-    main: ['select', 'line', '-shapes', 'free', 'trash']
+    lines: ['-select', 'line', 'arrow', 'doubleArrow'],
+    main: ['select', '-lines', '-shapes', 'free', 'trash']
   };
   this._initToolUI(palettes); // initialize the palettes and buttons
   this._initButtonUpdates(); // set up the listeners
 
   // set the labels
-  this.setLabel(selectionTool.selector,  "s");
-  this.setLabel(lineTool.selector,       "L");
-  this.setLabel(rectangleTool.selector,  "R");
-  this.setLabel(ellipseTool.selector,    "E");
-  this.setLabel(squareTool.selector,     "S");
-  this.setLabel(circleTool.selector,     "C");
-  this.setLabel(freeDrawTool.selector,   "F");
-  this.setLabel(deleteTool.selector,     "d");
-  this.setLabel("-shapes",  "Sh"); // immediately replaced by the currently active shape tool (rect)
-  this.setLabel("-select",  "s");
+  this.setLabel(selectionTool.selector,   "s");
+  this.setLabel(lineTool.selector,        "L");
+  this.setLabel(arrowTool.selector,       "A");
+  this.setLabel(doubleArrowTool.selector, "D");
+  this.setLabel(rectangleTool.selector,   "R");
+  this.setLabel(ellipseTool.selector,     "E");
+  this.setLabel(squareTool.selector,      "S");
+  this.setLabel(circleTool.selector,      "C");
+  this.setLabel(freeDrawTool.selector,    "F");
+  this.setLabel(deleteTool.selector,      "d");
+  this.setLabel("-shapes", "Sh"); // immediately replaced by the currently active shape tool (rect)
+  this.setLabel("-lines",  "Li"); // immediately replaced by the currently active line tool (line)
+  this.setLabel("-select", "s");
 
   // show/hide trash button when objects are selected/deselected
   var trash = this.$buttons.trash;

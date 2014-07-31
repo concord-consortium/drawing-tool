@@ -42,6 +42,9 @@ var resizers = {
     if (s.y1 > s.y2) { s.y1 = s.top + s.height; s.y2 = s.top; }
     else { s.y2 = s.top + s.height; s.y1 = s.top; }
   },
+  arrow: function (s) {
+    this.line(s);
+  },
   path: function (s) {
     // we have two options to adjust width/height:
 

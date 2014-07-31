@@ -1,6 +1,6 @@
 var inherit                 = require('scripts/inherit');
 var Tool                    = require('scripts/tool');
-var lineCustomControlPoints = require('scripts/line-custom-control-points');
+var lineCustomControlPoints = require('scripts/fabric-extensions/line-custom-control-points');
 
 var BASIC_SELECTION_PROPERTIES = {
   cornerSize: fabric.isTouchSupported ? 22 : 12,

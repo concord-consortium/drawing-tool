@@ -2,9 +2,7 @@ var inherit                 = require('scripts/inherit');
 var ShapeTool               = require('scripts/tools/shape-tool');
 var SelectTool              = require('scripts/tools/select-tool');
 var Util                    = require('scripts/util');
-var lineCustomControlPoints = require('scripts/line-custom-control-points');
-
-// Load FabricJS extension.
+var lineCustomControlPoints = require('scripts/fabric-extensions/line-custom-control-points');
 require('scripts/fabric-extensions/arrow');
 
 // Note that this tool supports fabric.Line and all its subclasses (defined

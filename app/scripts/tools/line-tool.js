@@ -3,9 +3,16 @@ var ShapeTool  = require('scripts/tools/shape-tool');
 var SelectTool = require('scripts/tools/select-tool');
 var Util       = require('scripts/util');
 
+// Load FabricJS extension.
+require('scripts/fabric-extensions/arrow');
+
 var CONTROL_POINT_COLOR = '#bcd2ff';
 
-function LineTool(name, selector, drawTool) {
+// Note that this tool supports fabric.Line and all its subclasses (defined
+// as part of this code base, not FabricJS itself). Pass 'lineType' argument
+// (e.g. "line" or "arrow").
+
+function LineTool(name, selector, drawTool, lineType) {
   ShapeTool.call(this, name, selector, drawTool);
 
   var self = this;
@@ -13,7 +20,9 @@ function LineTool(name, selector, drawTool) {
   this.addEventListener("mouse:move", function (e) { self.mouseMove(e); });
   this.addEventListener("mouse:up", function (e) { self.mouseUp(e); });
 
-  handleLineSelection(this.canvas);
+  lineType = lineType || 'line';
+  handleLineSelection(this.canvas, lineType);
+  this._lineKlass = fabric.util.getKlass(lineType);
 }
 
 inherit(LineTool, ShapeTool);
@@ -27,8 +36,8 @@ LineTool.prototype.mouseDown = function (e) {
   var x = loc.x;
   var y = loc.y;
 
-  this.curr = new fabric.Line([x,y,x,y], {
-    fill: this.master.state.fill,
+  this.curr = new this._lineKlass([x,y,x,y], {
+    selectable: false,
     stroke: this.master.state.color,
     strokeWidth: this.master.state.strokeWidth
   });
@@ -70,22 +79,22 @@ LineTool.prototype._processNewShape = function (s) {
   s.setCoords();
 };
 
-function handleLineSelection(canvas) {
+function handleLineSelection(canvas, lineType) {
   var selectedObject = null;
   canvas.on("object:selected", function (e) {
     var newTarget = e.target;
-    if (selectedObject && selectedObject.type === "line" && !isControlPoint(newTarget, selectedObject)) {
+    if (selectedObject && selectedObject.type === lineType && !isControlPoint(newTarget, selectedObject)) {
       lineDeselected.call(selectedObject);
     }
     if (!isControlPoint(newTarget, selectedObject)) {
       selectedObject = newTarget;
-      if (newTarget.type === "line") {
+      if (newTarget.type === lineType) {
         lineSelected.call(newTarget);
       }
     }
   });
   canvas.on("selection:cleared", function (e) {
-    if (selectedObject && selectedObject.type === "line") {
+    if (selectedObject && selectedObject.type === lineType) {
       lineDeselected.call(selectedObject);
     }
     selectedObject = null;

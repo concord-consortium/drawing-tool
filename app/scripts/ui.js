@@ -100,11 +100,11 @@ UI.prototype._uiClicked = function (target) {
 UI.prototype._paletteButtonClicked = function (selector) {
   for (var p in this.palettes) {
     if (p === selector) {
-      this.palettes[p].$palette.show();
+      this.palettes[p].$palette.show(400);
       if (this.master.currentTool.selector !== this.palettes[p].currentTool) {
         this.master.chooseTool(this.palettes[p].currentTool);
       }
-    } else { this.palettes[p].$palette.hide(); }
+    } else { this.palettes[p].$palette.hide(400); }
   }
   var links = this.palettes[selector].$palette.find('.dt-link');
   for (var i = 0; i < links.length; i++) {

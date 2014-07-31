@@ -1,6 +1,6 @@
 {
   "name": "drawing-tool",
-  "version": "0.9.1",
+  "version": "0.9.2",
   "main": [
     "dist/drawing-tool.js",
     "dist/drawing-tool.css",

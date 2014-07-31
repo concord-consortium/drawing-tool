@@ -1866,11 +1866,11 @@ UI.prototype._uiClicked = function (target) {
 UI.prototype._paletteButtonClicked = function (selector) {
   for (var p in this.palettes) {
     if (p === selector) {
-      this.palettes[p].$palette.show();
+      this.palettes[p].show();
       if (this.master.currentTool.selector !== this.palettes[p].currentTool) {
         this.master.chooseTool(this.palettes[p].currentTool);
       }
-    } else { this.palettes[p].$palette.hide(); }
+    } else { this.palettes[p].hide(); }
   }
   var links = this.palettes[selector].$palette.find('.dt-link');
   for (var i = 0; i < links.length; i++) {
@@ -2029,6 +2029,14 @@ function BtnGroup (groupName, buttons) {
     this.$buttons[j].data('dt-btn-type') !== 'tool'; j++) {}
   this.currentTool = buttons[j].data('dt-target-id');
 }
+
+BtnGroup.prototype.show = function() {
+  this.$palette.show(400);
+};
+
+BtnGroup.prototype.hide = function() {
+  this.$palette.hide(400);
+};
 
 module.exports = UI;
 

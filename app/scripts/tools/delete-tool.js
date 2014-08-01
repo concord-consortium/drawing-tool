@@ -33,12 +33,14 @@ DeleteTool.prototype._delete = function () {
   } else if (canvas.getActiveGroup()) {
     canvas.getActiveGroup().forEachObject(function(o){ canvas.remove(o); });
     canvas.discardActiveGroup().renderAll();
-  } else if (canvas.getObjects().length > 0) {
-    // OPTION 1: REMOVES the most recently created object
-    // canvas.remove(canvas.item(canvas.getObjects().length - 1));
-    // OPTION 2: SELECTS the most recently created object
-    canvas.setActiveObject(canvas.item(canvas.getObjects().length - 1));
   }
+  // Alternate UI pattern for 'inactive delete tool'
+  // else if (canvas.getObjects().length > 0) {
+  //   // OPTION 1: REMOVES the most recently created object
+  //   // canvas.remove(canvas.item(canvas.getObjects().length - 1));
+  //   // OPTION 2: SELECTS the most recently created object
+  //   // canvas.setActiveObject(canvas.item(canvas.getObjects().length - 1));
+  // }
 };
 
 DeleteTool.prototype.show = function () { this.$element.show(); };

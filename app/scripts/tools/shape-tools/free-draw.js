@@ -13,9 +13,9 @@ inherit(FreeDrawTool, ShapeTool);
 
 FreeDrawTool.prototype.mouseDown = function (opt) {
 
-  this.canvas.freeDrawingBrush.color = this.master.state.color;
+  this.canvas.freeDrawingBrush.color = this.master.state.stroke;
   this.canvas.freeDrawingBrush.width = this.master.state.strokeWidth;
-  
+
   FreeDrawTool.super.mouseDown.call(this, opt);
   if (!this.active) { return; }
   if (!this.canvas.isDrawingMode) {

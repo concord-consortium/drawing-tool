@@ -9,7 +9,7 @@ var DEF_OPTIONS = {
 };
 
 var DEF_STATE = {
-  color: "rgba(100,200,200,.75)",
+  stroke: "rgba(100,200,200,.75)",
   strokeWidth: 10,
   fill: ""
 };

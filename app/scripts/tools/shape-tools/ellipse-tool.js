@@ -33,7 +33,7 @@ EllipseTool.prototype.mouseDown = function (e) {
     selectable: false,
     lockUniScaling: this._circle,
     fill: this.master.state.fill,
-    stroke: this.master.state.color,
+    stroke: this.master.state.stroke,
     strokeWidth: this.master.state.strokeWidth
   });
   this.canvas.add(this.curr);

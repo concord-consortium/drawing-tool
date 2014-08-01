@@ -39,7 +39,7 @@ LineTool.prototype.mouseDown = function (e) {
     originX: 'center', // important due to custom line control points!
     originY: 'center',
     selectable: false,
-    stroke: this.master.state.color,
+    stroke: this.master.state.stroke,
     strokeWidth: this.master.state.strokeWidth
   }, this._lineOptions));
   this.canvas.add(this.curr);

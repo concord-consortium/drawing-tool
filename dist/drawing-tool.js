@@ -102,7 +102,7 @@ var DEF_OPTIONS = {
 };
 
 var DEF_STATE = {
-  color: "rgba(100,200,200,.75)",
+  stroke: "rgba(100,200,200,.75)",
   strokeWidth: 10,
   fill: ""
 };
@@ -1028,6 +1028,56 @@ module.exports = Tool;
 
 });
 
+require.register("scripts/tools/color-tool", function(exports, require, module) {
+var inherit = require('scripts/inherit');
+var Tool    = require('scripts/tool');
+
+/*
+ * `ColorTool` is a single use (see `tool.js`'s `singleUse` property')
+ * tool that sets property (specified by `type`) of the selected object(s)
+ * to a certain color (defined by `colorCode`).
+ *
+ * constructor parameters:
+ *  - colorName: human-readable name for the color
+ *  - type: name of the parameter to be changed
+ *          (will either be 'stroke' or 'fill')
+ *          default: 'stroke'
+ *  - colorCode: the actual color (in hex or rgba etc)
+ *          NOTE: this string is used to compare equivilancies
+ *  - drawTool: the 'master'
+ */
+function ColorTool(colorName, type, colorCode, drawTool) {
+  type = type || "stroke";
+  var name = colorName + "-" + type;
+  Tool.call(this, name, name, drawTool);
+
+  this.color = colorCode;
+  this.singleUse = true;
+}
+
+inherit(ColorTool, Tool);
+
+ColorTool.prototype.use = function () {
+  // TODO: implement color tool
+  // set color of property of currently selected object
+  if (this.master.canvas.getActiveObject()) {
+    var obj = this.master.canvas.getActiveObject();
+    obj.set(this.type, this.colorCode);
+  } else if (this.master.canvas.getActiveGroup()) {
+    var objs = this.master.canvas.getActiveGroup().objects;
+    var i = 0;
+    for (; i < objs.length; i++) {
+      objs[i].set(this.type, this.colorCode);
+    }
+  }
+  // set color of property of state object
+  this.master.state[this.type] = this.colorCode;
+}
+
+module.exports = ColorTool;
+
+});
+
 require.register("scripts/tools/delete-tool", function(exports, require, module) {
 var inherit  = require('scripts/inherit');
 var Tool     = require('scripts/tool');
@@ -1286,7 +1336,7 @@ EllipseTool.prototype.mouseDown = function (e) {
     selectable: false,
     lockUniScaling: this._circle,
     fill: this.master.state.fill,
-    stroke: this.master.state.color,
+    stroke: this.master.state.stroke,
     strokeWidth: this.master.state.strokeWidth
   });
   this.canvas.add(this.curr);
@@ -1372,9 +1422,9 @@ inherit(FreeDrawTool, ShapeTool);
 
 FreeDrawTool.prototype.mouseDown = function (opt) {
 
-  this.canvas.freeDrawingBrush.color = this.master.state.color;
+  this.canvas.freeDrawingBrush.color = this.master.state.stroke;
   this.canvas.freeDrawingBrush.width = this.master.state.strokeWidth;
-  
+
   FreeDrawTool.super.mouseDown.call(this, opt);
   if (!this.active) { return; }
   if (!this.canvas.isDrawingMode) {
@@ -1459,7 +1509,7 @@ LineTool.prototype.mouseDown = function (e) {
     originX: 'center', // important due to custom line control points!
     originY: 'center',
     selectable: false,
-    stroke: this.master.state.color,
+    stroke: this.master.state.stroke,
     strokeWidth: this.master.state.strokeWidth
   }, this._lineOptions));
   this.canvas.add(this.curr);
@@ -1540,7 +1590,7 @@ RectangleTool.prototype.mouseDown = function (e) {
     selectable: false,
     lockUniScaling: this._square,
     fill: this.master.state.fill,
-    stroke: this.master.state.color,
+    stroke: this.master.state.stroke,
     strokeWidth: this.master.state.strokeWidth
   });
   this.canvas.add(this.curr);

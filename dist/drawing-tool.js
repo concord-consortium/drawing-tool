@@ -1195,6 +1195,13 @@ DeleteTool.prototype._delete = function () {
     canvas.getActiveGroup().forEachObject(function(o){ canvas.remove(o); });
     canvas.discardActiveGroup().renderAll();
   }
+  // Alternate UI pattern for 'inactive delete tool'
+  // else if (canvas.getObjects().length > 0) {
+  //   // OPTION 1: REMOVES the most recently created object
+  //   // canvas.remove(canvas.item(canvas.getObjects().length - 1));
+  //   // OPTION 2: SELECTS the most recently created object
+  //   // canvas.setActiveObject(canvas.item(canvas.getObjects().length - 1));
+  // }
 };
 
 DeleteTool.prototype.show = function () { this.$element.show(); };
@@ -1872,9 +1879,9 @@ UI.prototype.initTools = function(p) {
 
   // show/hide trash button when objects are selected/deselected
   var trash = this.$buttons.trash;
-  trash.hide();
-  this.master.canvas.on("object:selected", function () { trash.show(); });
-  this.master.canvas.on("selection:cleared", function () { trash.hide(); });
+  trash.addClass('dt-locked');
+  this.master.canvas.on("object:selected", function () { trash.removeClass('dt-locked'); });
+  this.master.canvas.on("selection:cleared", function () { trash.addClass('dt-locked'); });
 
   // start on the select tool and show the main menu
   // this.palettes.main.$palette.show();
@@ -2095,12 +2102,12 @@ function BtnGroup (groupName, buttons, static) {
 }
 
 BtnGroup.prototype.show = function(callback) {
-  this.$palette.fadeIn(200, callback);
+  this.$palette.fadeIn(100, callback);
 };
 
 BtnGroup.prototype.hide = function(callback) {
   if (this.static) { return; }
-  this.$palette.fadeOut(200, callback);
+  this.$palette.fadeOut(100, callback);
 };
 
 module.exports = UI;

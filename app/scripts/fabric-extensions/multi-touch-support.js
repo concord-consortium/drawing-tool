@@ -10,7 +10,7 @@ module.exports = function addMultiTouchSupport(canvas) {
 
   mc.on('pinchstart', function (e) {
     var target = getTarget();
-    if (!target || target.type === 'line') {
+    if (!target || isLine(target)) {
       return;
     }
     setLocked(target, true);
@@ -20,7 +20,7 @@ module.exports = function addMultiTouchSupport(canvas) {
 
   mc.on('pinchmove', function (e) {
     var target = getTarget();
-    if (!target || target.type === 'line') {
+    if (!target || isLine(target)) {
       return;
     }
     target.set({
@@ -37,11 +37,15 @@ module.exports = function addMultiTouchSupport(canvas) {
 
   mc.on('pinchend', function (e) {
     var target = getTarget();
-    if (!target || target.type === 'line') {
+    if (!target || isLine(target)) {
       return;
     }
     setLocked(target, false);
   });
+
+  function isLine(object) {
+    return object.type === 'line' || object.type === 'arrow';
+  }
 
   function getTarget() {
     return canvas.getActiveObject() || canvas.getActiveGroup();

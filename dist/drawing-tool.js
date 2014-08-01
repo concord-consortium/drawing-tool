@@ -234,6 +234,15 @@ DrawingTool.prototype.resizeCanvasToBackground = function () {
   this.canvas.renderAll();
 };
 
+/**
+ * Calculates canvas element offset relative to the document.
+ * Call this method when Drawing Tool container position is updated.
+ * This method is attached as "resize" event handler of window (by FabricJS itself).
+ */
+DrawingTool.prototype.calcOffset = function () {
+  this.canvas.calcOffset();
+};
+
 DrawingTool.prototype.chooseTool = function (toolSelector){
   $(this.selector).find('.'+toolSelector).click();
 };

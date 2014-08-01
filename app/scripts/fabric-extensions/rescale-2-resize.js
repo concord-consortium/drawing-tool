@@ -5,15 +5,6 @@ function basicWidthHeightTransform(s) {
   s.height = s.height * s.scaleY + s.strokeWidth * (s.scaleY - 1);
 }
 
-function uniformWidthHeightTransform(s) {
-  basicWidthHeightTransform(s);
-  if (s.scaleX !== 1) {
-    s.height = s.width;
-  } else {
-    s.width = s.height;
-  }
-}
-
 var resizers = {
   rect: function (s) {
     basicWidthHeightTransform(s);
@@ -22,10 +13,6 @@ var resizers = {
     basicWidthHeightTransform(s);
     s.rx = Math.abs(s.width / 2);
     s.ry = Math.abs(s.height / 2);
-  },
-  circle: function (s) {
-    uniformWidthHeightTransform(s);
-    s.radius = Math.abs(s.width / 2);
   },
   line: function (s) {
     basicWidthHeightTransform(s);

@@ -2,7 +2,7 @@ var inherit   = require('scripts/inherit');
 var ShapeTool = require('scripts/tools/shape-tool');
 var Util      = require('scripts/util');
 
-function EllipseTool(name, selector, drawTool) {
+function EllipseTool(name, selector, drawTool, type) {
   ShapeTool.call(this, name, selector, drawTool);
 
   var self = this;
@@ -10,7 +10,7 @@ function EllipseTool(name, selector, drawTool) {
   this.addEventListener("mouse:move", function (e) { self.mouseMove(e); });
   this.addEventListener("mouse:up", function (e) { self.mouseUp(e); });
 
-  // this.setLabel('E');
+  this._circle = type === "circle";
 }
 
 inherit(EllipseTool, ShapeTool);
@@ -31,6 +31,7 @@ EllipseTool.prototype.mouseDown = function (e) {
     rx: 0.1,
     ry: 0.1,
     selectable: false,
+    lockUniScaling: this._circle,
     fill: this.master.state.fill,
     stroke: this.master.state.color,
     strokeWidth: this.master.state.strokeWidth
@@ -40,38 +41,34 @@ EllipseTool.prototype.mouseDown = function (e) {
 
 EllipseTool.prototype.mouseMove = function (e) {
   EllipseTool.super.mouseMove.call(this, e);
+
   if (this.down === false) { return; }
+
   var loc = this.canvas.getPointer(e.e);
-  var x = loc.x;
-  var y = loc.y;
-  var x1 = this.curr.left;
-  var y1 = this.curr.top;
+  var width = loc.x - this.curr.left;
+  var height = loc.y - this.curr.top;
 
-  var width = x - x1;
-  var height = y - y1;
-
-  if (width < 0) {
-    this.curr.originX = "right";
-    width = -width;
-  } else {
-    this.curr.originX = "left";
+  if (this._circle) {
+    if (Math.abs(width) < Math.abs(height)) {
+      height = Math.abs(width) * sign(height);
+    } else {
+      width = Math.abs(height) * sign(width);
+    }
   }
 
-  if (height < 0) {
-    this.curr.originY = "bottom";
-    height = -height;
-  } else {
-    this.curr.originY = "top";
-  }
-
-  this.curr.set('rx', width / 2);
-  this.curr.set('ry', height / 2);
-
-  this.curr.set('width', width);
-  this.curr.set('height', height);
+  this.curr.set({
+    width: width,
+    height: height,
+    rx: Math.abs(width / 2),
+    ry: Math.abs(height / 2)
+  });
 
   this.canvas.renderAll();
 };
+
+function sign(num) {
+  return num >= 0 ? 1 : -1;
+}
 
 EllipseTool.prototype.mouseUp = function (e) {
   EllipseTool.super.mouseUp.call(this, e);
@@ -82,18 +79,13 @@ EllipseTool.prototype.mouseUp = function (e) {
 };
 
 EllipseTool.prototype._processNewShape = function (s) {
-  var width = s.width;
-  var height = s.height;
-
-  if (s.originX === "right") {
-    // "- s.strokeWidth" eliminates the small position shift
-    // that would otherwise occur on mouseup
-    s.left = s.left - s.width - s.strokeWidth;
-    s.originX = "left";
+  if (s.width < 0) {
+    s.left = s.left + s.width;
+    s.width = -s.width;
   }
-  if (s.originY === "bottom") {
-    s.top = s.top - s.height - s.strokeWidth;
-    s.originY = "top";
+  if (s.height < 0) {
+    s.top = s.top + s.height;
+    s.height = -s.height;
   }
   if (Math.max(s.width, s.height) < this.minSize) {
     s.set('rx', this.defSize / 2);

@@ -3,7 +3,6 @@ var SelectionTool     = require('scripts/tools/select-tool');
 var LineTool          = require('scripts/tools/line-tool');
 var RectangleTool     = require('scripts/tools/rect-tool');
 var EllipseTool       = require('scripts/tools/ellipse-tool');
-var CircleTool        = require('scripts/tools/circle-tool');
 var FreeDrawTool      = require('scripts/tools/free-draw');
 var DeleteTool        = require('scripts/tools/delete-tool');
 
@@ -25,7 +24,7 @@ UI.prototype.initTools = function(p) {
   var rectangleTool = new RectangleTool("Rectangle Tool", "rect", this.master);
   var ellipseTool = new EllipseTool("Ellipse Tool", "ellipse", this.master);
   var squareTool = new RectangleTool("Square Tool", "square", this.master, "square");
-  var circleTool = new CircleTool("Circle Tool", "circle", this.master);
+  var circleTool = new EllipseTool("Circle Tool", "circle", this.master, "circle");
   var freeDrawTool = new FreeDrawTool("Free Draw Tool", "free", this.master);
   var deleteTool = new DeleteTool("Delete Tool", "trash", this.master);
 

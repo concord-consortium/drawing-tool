@@ -112,25 +112,57 @@ function controlPointDeleted() {
 
 // Helpers
 
-// TODO: fix this to control the line endpoints from the
-//       CENTER of the control point (not the edge)
-//       This is visible on larger width lines.
 function updateLineControlPoints() {
-  // First update line itself, (x1, y1) and (x2, y2) points using left / top.
-  // Note that there is an assumption that line has central origin!
-  var dx = this.left - (this.get('x1') + (this.get('x2') - this.get('x1')) * 0.5);
-  var dy = this.top  - (this.get('y1') + (this.get('y2') - this.get('y1')) * 0.5);
+  translateLineCoords.call(this);
+  rotateLineCoords.call(this);
+  this.ctp[0].set('left', this.get('x1'));
+  this.ctp[0].set('top', this.get('y1'));
+  this.ctp[1].set('left', this.get('x2'));
+  this.ctp[1].set('top', this.get('y2'));
+  this.ctp[0].setCoords();
+  this.ctp[1].setCoords();
+}
+
+function translateLineCoords() {
+  // It's a bit confusing part of FabricJS. Basically line has (x1, y1), (x2, y2) coordinates
+  // and (top, left). When line is moved, only (top, left) are updated. Update rest of
+  // coordinates too. Note that there is an assumption that the line has central origin!
+  var centerX = this.get('x1') + (this.get('x2') - this.get('x1')) * 0.5;
+  var centerY = this.get('y1') + (this.get('y2') - this.get('y1')) * 0.5;
+  var dx = this.left - centerX;
+  var dy = this.top  - centerY;
   this.set('x1', dx + this.x1);
   this.set('y1', dy + this.y1);
   this.set('x2', dx + this.x2);
   this.set('y2', dy + this.y2);
+}
 
-  this.ctp[0].set('top', this.y1);
-  this.ctp[0].set('left', this.x1);
-  this.ctp[1].set('top', this.y2);
-  this.ctp[1].set('left', this.x2);
-  this.ctp[0].setCoords();
-  this.ctp[1].setCoords();
+function rotateLineCoords() {
+  // Set angle to 0 and apply transform to (x1, y1), (x2, y2). We could also
+  // apply this transformation to control points instead. However if we reset
+  // line rotation, conversion will have to be applies only once.
+  if (this.get('angle') === 0) return;
+  var angle = this.get('angle') / 180 * Math.PI;
+  var originX = this.get('left');
+  var originY = this.get('top');
+  var newA = rot(this.get('x1'), this.get('y1'), originX, originY, angle);
+  var newB = rot(this.get('x2'), this.get('y2'), originX, originY, angle);
+  this.set({
+    x1: newA[0],
+    y1: newA[1],
+    x2: newB[0],
+    y2: newB[1],
+    angle: 0
+  });
+
+  function rot(px, py, ox, oy, theta) {
+    var cos = Math.cos(theta);
+    var sin = Math.sin(theta);
+    return [
+      cos * (px - ox) - sin * (py - oy) + ox,
+      sin * (px - ox) + cos * (py - oy) + oy
+    ];
+  }
 }
 
 function makeControlPoint(s, source, i) {

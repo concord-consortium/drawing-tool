@@ -2,13 +2,15 @@ var inherit   = require('scripts/inherit');
 var ShapeTool = require('scripts/tools/shape-tool');
 var Util      = require('scripts/util');
 
-function RectangleTool(name, selector, drawTool) {
+function RectangleTool(name, selector, drawTool, type) {
   ShapeTool.call(this, name, selector, drawTool);
 
   var self = this;
   this.addEventListener("mouse:down", function (e) { self.mouseDown(e); });
   this.addEventListener("mouse:move", function (e) { self.mouseMove(e); });
   this.addEventListener("mouse:up", function (e) { self.mouseUp(e); });
+
+  this._square = type === "square";
 }
 
 inherit(RectangleTool, ShapeTool);
@@ -29,6 +31,7 @@ RectangleTool.prototype.mouseDown = function (e) {
     width: 0,
     height: 0,
     selectable: false,
+    lockUniScaling: this._square,
     fill: this.master.state.fill,
     stroke: this.master.state.color,
     strokeWidth: this.master.state.strokeWidth
@@ -41,19 +44,28 @@ RectangleTool.prototype.mouseMove = function (e) {
   if (this.down === false) { return; }
 
   var loc = this.canvas.getPointer(e.e);
+  var width = loc.x - this.curr.left;
+  var height = loc.y - this.curr.top;
 
-  var x = loc.x;
-  var y = loc.y;
-  var x1 = this.curr.left;
-  var y1 = this.curr.top;
+  if (this._square) {
+    if (Math.abs(width) < Math.abs(height)) {
+      height = Math.abs(width) * sign(height);
+    } else {
+      width = Math.abs(height) * sign(width);
+    }
+  }
 
   this.curr.set({
-    width: x - x1,
-    height: y - y1
+    width: width,
+    height: height
   });
 
-  this.canvas.renderAll(false);
+  this.canvas.renderAll();
 };
+
+function sign(num) {
+  return num >= 0 ? 1 : -1;
+}
 
 RectangleTool.prototype.mouseUp = function (e) {
   RectangleTool.super.mouseUp.call(this, e);

@@ -800,9 +800,6 @@ var resizers = {
     uniformWidthHeightTransform(s);
     s.radius = Math.abs(s.width / 2);
   },
-  square: function (s) {
-    uniformWidthHeightTransform(s);
-  },
   line: function (s) {
     basicWidthHeightTransform(s);
 
@@ -844,9 +841,7 @@ var resizers = {
 module.exports = function rescale2resize(canvas) {
   canvas.on('object:scaling', function (opt) {
     var shape = opt.target;
-    // Support custom Drawing Tool shape types (e.g. "square" which is
-    // not supported in FabricJS).
-    var type = shape.dtType || shape.type;
+    var type = shape.type;
     if (resizers[type] !== undefined) {
       resizers[type](shape);
       shape.scaleX = 1;
@@ -1478,13 +1473,15 @@ var inherit   = require('scripts/inherit');
 var ShapeTool = require('scripts/tools/shape-tool');
 var Util      = require('scripts/util');
 
-function RectangleTool(name, selector, drawTool) {
+function RectangleTool(name, selector, drawTool, type) {
   ShapeTool.call(this, name, selector, drawTool);
 
   var self = this;
   this.addEventListener("mouse:down", function (e) { self.mouseDown(e); });
   this.addEventListener("mouse:move", function (e) { self.mouseMove(e); });
   this.addEventListener("mouse:up", function (e) { self.mouseUp(e); });
+
+  this._square = type === "square";
 }
 
 inherit(RectangleTool, ShapeTool);
@@ -1505,6 +1502,7 @@ RectangleTool.prototype.mouseDown = function (e) {
     width: 0,
     height: 0,
     selectable: false,
+    lockUniScaling: this._square,
     fill: this.master.state.fill,
     stroke: this.master.state.color,
     strokeWidth: this.master.state.strokeWidth
@@ -1517,19 +1515,28 @@ RectangleTool.prototype.mouseMove = function (e) {
   if (this.down === false) { return; }
 
   var loc = this.canvas.getPointer(e.e);
+  var width = loc.x - this.curr.left;
+  var height = loc.y - this.curr.top;
 
-  var x = loc.x;
-  var y = loc.y;
-  var x1 = this.curr.left;
-  var y1 = this.curr.top;
+  if (this._square) {
+    if (Math.abs(width) < Math.abs(height)) {
+      height = Math.abs(width) * sign(height);
+    } else {
+      width = Math.abs(height) * sign(width);
+    }
+  }
 
   this.curr.set({
-    width: x - x1,
-    height: y - y1
+    width: width,
+    height: height
   });
 
-  this.canvas.renderAll(false);
+  this.canvas.renderAll();
 };
+
+function sign(num) {
+  return num >= 0 ? 1 : -1;
+}
 
 RectangleTool.prototype.mouseUp = function (e) {
   RectangleTool.super.mouseUp.call(this, e);
@@ -1731,100 +1738,12 @@ module.exports = ShapeTool;
 
 });
 
-require.register("scripts/tools/square-tool", function(exports, require, module) {
-var inherit   = require('scripts/inherit');
-var ShapeTool = require('scripts/tools/shape-tool');
-var Util      = require('scripts/util');
-
-function SquareTool(name, selector, drawTool) {
-  ShapeTool.call(this, name, selector, drawTool);
-
-  var self = this;
-  this.addEventListener("mouse:down", function (e) { self.mouseDown(e); });
-  this.addEventListener("mouse:move", function (e) { self.mouseMove(e); });
-  this.addEventListener("mouse:up", function (e) { self.mouseUp(e); });
-}
-
-inherit(SquareTool, ShapeTool);
-
-SquareTool.prototype.mouseDown = function (e) {
-  SquareTool.super.mouseDown.call(this, e);
-
-  if (!this.active) { return; }
-
-  var loc = this.canvas.getPointer(e.e);
-  var x = loc.x;
-  var y = loc.y;
-
-  this.curr = new fabric.Rect({
-    top: y,
-    left: x,
-    width: 0,
-    height: 0,
-    selectable: false,
-    lockUniScaling: true, // it's a square!
-    fill: this.master.state.fill,
-    stroke: this.master.state.color,
-    strokeWidth: this.master.state.strokeWidth
-  });
-  this.canvas.add(this.curr);
-};
-
-SquareTool.prototype.mouseMove = function (e) {
-  SquareTool.super.mouseMove.call(this, e);
-  if (this.down === false) { return; }
-
-  var loc = this.canvas.getPointer(e.e);
-  var width = loc.x - this.curr.left;
-  var height = loc.y - this.curr.top;
-
-  var sideLen = Math.abs(width) > Math.abs(height) ? Math.abs(width) : Math.abs(height);
-  this.curr.width = sideLen;
-  if (width < 0) { this.curr.width *= -1; }
-  this.curr.height = sideLen;
-  if (height < 0) { this.curr.height *= -1; }
-
-  this.canvas.renderAll(false);
-};
-
-SquareTool.prototype.mouseUp = function (e) {
-  SquareTool.super.mouseUp.call(this, e);
-  this._processNewShape(this.curr);
-  this.canvas.renderAll();
-  this.actionComplete(this.curr);
-  this.curr = undefined;
-};
-
-SquareTool.prototype._processNewShape = function (s) {
-  if (s.width < 0) {
-    s.left = s.left + s.width;
-    s.width = - s.width;
-  }
-  if (s.height < 0) {
-    s.top = s.top + s.height;
-    s.height = - s.height;
-  }
-  if (Math.max(s.width, s.height) < this.minSize) {
-    s.set('width', this.defSize);
-    s.set('height', this.defSize);
-    s.set('top', s.get('top') - s.get('height') + s.get('strokeWidth'));
-    s.set('left', s.get('left') - s.get('width') + s.get('strokeWidth'));
-  }
-  this.setCentralOrigin(s);
-  s.setCoords();
-};
-
-module.exports = SquareTool;
-
-});
-
 require.register("scripts/ui", function(exports, require, module) {
 var Tool              = require('scripts/tool');
 var SelectionTool     = require('scripts/tools/select-tool');
 var LineTool          = require('scripts/tools/line-tool');
 var RectangleTool     = require('scripts/tools/rect-tool');
 var EllipseTool       = require('scripts/tools/ellipse-tool');
-var SquareTool        = require('scripts/tools/square-tool');
 var CircleTool        = require('scripts/tools/circle-tool');
 var FreeDrawTool      = require('scripts/tools/free-draw');
 var DeleteTool        = require('scripts/tools/delete-tool');
@@ -1846,7 +1765,7 @@ UI.prototype.initTools = function(p) {
   var doubleArrowTool = new LineTool("Double Arrow Tool", "doubleArrow", this.master, "arrow", {doubleArrowhead: true});
   var rectangleTool = new RectangleTool("Rectangle Tool", "rect", this.master);
   var ellipseTool = new EllipseTool("Ellipse Tool", "ellipse", this.master);
-  var squareTool = new SquareTool("Square Tool", "square", this.master);
+  var squareTool = new RectangleTool("Square Tool", "square", this.master, "square");
   var circleTool = new CircleTool("Circle Tool", "circle", this.master);
   var freeDrawTool = new FreeDrawTool("Free Draw Tool", "free", this.master);
   var deleteTool = new DeleteTool("Delete Tool", "trash", this.master);

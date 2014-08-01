@@ -27,9 +27,6 @@ var resizers = {
     uniformWidthHeightTransform(s);
     s.radius = Math.abs(s.width / 2);
   },
-  square: function (s) {
-    uniformWidthHeightTransform(s);
-  },
   line: function (s) {
     basicWidthHeightTransform(s);
 
@@ -71,9 +68,7 @@ var resizers = {
 module.exports = function rescale2resize(canvas) {
   canvas.on('object:scaling', function (opt) {
     var shape = opt.target;
-    // Support custom Drawing Tool shape types (e.g. "square" which is
-    // not supported in FabricJS).
-    var type = shape.dtType || shape.type;
+    var type = shape.type;
     if (resizers[type] !== undefined) {
       resizers[type](shape);
       shape.scaleX = 1;

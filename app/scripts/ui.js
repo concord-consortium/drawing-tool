@@ -1,10 +1,11 @@
 var Tool              = require('scripts/tool');
 var SelectionTool     = require('scripts/tools/select-tool');
-var LineTool          = require('scripts/tools/line-tool');
-var RectangleTool     = require('scripts/tools/rect-tool');
-var EllipseTool       = require('scripts/tools/ellipse-tool');
-var FreeDrawTool      = require('scripts/tools/free-draw');
+var LineTool          = require('scripts/tools/shape-tools/line-tool');
+var RectangleTool     = require('scripts/tools/shape-tools/rect-tool');
+var EllipseTool       = require('scripts/tools/shape-tools/ellipse-tool');
+var FreeDrawTool      = require('scripts/tools/shape-tools/free-draw');
 var DeleteTool        = require('scripts/tools/delete-tool');
+// var ColorTool         = require('scripts/tools/color-tool');
 
 function UI (master, selector, options) {
   this.master = master;
@@ -27,6 +28,8 @@ UI.prototype.initTools = function(p) {
   var circleTool = new EllipseTool("Circle Tool", "circle", this.master, "circle");
   var freeDrawTool = new FreeDrawTool("Free Draw Tool", "free", this.master);
   var deleteTool = new DeleteTool("Delete Tool", "trash", this.master);
+
+  // var strokeBlack = new ColorTool('black', 'stroke', '#000', this.master);
 
   // tool palettes
   // TODO: document this portion

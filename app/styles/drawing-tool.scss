@@ -28,6 +28,12 @@ $icons: 'Draw Tool Icons', Arial, sans-serif;
     margin: 0 2px 0 0;
   }
 
+  .dt-color-palette {
+    .dt-btn {
+      height: $buttonSize / 2;
+    }
+  }
+
   .dt-btn {
     font-family: $icons;
     font-size: $buttonFontSize;

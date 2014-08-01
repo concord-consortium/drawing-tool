@@ -1,4 +1,4 @@
-var LineTool = require('scripts/tools/line-tool');
+var LineTool = require('scripts/tools/shape-tools/line-tool');
 
 function basicWidthHeightTransform(s) {
   s.width = s.width * s.scaleX + s.strokeWidth * (s.scaleX - 1);

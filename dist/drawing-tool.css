@@ -16,6 +16,8 @@
     vertical-align: top;
     width: 44px;
     margin: 0 2px 0 0; }
+  .dt-container .dt-color-palette .dt-btn {
+    height: 22px; }
   .dt-container .dt-btn {
     font-family: 'Draw Tool Icons', Arial, sans-serif;
     font-size: 32px;

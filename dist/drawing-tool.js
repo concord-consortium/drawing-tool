@@ -771,7 +771,7 @@ module.exports = function addMultiTouchSupport(canvas) {
 });
 
 require.register("scripts/fabric-extensions/rescale-2-resize", function(exports, require, module) {
-var LineTool = require('scripts/tools/line-tool');
+var LineTool = require('scripts/tools/shape-tools/line-tool');
 
 function basicWidthHeightTransform(s) {
   s.width = s.width * s.scaleX + s.strokeWidth * (s.scaleX - 1);
@@ -1081,361 +1081,6 @@ module.exports = DeleteTool;
 
 });
 
-require.register("scripts/tools/ellipse-tool", function(exports, require, module) {
-var inherit   = require('scripts/inherit');
-var ShapeTool = require('scripts/tools/shape-tool');
-var Util      = require('scripts/util');
-
-function EllipseTool(name, selector, drawTool, type) {
-  ShapeTool.call(this, name, selector, drawTool);
-
-  var self = this;
-  this.addEventListener("mouse:down", function (e) { self.mouseDown(e); });
-  this.addEventListener("mouse:move", function (e) { self.mouseMove(e); });
-  this.addEventListener("mouse:up", function (e) { self.mouseUp(e); });
-
-  this._circle = type === "circle";
-}
-
-inherit(EllipseTool, ShapeTool);
-
-EllipseTool.prototype.mouseDown = function (e) {
-  EllipseTool.super.mouseDown.call(this, e);
-
-  // if this tool is no longer active, stop current action!
-  if (!this.active) { return; }
-
-  var loc = this.canvas.getPointer(e.e);
-  var x = loc.x;
-  var y = loc.y;
-
-  this.curr = new fabric.Ellipse({
-    top: y,
-    left: x,
-    rx: 0.1,
-    ry: 0.1,
-    selectable: false,
-    lockUniScaling: this._circle,
-    fill: this.master.state.fill,
-    stroke: this.master.state.color,
-    strokeWidth: this.master.state.strokeWidth
-  });
-  this.canvas.add(this.curr);
-};
-
-EllipseTool.prototype.mouseMove = function (e) {
-  EllipseTool.super.mouseMove.call(this, e);
-
-  if (this.down === false) { return; }
-
-  var loc = this.canvas.getPointer(e.e);
-  var width = loc.x - this.curr.left;
-  var height = loc.y - this.curr.top;
-
-  if (this._circle) {
-    if (Math.abs(width) < Math.abs(height)) {
-      height = Math.abs(width) * sign(height);
-    } else {
-      width = Math.abs(height) * sign(width);
-    }
-  }
-
-  this.curr.set({
-    width: width,
-    height: height,
-    rx: Math.abs(width / 2),
-    ry: Math.abs(height / 2)
-  });
-
-  this.canvas.renderAll();
-};
-
-function sign(num) {
-  return num >= 0 ? 1 : -1;
-}
-
-EllipseTool.prototype.mouseUp = function (e) {
-  EllipseTool.super.mouseUp.call(this, e);
-  this._processNewShape(this.curr);
-  this.canvas.renderAll();
-  this.actionComplete(this.curr);
-  this.curr = undefined;
-};
-
-EllipseTool.prototype._processNewShape = function (s) {
-  if (s.width < 0) {
-    s.left = s.left + s.width;
-    s.width = -s.width;
-  }
-  if (s.height < 0) {
-    s.top = s.top + s.height;
-    s.height = -s.height;
-  }
-  if (Math.max(s.width, s.height) < this.minSize) {
-    s.set('rx', this.defSize / 2);
-    s.set('ry', this.defSize / 2);
-    s.set('width', this.defSize);
-    s.set('height', this.defSize);
-    s.set('top', s.get('top') - s.get('ry') - s.get('strokeWidth') / 2);
-    s.set('left', s.get('left') - s.get('rx') - s.get('strokeWidth') / 2);
-  }
-  this.setCentralOrigin(s);
-  s.setCoords();
-};
-
-module.exports = EllipseTool;
-
-});
-
-require.register("scripts/tools/free-draw", function(exports, require, module) {
-var inherit   = require('scripts/inherit');
-var ShapeTool = require('scripts/tools/shape-tool');
-
-function FreeDrawTool(name, selector, drawTool) {
-  ShapeTool.call(this, name, selector, drawTool);
-
-  var self = this;
-  this.addEventListener("mouse:down", function (e) { self.mouseDown(e); });
-  this.addEventListener("mouse:up", function (e) { self.mouseUp(e); });
-}
-
-inherit(FreeDrawTool, ShapeTool);
-
-FreeDrawTool.prototype.mouseDown = function (opt) {
-
-  this.canvas.freeDrawingBrush.color = this.master.state.color;
-  this.canvas.freeDrawingBrush.width = this.master.state.strokeWidth;
-  
-  FreeDrawTool.super.mouseDown.call(this, opt);
-  if (!this.active) { return; }
-  if (!this.canvas.isDrawingMode) {
-    // If we are here, it means the handler is called for the first time.
-    // Activate drawing mode and call manually FabricJS handler to handle
-    // mouse down in drawing mode correctly.
-    //
-    // If you take look at FabricJS's methods like:
-    // - _onMouseDownInDrawingMode
-    // - _onMouseMoveInDrawingMode
-    // - _onMouseUpInDrawingMode
-    // it's visible that we could implement whole functionality using public
-    // `freeDrawingBrush` object. That would be better solution if these methods
-    // didn't handle clipping too. It would force us to literally copy the same
-    // code. So unless almost everything is handled in brush class, IMHO it's
-    // better to use this solution which is at least short and simple.
-    this.canvas.isDrawingMode = true;
-    this.canvas._onMouseDownInDrawingMode(opt.e);
-  }
-};
-
-FreeDrawTool.prototype.mouseUp = function (opt) {
-  var objects = this.canvas.getObjects();
-  var lastObject = objects[objects.length - 1];
-  this.curr = lastObject;
-  FreeDrawTool.super.mouseUp.call(this, opt);
-  if (!this._locked) {
-    this.canvas.isDrawingMode = false;
-  }
-  this.actionComplete(lastObject);
-  this.curr = undefined;
-};
-
-FreeDrawTool.prototype.deactivate = function () {
-  FreeDrawTool.super.deactivate.call(this);
-  this.canvas.isDrawingMode = false;
-};
-
-module.exports = FreeDrawTool;
-
-});
-
-require.register("scripts/tools/line-tool", function(exports, require, module) {
-var inherit                 = require('scripts/inherit');
-var ShapeTool               = require('scripts/tools/shape-tool');
-var SelectTool              = require('scripts/tools/select-tool');
-var Util                    = require('scripts/util');
-var lineCustomControlPoints = require('scripts/fabric-extensions/line-custom-control-points');
-require('scripts/fabric-extensions/arrow');
-
-// Note that this tool supports fabric.Line and all its subclasses (defined
-// as part of this code base, not FabricJS itself). Pass 'lineType' argument
-// (e.g. "line" or "arrow").
-
-function LineTool(name, selector, drawTool, lineType, lineOptions) {
-  ShapeTool.call(this, name, selector, drawTool);
-
-  var self = this;
-  this.addEventListener("mouse:down", function (e) { self.mouseDown(e); });
-  this.addEventListener("mouse:move", function (e) { self.mouseMove(e); });
-  this.addEventListener("mouse:up", function (e) { self.mouseUp(e); });
-
-  lineType = lineType || 'line';
-  this._lineKlass = fabric.util.getKlass(lineType);
-  this._lineOptions = lineOptions;
-
-  lineCustomControlPoints(this.canvas);
-}
-
-inherit(LineTool, ShapeTool);
-
-LineTool.prototype.mouseDown = function (e) {
-  LineTool.super.mouseDown.call(this, e);
-
-  if (!this.active) return;
-
-  var loc = this.canvas.getPointer(e.e);
-  var x = loc.x;
-  var y = loc.y;
-
-  this.curr = new this._lineKlass([x, y, x, y], $.extend(true, {
-    originX: 'center', // important due to custom line control points!
-    originY: 'center',
-    selectable: false,
-    stroke: this.master.state.color,
-    strokeWidth: this.master.state.strokeWidth
-  }, this._lineOptions));
-  this.canvas.add(this.curr);
-};
-
-LineTool.prototype.mouseMove = function (e) {
-  LineTool.super.mouseMove.call(this, e);
-  if (this.down === false) { return; }
-
-  var loc = this.canvas.getPointer(e.e);
-  var x = loc.x;
-  var y = loc.y;
-
-  this.curr.set('x2', x);
-  this.curr.set('y2', y);
-  this.canvas.renderAll();
-};
-
-LineTool.prototype.mouseUp = function (e) {
-  LineTool.super.mouseUp.call(this, e);
-  this._processNewShape(this.curr);
-  this.canvas.renderAll();
-  this.actionComplete(this.curr);
-  this.curr = undefined;
-};
-
-LineTool.prototype._processNewShape = function (s) {
-  var x1 = s.get('x1');
-  var y1 = s.get('y1');
-  var x2 = s.get('x2');
-  var y2 = s.get('y2');
-  if (Util.dist(x1 - x2, y1 - y2) < this.minSize) {
-    x2 = x1 + this.defSize;
-    y2 = y1 + this.defSize;
-    s.set('x2', x2);
-    s.set('y2', y2);
-  }
-  s.setCoords();
-};
-
-module.exports = LineTool;
-
-});
-
-require.register("scripts/tools/rect-tool", function(exports, require, module) {
-var inherit   = require('scripts/inherit');
-var ShapeTool = require('scripts/tools/shape-tool');
-var Util      = require('scripts/util');
-
-function RectangleTool(name, selector, drawTool, type) {
-  ShapeTool.call(this, name, selector, drawTool);
-
-  var self = this;
-  this.addEventListener("mouse:down", function (e) { self.mouseDown(e); });
-  this.addEventListener("mouse:move", function (e) { self.mouseMove(e); });
-  this.addEventListener("mouse:up", function (e) { self.mouseUp(e); });
-
-  this._square = type === "square";
-}
-
-inherit(RectangleTool, ShapeTool);
-
-RectangleTool.prototype.mouseDown = function (e) {
-  RectangleTool.super.mouseDown.call(this, e);
-
-  if (!this.active) { return; }
-
-  var loc = this.canvas.getPointer(e.e);
-
-  var x = loc.x;
-  var y = loc.y;
-
-  this.curr = new fabric.Rect({
-    top: y,
-    left: x,
-    width: 0,
-    height: 0,
-    selectable: false,
-    lockUniScaling: this._square,
-    fill: this.master.state.fill,
-    stroke: this.master.state.color,
-    strokeWidth: this.master.state.strokeWidth
-  });
-  this.canvas.add(this.curr);
-};
-
-RectangleTool.prototype.mouseMove = function (e) {
-  RectangleTool.super.mouseMove.call(this, e);
-  if (this.down === false) { return; }
-
-  var loc = this.canvas.getPointer(e.e);
-  var width = loc.x - this.curr.left;
-  var height = loc.y - this.curr.top;
-
-  if (this._square) {
-    if (Math.abs(width) < Math.abs(height)) {
-      height = Math.abs(width) * sign(height);
-    } else {
-      width = Math.abs(height) * sign(width);
-    }
-  }
-
-  this.curr.set({
-    width: width,
-    height: height
-  });
-
-  this.canvas.renderAll();
-};
-
-function sign(num) {
-  return num >= 0 ? 1 : -1;
-}
-
-RectangleTool.prototype.mouseUp = function (e) {
-  RectangleTool.super.mouseUp.call(this, e);
-  this._processNewShape(this.curr);
-  this.canvas.renderAll();
-  this.actionComplete(this.curr);
-  this.curr = undefined;
-};
-
-RectangleTool.prototype._processNewShape = function (s) {
-  if (s.width < 0) {
-    s.left = s.left + s.width;
-    s.width = -s.width;
-  }
-  if (s.height < 0) {
-    s.top = s.top + s.height;
-    s.height = -s.height;
-  }
-  this.setCentralOrigin(s);
-  if (Math.max(s.width, s.height) < this.minSize) {
-    s.set('width', this.defSize);
-    s.set('height', this.defSize);
-    s.set('top', s.get('top') - (s.get('height') / 2) + s.get('strokeWidth'));
-    s.set('left', s.get('left') - (s.get('width') / 2) + s.get('strokeWidth'));
-  }
-  s.setCoords();
-};
-
-module.exports = RectangleTool;
-
-});
-
 require.register("scripts/tools/select-tool", function(exports, require, module) {
 var inherit                 = require('scripts/inherit');
 var Tool                    = require('scripts/tool');
@@ -1605,14 +1250,370 @@ module.exports = ShapeTool;
 
 });
 
+require.register("scripts/tools/shape-tools/ellipse-tool", function(exports, require, module) {
+var inherit   = require('scripts/inherit');
+var ShapeTool = require('scripts/tools/shape-tool');
+var Util      = require('scripts/util');
+
+function EllipseTool(name, selector, drawTool, type) {
+  ShapeTool.call(this, name, selector, drawTool);
+
+  var self = this;
+  this.addEventListener("mouse:down", function (e) { self.mouseDown(e); });
+  this.addEventListener("mouse:move", function (e) { self.mouseMove(e); });
+  this.addEventListener("mouse:up", function (e) { self.mouseUp(e); });
+
+  this._circle = type === "circle";
+}
+
+inherit(EllipseTool, ShapeTool);
+
+EllipseTool.prototype.mouseDown = function (e) {
+  EllipseTool.super.mouseDown.call(this, e);
+
+  // if this tool is no longer active, stop current action!
+  if (!this.active) { return; }
+
+  var loc = this.canvas.getPointer(e.e);
+  var x = loc.x;
+  var y = loc.y;
+
+  this.curr = new fabric.Ellipse({
+    top: y,
+    left: x,
+    rx: 0.1,
+    ry: 0.1,
+    selectable: false,
+    lockUniScaling: this._circle,
+    fill: this.master.state.fill,
+    stroke: this.master.state.color,
+    strokeWidth: this.master.state.strokeWidth
+  });
+  this.canvas.add(this.curr);
+};
+
+EllipseTool.prototype.mouseMove = function (e) {
+  EllipseTool.super.mouseMove.call(this, e);
+
+  if (this.down === false) { return; }
+
+  var loc = this.canvas.getPointer(e.e);
+  var width = loc.x - this.curr.left;
+  var height = loc.y - this.curr.top;
+
+  if (this._circle) {
+    if (Math.abs(width) < Math.abs(height)) {
+      height = Math.abs(width) * sign(height);
+    } else {
+      width = Math.abs(height) * sign(width);
+    }
+  }
+
+  this.curr.set({
+    width: width,
+    height: height,
+    rx: Math.abs(width / 2),
+    ry: Math.abs(height / 2)
+  });
+
+  this.canvas.renderAll();
+};
+
+function sign(num) {
+  return num >= 0 ? 1 : -1;
+}
+
+EllipseTool.prototype.mouseUp = function (e) {
+  EllipseTool.super.mouseUp.call(this, e);
+  this._processNewShape(this.curr);
+  this.canvas.renderAll();
+  this.actionComplete(this.curr);
+  this.curr = undefined;
+};
+
+EllipseTool.prototype._processNewShape = function (s) {
+  if (s.width < 0) {
+    s.left = s.left + s.width;
+    s.width = -s.width;
+  }
+  if (s.height < 0) {
+    s.top = s.top + s.height;
+    s.height = -s.height;
+  }
+  if (Math.max(s.width, s.height) < this.minSize) {
+    s.set('rx', this.defSize / 2);
+    s.set('ry', this.defSize / 2);
+    s.set('width', this.defSize);
+    s.set('height', this.defSize);
+    s.set('top', s.get('top') - s.get('ry') - s.get('strokeWidth') / 2);
+    s.set('left', s.get('left') - s.get('rx') - s.get('strokeWidth') / 2);
+  }
+  this.setCentralOrigin(s);
+  s.setCoords();
+};
+
+module.exports = EllipseTool;
+
+});
+
+require.register("scripts/tools/shape-tools/free-draw", function(exports, require, module) {
+var inherit   = require('scripts/inherit');
+var ShapeTool = require('scripts/tools/shape-tool');
+
+function FreeDrawTool(name, selector, drawTool) {
+  ShapeTool.call(this, name, selector, drawTool);
+
+  var self = this;
+  this.addEventListener("mouse:down", function (e) { self.mouseDown(e); });
+  this.addEventListener("mouse:up", function (e) { self.mouseUp(e); });
+}
+
+inherit(FreeDrawTool, ShapeTool);
+
+FreeDrawTool.prototype.mouseDown = function (opt) {
+
+  this.canvas.freeDrawingBrush.color = this.master.state.color;
+  this.canvas.freeDrawingBrush.width = this.master.state.strokeWidth;
+  
+  FreeDrawTool.super.mouseDown.call(this, opt);
+  if (!this.active) { return; }
+  if (!this.canvas.isDrawingMode) {
+    // If we are here, it means the handler is called for the first time.
+    // Activate drawing mode and call manually FabricJS handler to handle
+    // mouse down in drawing mode correctly.
+    //
+    // If you take look at FabricJS's methods like:
+    // - _onMouseDownInDrawingMode
+    // - _onMouseMoveInDrawingMode
+    // - _onMouseUpInDrawingMode
+    // it's visible that we could implement whole functionality using public
+    // `freeDrawingBrush` object. That would be better solution if these methods
+    // didn't handle clipping too. It would force us to literally copy the same
+    // code. So unless almost everything is handled in brush class, IMHO it's
+    // better to use this solution which is at least short and simple.
+    this.canvas.isDrawingMode = true;
+    this.canvas._onMouseDownInDrawingMode(opt.e);
+  }
+};
+
+FreeDrawTool.prototype.mouseUp = function (opt) {
+  var objects = this.canvas.getObjects();
+  var lastObject = objects[objects.length - 1];
+  this.curr = lastObject;
+  FreeDrawTool.super.mouseUp.call(this, opt);
+  if (!this._locked) {
+    this.canvas.isDrawingMode = false;
+  }
+  this.actionComplete(lastObject);
+  this.curr = undefined;
+};
+
+FreeDrawTool.prototype.deactivate = function () {
+  FreeDrawTool.super.deactivate.call(this);
+  this.canvas.isDrawingMode = false;
+};
+
+module.exports = FreeDrawTool;
+
+});
+
+require.register("scripts/tools/shape-tools/line-tool", function(exports, require, module) {
+var inherit                 = require('scripts/inherit');
+var ShapeTool               = require('scripts/tools/shape-tool');
+var SelectTool              = require('scripts/tools/select-tool');
+var Util                    = require('scripts/util');
+var lineCustomControlPoints = require('scripts/fabric-extensions/line-custom-control-points');
+require('scripts/fabric-extensions/arrow');
+
+// Note that this tool supports fabric.Line and all its subclasses (defined
+// as part of this code base, not FabricJS itself). Pass 'lineType' argument
+// (e.g. "line" or "arrow").
+
+function LineTool(name, selector, drawTool, lineType, lineOptions) {
+  ShapeTool.call(this, name, selector, drawTool);
+
+  var self = this;
+  this.addEventListener("mouse:down", function (e) { self.mouseDown(e); });
+  this.addEventListener("mouse:move", function (e) { self.mouseMove(e); });
+  this.addEventListener("mouse:up", function (e) { self.mouseUp(e); });
+
+  lineType = lineType || 'line';
+  this._lineKlass = fabric.util.getKlass(lineType);
+  this._lineOptions = lineOptions;
+
+  lineCustomControlPoints(this.canvas);
+}
+
+inherit(LineTool, ShapeTool);
+
+LineTool.prototype.mouseDown = function (e) {
+  LineTool.super.mouseDown.call(this, e);
+
+  if (!this.active) return;
+
+  var loc = this.canvas.getPointer(e.e);
+  var x = loc.x;
+  var y = loc.y;
+
+  this.curr = new this._lineKlass([x, y, x, y], $.extend(true, {
+    originX: 'center', // important due to custom line control points!
+    originY: 'center',
+    selectable: false,
+    stroke: this.master.state.color,
+    strokeWidth: this.master.state.strokeWidth
+  }, this._lineOptions));
+  this.canvas.add(this.curr);
+};
+
+LineTool.prototype.mouseMove = function (e) {
+  LineTool.super.mouseMove.call(this, e);
+  if (this.down === false) { return; }
+
+  var loc = this.canvas.getPointer(e.e);
+  var x = loc.x;
+  var y = loc.y;
+
+  this.curr.set('x2', x);
+  this.curr.set('y2', y);
+  this.canvas.renderAll();
+};
+
+LineTool.prototype.mouseUp = function (e) {
+  LineTool.super.mouseUp.call(this, e);
+  this._processNewShape(this.curr);
+  this.canvas.renderAll();
+  this.actionComplete(this.curr);
+  this.curr = undefined;
+};
+
+LineTool.prototype._processNewShape = function (s) {
+  var x1 = s.get('x1');
+  var y1 = s.get('y1');
+  var x2 = s.get('x2');
+  var y2 = s.get('y2');
+  if (Util.dist(x1 - x2, y1 - y2) < this.minSize) {
+    x2 = x1 + this.defSize;
+    y2 = y1 + this.defSize;
+    s.set('x2', x2);
+    s.set('y2', y2);
+  }
+  s.setCoords();
+};
+
+module.exports = LineTool;
+
+});
+
+require.register("scripts/tools/shape-tools/rect-tool", function(exports, require, module) {
+var inherit   = require('scripts/inherit');
+var ShapeTool = require('scripts/tools/shape-tool');
+var Util      = require('scripts/util');
+
+function RectangleTool(name, selector, drawTool, type) {
+  ShapeTool.call(this, name, selector, drawTool);
+
+  var self = this;
+  this.addEventListener("mouse:down", function (e) { self.mouseDown(e); });
+  this.addEventListener("mouse:move", function (e) { self.mouseMove(e); });
+  this.addEventListener("mouse:up", function (e) { self.mouseUp(e); });
+
+  this._square = type === "square";
+}
+
+inherit(RectangleTool, ShapeTool);
+
+RectangleTool.prototype.mouseDown = function (e) {
+  RectangleTool.super.mouseDown.call(this, e);
+
+  if (!this.active) { return; }
+
+  var loc = this.canvas.getPointer(e.e);
+
+  var x = loc.x;
+  var y = loc.y;
+
+  this.curr = new fabric.Rect({
+    top: y,
+    left: x,
+    width: 0,
+    height: 0,
+    selectable: false,
+    lockUniScaling: this._square,
+    fill: this.master.state.fill,
+    stroke: this.master.state.color,
+    strokeWidth: this.master.state.strokeWidth
+  });
+  this.canvas.add(this.curr);
+};
+
+RectangleTool.prototype.mouseMove = function (e) {
+  RectangleTool.super.mouseMove.call(this, e);
+  if (this.down === false) { return; }
+
+  var loc = this.canvas.getPointer(e.e);
+  var width = loc.x - this.curr.left;
+  var height = loc.y - this.curr.top;
+
+  if (this._square) {
+    if (Math.abs(width) < Math.abs(height)) {
+      height = Math.abs(width) * sign(height);
+    } else {
+      width = Math.abs(height) * sign(width);
+    }
+  }
+
+  this.curr.set({
+    width: width,
+    height: height
+  });
+
+  this.canvas.renderAll();
+};
+
+function sign(num) {
+  return num >= 0 ? 1 : -1;
+}
+
+RectangleTool.prototype.mouseUp = function (e) {
+  RectangleTool.super.mouseUp.call(this, e);
+  this._processNewShape(this.curr);
+  this.canvas.renderAll();
+  this.actionComplete(this.curr);
+  this.curr = undefined;
+};
+
+RectangleTool.prototype._processNewShape = function (s) {
+  if (s.width < 0) {
+    s.left = s.left + s.width;
+    s.width = -s.width;
+  }
+  if (s.height < 0) {
+    s.top = s.top + s.height;
+    s.height = -s.height;
+  }
+  this.setCentralOrigin(s);
+  if (Math.max(s.width, s.height) < this.minSize) {
+    s.set('width', this.defSize);
+    s.set('height', this.defSize);
+    s.set('top', s.get('top') - (s.get('height') / 2) + s.get('strokeWidth'));
+    s.set('left', s.get('left') - (s.get('width') / 2) + s.get('strokeWidth'));
+  }
+  s.setCoords();
+};
+
+module.exports = RectangleTool;
+
+});
+
 require.register("scripts/ui", function(exports, require, module) {
 var Tool              = require('scripts/tool');
 var SelectionTool     = require('scripts/tools/select-tool');
-var LineTool          = require('scripts/tools/line-tool');
-var RectangleTool     = require('scripts/tools/rect-tool');
-var EllipseTool       = require('scripts/tools/ellipse-tool');
-var FreeDrawTool      = require('scripts/tools/free-draw');
+var LineTool          = require('scripts/tools/shape-tools/line-tool');
+var RectangleTool     = require('scripts/tools/shape-tools/rect-tool');
+var EllipseTool       = require('scripts/tools/shape-tools/ellipse-tool');
+var FreeDrawTool      = require('scripts/tools/shape-tools/free-draw');
 var DeleteTool        = require('scripts/tools/delete-tool');
+// var ColorTool         = require('scripts/tools/color-tool');
 
 function UI (master, selector, options) {
   this.master = master;
@@ -1635,6 +1636,8 @@ UI.prototype.initTools = function(p) {
   var circleTool = new EllipseTool("Circle Tool", "circle", this.master, "circle");
   var freeDrawTool = new FreeDrawTool("Free Draw Tool", "free", this.master);
   var deleteTool = new DeleteTool("Delete Tool", "trash", this.master);
+
+  // var strokeBlack = new ColorTool('black', 'stroke', '#000', this.master);
 
   // tool palettes
   // TODO: document this portion

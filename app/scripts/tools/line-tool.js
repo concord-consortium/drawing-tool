@@ -36,6 +36,8 @@ LineTool.prototype.mouseDown = function (e) {
   var y = loc.y;
 
   this.curr = new this._lineKlass([x, y, x, y], $.extend(true, {
+    originX: 'center', // important due to custom line control points!
+    originY: 'center',
     selectable: false,
     stroke: this.master.state.color,
     strokeWidth: this.master.state.strokeWidth

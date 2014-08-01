@@ -622,8 +622,9 @@ function controlPointDeleted() {
 //       This is visible on larger width lines.
 function updateLineControlPoints() {
   // First update line itself, (x1, y1) and (x2, y2) points using left / top.
-  var dx = this.left - Math.min(this.get('x1'), this.get('x2'));
-  var dy = this.top  - Math.min(this.get('y1'), this.get('y2'));
+  // Note that there is an assumption that line has central origin!
+  var dx = this.left - (this.get('x1') + (this.get('x2') - this.get('x1')) * 0.5);
+  var dy = this.top  - (this.get('y1') + (this.get('y2') - this.get('y1')) * 0.5);
   this.set('x1', dx + this.x1);
   this.set('y1', dy + this.y1);
   this.set('x2', dx + this.x2);
@@ -646,6 +647,8 @@ function makeControlPoint(s, source, i) {
     fill: lineCustomControlPoints.controlPointColor,
     hasControls: false,
     hasBorders: false,
+    originX: 'center',
+    originY: 'center',
     // Custom properties:
     line: source,
     id: i
@@ -1370,6 +1373,8 @@ LineTool.prototype.mouseDown = function (e) {
   var y = loc.y;
 
   this.curr = new this._lineKlass([x, y, x, y], $.extend(true, {
+    originX: 'center', // important due to custom line control points!
+    originY: 'center',
     selectable: false,
     stroke: this.master.state.color,
     strokeWidth: this.master.state.strokeWidth

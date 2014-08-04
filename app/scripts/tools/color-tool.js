@@ -41,6 +41,6 @@ ColorTool.prototype.use = function () {
   }
   // set color of property of state object
   this.master.state[this.type] = this.colorCode;
-}
+};
 
 module.exports = ColorTool;

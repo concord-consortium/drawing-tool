@@ -14,6 +14,10 @@ var DEF_STATE = {
   fill: ""
 };
 
+// Note that some object properties aren't serialized by default by FabricJS.
+// List them here so they can be serialized.
+var ADDITIONAL_PROPS_TO_SERIALIZE = ['lockUniScaling'];
+
 // Constructor function.
 function DrawingTool(selector, options, settings) {
   this.selector = selector;
@@ -48,8 +52,7 @@ DrawingTool.prototype.clearSelection = function () {
 };
 
 DrawingTool.prototype.save = function () {
-  // FIXME: It ensures that all custom control points are hidden before serialization.
-  //        Of course it's totally wrong, temporal workaround.
+  // It ensures that all custom control points will be removed before serialization!
   this.clearSelection();
   return JSON.stringify({
     dt: {
@@ -57,7 +60,7 @@ DrawingTool.prototype.save = function () {
       width: this.canvas.getWidth(),
       height: this.canvas.getHeight()
     },
-    canvas: this.canvas.toJSON()
+    canvas: this.canvas.toJSON(ADDITIONAL_PROPS_TO_SERIALIZE)
   });
 };
 

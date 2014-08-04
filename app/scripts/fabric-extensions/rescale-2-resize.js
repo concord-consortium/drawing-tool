@@ -17,9 +17,6 @@ var resizers = {
   line: function (s) {
     basicWidthHeightTransform(s);
 
-    s.prevTop = s.top;
-    s.prevLeft = s.left;
-
     if (s.x1 > s.x2) { s.x1 = s.left + s.width; s.x2 = s.left; }
     else { s.x2 = s.left + s.width; s.x1 = s.left; }
 

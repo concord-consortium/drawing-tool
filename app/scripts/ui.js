@@ -1,10 +1,9 @@
-var Tool              = require('scripts/tool');
-var SelectionTool     = require('scripts/tools/select-tool');
-var LineTool          = require('scripts/tools/shape-tools/line-tool');
-var RectangleTool     = require('scripts/tools/shape-tools/rect-tool');
-var EllipseTool       = require('scripts/tools/shape-tools/ellipse-tool');
-var FreeDrawTool      = require('scripts/tools/shape-tools/free-draw');
-var DeleteTool        = require('scripts/tools/delete-tool');
+var Tool           = require('scripts/tool');
+var SelectionTool  = require('scripts/tools/select-tool');
+var LineTool       = require('scripts/tools/shape-tools/line-tool');
+var BasicShapeTool = require('scripts/tools/shape-tools/basic-shape-tool');
+var FreeDrawTool   = require('scripts/tools/shape-tools/free-draw');
+var DeleteTool     = require('scripts/tools/delete-tool');
 // var ColorTool         = require('scripts/tools/color-tool');
 
 function UI (master, selector, options) {
@@ -22,10 +21,10 @@ UI.prototype.initTools = function(p) {
   var lineTool = new LineTool("Line Tool", "line", this.master);
   var arrowTool = new LineTool("Arrow Tool", "arrow", this.master, "arrow");
   var doubleArrowTool = new LineTool("Double Arrow Tool", "doubleArrow", this.master, "arrow", {doubleArrowhead: true});
-  var rectangleTool = new RectangleTool("Rectangle Tool", "rect", this.master);
-  var ellipseTool = new EllipseTool("Ellipse Tool", "ellipse", this.master);
-  var squareTool = new RectangleTool("Square Tool", "square", this.master, "square");
-  var circleTool = new EllipseTool("Circle Tool", "circle", this.master, "circle");
+  var rectangleTool = new BasicShapeTool("Rectangle Tool", "rect", this.master, "rect");
+  var ellipseTool = new BasicShapeTool("Ellipse Tool", "ellipse", this.master, "ellipse");
+  var squareTool = new BasicShapeTool("Square Tool", "square", this.master, "square");
+  var circleTool = new BasicShapeTool("Circle Tool", "circle", this.master, "circle");
   var freeDrawTool = new FreeDrawTool("Free Draw Tool", "free", this.master);
   var deleteTool = new DeleteTool("Delete Tool", "trash", this.master);
 

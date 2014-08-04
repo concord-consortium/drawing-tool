@@ -2,7 +2,26 @@ var inherit   = require('scripts/inherit');
 var ShapeTool = require('scripts/tools/shape-tool');
 var Util      = require('scripts/util');
 
-function EllipseTool(name, selector, drawTool, type) {
+var SUPPORTED_SHAPES = {
+  rect: {
+    fabricType: 'rect'
+  },
+  square: {
+    fabricType: 'rect',
+    uniform: true
+  },
+  ellipse: {
+    fabricType: 'ellipse',
+    radius: true
+  },
+  circle: {
+    fabricType: 'ellipse',
+    uniform: true,
+    radius: true
+  }
+};
+
+function BasicShapeTool(name, selector, drawTool, type) {
   ShapeTool.call(this, name, selector, drawTool);
 
   var self = this;
@@ -10,28 +29,29 @@ function EllipseTool(name, selector, drawTool, type) {
   this.addEventListener("mouse:move", function (e) { self.mouseMove(e); });
   this.addEventListener("mouse:up", function (e) { self.mouseUp(e); });
 
-  this._circle = type === "circle";
+  this._type = SUPPORTED_SHAPES[type];
+  this._shapeKlass = fabric.util.getKlass(this._type.fabricType);
 }
 
-inherit(EllipseTool, ShapeTool);
+inherit(BasicShapeTool, ShapeTool);
 
-EllipseTool.prototype.mouseDown = function (e) {
-  EllipseTool.super.mouseDown.call(this, e);
+BasicShapeTool.prototype.mouseDown = function (e) {
+  BasicShapeTool.super.mouseDown.call(this, e);
 
-  // if this tool is no longer active, stop current action!
   if (!this.active) { return; }
 
   var loc = this.canvas.getPointer(e.e);
+
   var x = loc.x;
   var y = loc.y;
 
-  this.curr = new fabric.Ellipse({
+  this.curr = new this._shapeKlass({
     top: y,
     left: x,
-    rx: 0.1,
-    ry: 0.1,
+    width: 0,
+    height: 0,
     selectable: false,
-    lockUniScaling: this._circle,
+    lockUniScaling: this._type.uniform,
     fill: this.master.state.fill,
     stroke: this.master.state.stroke,
     strokeWidth: this.master.state.strokeWidth
@@ -39,16 +59,15 @@ EllipseTool.prototype.mouseDown = function (e) {
   this.canvas.add(this.curr);
 };
 
-EllipseTool.prototype.mouseMove = function (e) {
-  EllipseTool.super.mouseMove.call(this, e);
-
+BasicShapeTool.prototype.mouseMove = function (e) {
+  BasicShapeTool.super.mouseMove.call(this, e);
   if (this.down === false) { return; }
 
   var loc = this.canvas.getPointer(e.e);
   var width = loc.x - this.curr.left;
   var height = loc.y - this.curr.top;
 
-  if (this._circle) {
+  if (this._type.uniform) {
     if (Math.abs(width) < Math.abs(height)) {
       height = Math.abs(width) * sign(height);
     } else {
@@ -58,10 +77,15 @@ EllipseTool.prototype.mouseMove = function (e) {
 
   this.curr.set({
     width: width,
-    height: height,
-    rx: Math.abs(width / 2),
-    ry: Math.abs(height / 2)
+    height: height
   });
+
+  if (this._type.radius) {
+    this.curr.set({
+      rx: Math.abs(width / 2),
+      ry: Math.abs(height / 2)
+    });
+  }
 
   this.canvas.renderAll();
 };
@@ -70,15 +94,15 @@ function sign(num) {
   return num >= 0 ? 1 : -1;
 }
 
-EllipseTool.prototype.mouseUp = function (e) {
-  EllipseTool.super.mouseUp.call(this, e);
+BasicShapeTool.prototype.mouseUp = function (e) {
+  BasicShapeTool.super.mouseUp.call(this, e);
   this._processNewShape(this.curr);
   this.canvas.renderAll();
   this.actionComplete(this.curr);
   this.curr = undefined;
 };
 
-EllipseTool.prototype._processNewShape = function (s) {
+BasicShapeTool.prototype._processNewShape = function (s) {
   if (s.width < 0) {
     s.left = s.left + s.width;
     s.width = -s.width;
@@ -87,16 +111,18 @@ EllipseTool.prototype._processNewShape = function (s) {
     s.top = s.top + s.height;
     s.height = -s.height;
   }
+  this.setCentralOrigin(s);
   if (Math.max(s.width, s.height) < this.minSize) {
-    s.set('rx', this.defSize / 2);
-    s.set('ry', this.defSize / 2);
     s.set('width', this.defSize);
     s.set('height', this.defSize);
-    s.set('top', s.get('top') - s.get('ry') - s.get('strokeWidth') / 2);
-    s.set('left', s.get('left') - s.get('rx') - s.get('strokeWidth') / 2);
+    s.set('top', s.get('top') - (s.get('height') / 2) + s.get('strokeWidth'));
+    s.set('left', s.get('left') - (s.get('width') / 2) + s.get('strokeWidth'));
+    if (this._type.radius) {
+      s.set('rx', this.defSize / 2);
+      s.set('ry', this.defSize / 2);
+    }
   }
-  this.setCentralOrigin(s);
   s.setCoords();
 };
 
-module.exports = EllipseTool;
+module.exports = BasicShapeTool;

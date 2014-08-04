@@ -1,14 +1,18 @@
 // Object contains the jQuery div with the subpalette
 // in addition to other information (name and currently used tool)
-function BtnGroup (groupName, buttons, static) {
-  this.name = groupName;
-  this.static = static || false;
+function BtnGroup (groupName, buttons, permanent) {
+  this.permanent = permanent || false;
+  if (this.permanent) {
+    this.name = groupName.substring(5);
+  } else {
+    this.name = groupName;
+  }
   this.$buttons = buttons;
   this.$palette = $('<div class="dt-toolpalette dt-palette-' + this.name + '">')
     .data('dt-palette-id', this.name);
 
-  if (!this.static) { this.$palette.hide(); }
-  else { this.$palette.addClass('dt-static'); }
+  if (!this.permanent) { this.$palette.hide(); }
+  else { this.$palette.addClass('dt-permanent'); }
 
   // append the tools to the palette div
   for (var i = 0; i < this.$buttons.length; i++) {
@@ -30,7 +34,7 @@ BtnGroup.prototype.show = function(callback) {
 };
 
 BtnGroup.prototype.hide = function(callback) {
-  if (this.static) { return; }
+  if (this.permanent) { callback.call(); return; }
   this.$palette.fadeOut(100, callback);
 };
 

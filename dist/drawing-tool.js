@@ -1047,8 +1047,8 @@ var Tool    = require('scripts/tool');
  *  - drawTool: the 'master'
  */
 function ColorTool(colorName, type, colorCode, drawTool) {
-  type = type || "stroke";
-  var name = colorName + "-" + type;
+  this.type = type || "stroke";
+  var name = colorName + "-" + this.type;
   Tool.call(this, name, name, drawTool);
 
   this.color = colorCode;
@@ -1062,16 +1062,19 @@ ColorTool.prototype.use = function () {
   // set color of property of currently selected object
   if (this.master.canvas.getActiveObject()) {
     var obj = this.master.canvas.getActiveObject();
-    obj.set(this.type, this.colorCode);
+    obj.set(this.type, this.color);
   } else if (this.master.canvas.getActiveGroup()) {
     var objs = this.master.canvas.getActiveGroup().objects;
     var i = 0;
     for (; i < objs.length; i++) {
-      objs[i].set(this.type, this.colorCode);
+      objs[i].set(this.type, this.color);
     }
   }
+
+  this.canvas.renderAll(false);
+
   // set color of property of state object
-  this.master.state[this.type] = this.colorCode;
+  this.master.state[this.type] = this.color;
 };
 
 module.exports = ColorTool;
@@ -1612,15 +1615,15 @@ UI.prototype.initTools = function (p) {
   var freeDrawTool = new FreeDrawTool("Free Draw Tool", "free", this.master);
   var deleteTool = new DeleteTool("Delete Tool", "trash", this.master);
 
-  // var strokeBlack = new ColorTool('black', 'stroke', '#000', this.master);
+  var strokeBlack = new ColorTool('black', 'stroke', '#000', this.master);
 
   // tool palettes
   // TODO: document this portion
   var palettes = p || {
     shapes: ['-select', 'rect', 'ellipse', 'square', 'circle'],
     lines: ['-select', 'line', 'arrow', 'doubleArrow'],
-    main: ['select', '-lines', '-shapes', 'free', 'trash']
-    // ,_strokeColor: ['black-stroke']
+    main: ['select', '-lines', '-shapes', 'free', 'trash'],
+    perm_strokeColor: ['black-stroke']
   };
   this._initToolUI(palettes); // initialize the palettes and buttons
   this._initButtonUpdates(); // set up the listeners
@@ -1650,7 +1653,6 @@ UI.prototype.initTools = function (p) {
   // start on the select tool and show the main menu
   // this.palettes.main.$palette.show();
   this.master.chooseTool('select');
-  console.log(this.master.currentTool);
 };
 
 // Note: this function is bypassed in the _paletteButtonClicked function
@@ -1700,13 +1702,17 @@ UI.prototype._paletteButtonClicked = function (selector) {
       if (this.master.currentTool.selector !== this.palettes[p].currentTool) {
         this.master.chooseTool(this.palettes[p].currentTool);
       }
-    } else if (this.palettes[p].$palette.is(':visible')){ oldPalette = this.palettes[p]; }
+    } else if (this.palettes[p].$palette.is(':visible') && !this.palettes[p].permanent){
+        oldPalette = this.palettes[p];
+    }
   }
 
   if (oldPalette && newPalette) {
     oldPalette.hide(function () { newPalette.show(); });
   } else if (newPalette) { newPalette.show(); }
 
+  // refreshing any palette buttons that need new/updated
+  // current tool icons
   var links = this.palettes[selector].$palette.find('.dt-link');
   for (var i = 0; i < links.length; i++) {
     if ($(links[i]).data('dt-btn-type') === 'palette') {
@@ -1812,8 +1818,8 @@ UI.prototype._initToolUI = function (palettes) {
       buttons[i] = $btn;
       this.$buttons[btnNames[i]] = $btn;
     }
-    // if the palette name begins with '_' then it is a static palette
-    this.palettes[palette] = new BtnGroup(palette, buttons, palette.charAt(0) === '_');
+    // if the palette name begins with '_' then it is a permanent palette
+    this.palettes[palette] = new BtnGroup(palette, buttons, palette.substring(0, 5) === 'perm_');
     this.palettes[palette].$palette.appendTo(this.$tools);
   }
 
@@ -1849,15 +1855,19 @@ module.exports = UI;
 require.register("scripts/ui/btn-group", function(exports, require, module) {
 // Object contains the jQuery div with the subpalette
 // in addition to other information (name and currently used tool)
-function BtnGroup (groupName, buttons, static) {
-  this.name = groupName;
-  this.static = static || false;
+function BtnGroup (groupName, buttons, permanent) {
+  this.permanent = permanent || false;
+  if (this.permanent) {
+    this.name = groupName.substring(5);
+  } else {
+    this.name = groupName;
+  }
   this.$buttons = buttons;
   this.$palette = $('<div class="dt-toolpalette dt-palette-' + this.name + '">')
     .data('dt-palette-id', this.name);
 
-  if (!this.static) { this.$palette.hide(); }
-  else { this.$palette.addClass('dt-static'); }
+  if (!this.permanent) { this.$palette.hide(); }
+  else { this.$palette.addClass('dt-permanent'); }
 
   // append the tools to the palette div
   for (var i = 0; i < this.$buttons.length; i++) {
@@ -1879,7 +1889,7 @@ BtnGroup.prototype.show = function(callback) {
 };
 
 BtnGroup.prototype.hide = function(callback) {
-  if (this.static) { return; }
+  if (this.permanent) { callback.call(); return; }
   this.$palette.fadeOut(100, callback);
 };
 

@@ -222,12 +222,12 @@ UI.prototype._initToolUI = function (palettes) {
       if (btnNames[i].charAt(0) === '-') {
 
         if (btnNames[i].substring(1) in palettes) {
-          $btn = UI._initBtn(btnNames[i], 'palette');
+          $btn = this._initBtn(btnNames[i], 'palette');
         } else {
-          $btn = UI._initBtn(btnNames[i], 'toolLink');
+          $btn = this._initBtn(btnNames[i], 'toolLink');
         }
 
-      } else { $btn = UI._initBtn(btnNames[i]); }
+      } else { $btn = this._initBtn(btnNames[i]); }
 
       buttons[i] = $btn;
       this.$buttons[btnNames[i]] = $btn;
@@ -240,7 +240,7 @@ UI.prototype._initToolUI = function (palettes) {
 };
 
 // initializes each button
-UI._initBtn = function (toolId, type) {
+UI.prototype._initBtn = function (toolId, type) {
   var $element = $('<div class="dt-btn">');
   if (!type) { // normal button
     $element.addClass(toolId)

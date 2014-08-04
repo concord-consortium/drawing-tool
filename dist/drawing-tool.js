@@ -1580,12 +1580,56 @@ module.exports = LineTool;
 
 });
 
+require.register("scripts/tools/shape-tools/text-tool", function(exports, require, module) {
+var inherit                 = require('scripts/inherit');
+var ShapeTool               = require('scripts/tools/shape-tool');
+
+function TextTool(name, selector, drawTool) {
+  ShapeTool.call(this, name, selector, drawTool);
+
+  var self = this;
+  this.addEventListener("mouse:down", function (e) { self.mouseDown(e); });
+  this.addEventListener("mouse:move", function (e) { self.mouseMove(e); });
+  this.addEventListener("mouse:up", function (e) { self.mouseUp(e); });
+}
+
+inherit(TextTool, ShapeTool);
+
+TextTool.prototype.mouseDown = function (e) {
+  TextTool.super.mouseDown.call(this, e);
+
+  if (!this.active) return;
+
+  var loc = this.canvas.getPointer(e.e);
+  var x = loc.x;
+  var y = loc.y;
+
+  var text = new fabric.IText("", {
+    left: x,
+    top: y,
+    lockUniScaling: true,
+    fontFamily: 'Arial',
+    fontSize: this.master.state.strokeWidth * 4,
+    // Yes, looks strange, but I guess stroke color should be used (as it would be the "main" one).
+    fill: this.master.state.stroke
+  });
+  this.actionComplete(text);
+  this.canvas.add(text);
+  this.canvas.setActiveObject(text);
+  text.enterEditing();
+};
+
+module.exports = TextTool;
+
+});
+
 require.register("scripts/ui", function(exports, require, module) {
 var Tool           = require('scripts/tool');
 var SelectionTool  = require('scripts/tools/select-tool');
 var LineTool       = require('scripts/tools/shape-tools/line-tool');
 var BasicShapeTool = require('scripts/tools/shape-tools/basic-shape-tool');
 var FreeDrawTool   = require('scripts/tools/shape-tools/free-draw');
+var TextTool       = require('scripts/tools/shape-tools/text-tool');
 var DeleteTool     = require('scripts/tools/delete-tool');
 var ColorTool      = require('scripts/tools/color-tool');
 var BtnGroup       = require('scripts/ui/btn-group');
@@ -1610,6 +1654,7 @@ UI.prototype.initTools = function (p) {
   var squareTool = new BasicShapeTool("Square Tool", "square", this.master, "square");
   var circleTool = new BasicShapeTool("Circle Tool", "circle", this.master, "circle");
   var freeDrawTool = new FreeDrawTool("Free Draw Tool", "free", this.master);
+  var textTool = new TextTool("Text Tool", "text", this.master);
   var deleteTool = new DeleteTool("Delete Tool", "trash", this.master);
 
   // var strokeBlack = new ColorTool('black', 'stroke', '#000', this.master);
@@ -1619,7 +1664,7 @@ UI.prototype.initTools = function (p) {
   var palettes = p || {
     shapes: ['-select', 'rect', 'ellipse', 'square', 'circle'],
     lines: ['-select', 'line', 'arrow', 'doubleArrow'],
-    main: ['select', '-lines', '-shapes', 'free', 'trash']
+    main: ['select', '-lines', '-shapes', 'free', 'text', 'trash']
     // ,_strokeColor: ['black-stroke']
   };
   this._initToolUI(palettes); // initialize the palettes and buttons
@@ -1636,6 +1681,7 @@ UI.prototype.initTools = function (p) {
   this.setLabel(squareTool.selector,      "S");
   this.setLabel(circleTool.selector,      "C");
   this.setLabel(freeDrawTool.selector,    "F");
+  this.setLabel(textTool.selector,        "T");
   this.setLabel(deleteTool.selector,      "d");
   this.setLabel("-shapes", "Sh"); // immediately replaced by the currently active shape tool (rect)
   this.setLabel("-lines",  "Li"); // immediately replaced by the currently active line tool (line)

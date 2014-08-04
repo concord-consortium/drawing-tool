@@ -1,4 +1,3 @@
-
 var Tool              = require('scripts/tool');
 var SelectionTool     = require('scripts/tools/select-tool');
 var LineTool          = require('scripts/tools/shape-tools/line-tool');

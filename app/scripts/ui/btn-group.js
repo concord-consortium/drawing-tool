@@ -1,5 +1,12 @@
-// Object contains the jQuery div with the subpalette
-// in addition to other information (name and currently used tool)
+/*
+ * Object contains the jQuery div with the subpalette
+ * in addition to other information (name and currently used tool)
+ *
+ * constructor parameters:
+ *  - groupName
+ *  - buttons: array of jQuery buttons
+ *  - permanent: boolean whether or not the button group stays on screen
+ */
 function BtnGroup (groupName, buttons, permanent) {
   this.permanent = permanent || false;
   if (this.permanent) {

@@ -5,7 +5,9 @@ var RectangleTool     = require('scripts/tools/shape-tools/rect-tool');
 var EllipseTool       = require('scripts/tools/shape-tools/ellipse-tool');
 var FreeDrawTool      = require('scripts/tools/shape-tools/free-draw');
 var DeleteTool        = require('scripts/tools/delete-tool');
-// var ColorTool         = require('scripts/tools/color-tool');
+var ColorTool         = require('scripts/tools/color-tool');
+
+var BtnGroup          = require('scripts/ui/btn-group');
 
 function UI (master, selector, options) {
   this.master = master;
@@ -37,6 +39,7 @@ UI.prototype.initTools = function(p) {
     shapes: ['-select', 'rect', 'ellipse', 'square', 'circle'],
     lines: ['-select', 'line', 'arrow', 'doubleArrow'],
     main: ['select', '-lines', '-shapes', 'free', 'trash']
+    // ,_strokeColor: ['black-stroke']
   };
   this._initToolUI(palettes); // initialize the palettes and buttons
   this._initButtonUpdates(); // set up the listeners
@@ -66,6 +69,7 @@ UI.prototype.initTools = function(p) {
   // start on the select tool and show the main menu
   // this.palettes.main.$palette.show();
   this.master.chooseTool('select');
+  console.log(this.master.currentTool);
 };
 
 // Note: this function is bypassed in the _paletteButtonClicked function
@@ -92,6 +96,8 @@ UI.prototype._initButtonUpdates = function () {
   });
 };
 
+// listens for a click in the tools area and delivers the action to
+// the proper recipient (either `_paletteButtonClicked` or `_toolButtonClicked`)
 UI.prototype._uiClicked = function (target) {
   if ($(target).data('dt-btn-type') === 'palette') {
     this._paletteButtonClicked($(target).data('dt-target-id'));
@@ -225,7 +231,8 @@ UI.prototype._initToolUI = function (palettes) {
       buttons[i] = $btn;
       this.$buttons[btnNames[i]] = $btn;
     }
-    this.palettes[palette] = new BtnGroup(palette, buttons);
+    // if the palette name begins with '_' then it is a static palette
+    this.palettes[palette] = new BtnGroup(palette, buttons, palette.charAt(0) === '_');
     this.palettes[palette].$palette.appendTo(this.$tools);
   }
 
@@ -252,42 +259,6 @@ UI.prototype._initBtn = function (toolId, type) {
   $('<span>') // for the label
     .appendTo($element);
   return $element;
-};
-
-// Object contains the jQuery div with the subpalette
-// in addition to other information (name and currently used tool)
-function BtnGroup (groupName, buttons, static) {
-  this.name = groupName;
-  this.static = static || false;
-  this.$buttons = buttons;
-  this.$palette = $('<div class="dt-toolpalette dt-palette-' + this.name + '">')
-    .data('dt-palette-id', this.name);
-
-  if (!this.static) { this.$palette.hide(); }
-  else { this.$palette.addClass('dt-static'); }
-
-  // append the tools to the palette div
-  for (var i = 0; i < this.$buttons.length; i++) {
-    // TODO: the "if" is temporary
-    if (this.$buttons[i] === undefined) {}
-    else {this.$buttons[i].appendTo(this.$palette);}
-  }
-
-  // set the default current tool of each palette to the first
-  // not 'link' tool
-  var j = 0;
-  for (; j < this.$buttons.length &&
-    this.$buttons[j].data('dt-btn-type') !== 'tool'; j++) {}
-  this.currentTool = buttons[j].data('dt-target-id');
-}
-
-BtnGroup.prototype.show = function(callback) {
-  this.$palette.fadeIn(100, callback);
-};
-
-BtnGroup.prototype.hide = function(callback) {
-  if (this.static) { return; }
-  this.$palette.fadeOut(100, callback);
 };
 
 module.exports = UI;

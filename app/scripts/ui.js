@@ -1,13 +1,11 @@
-var Tool              = require('scripts/tool');
-var SelectionTool     = require('scripts/tools/select-tool');
-var LineTool          = require('scripts/tools/shape-tools/line-tool');
-var RectangleTool     = require('scripts/tools/shape-tools/rect-tool');
-var EllipseTool       = require('scripts/tools/shape-tools/ellipse-tool');
-var FreeDrawTool      = require('scripts/tools/shape-tools/free-draw');
-var DeleteTool        = require('scripts/tools/delete-tool');
-var ColorTool         = require('scripts/tools/color-tool');
-
-var BtnGroup          = require('scripts/ui/btn-group');
+var Tool           = require('scripts/tool');
+var SelectionTool  = require('scripts/tools/select-tool');
+var LineTool       = require('scripts/tools/shape-tools/line-tool');
+var BasicShapeTool = require('scripts/tools/shape-tools/basic-shape-tool');
+var FreeDrawTool   = require('scripts/tools/shape-tools/free-draw');
+var DeleteTool     = require('scripts/tools/delete-tool');
+var ColorTool      = require('scripts/tools/color-tool');
+var BtnGroup       = require('scripts/ui/btn-group');
 
 function UI (master, selector, options) {
   this.master = master;
@@ -17,7 +15,7 @@ function UI (master, selector, options) {
 }
 
 // initialize tools, config palettes, set labels, and setup trash behavior
-UI.prototype.initTools = function(p) {
+UI.prototype.initTools = function (p) {
 
   // Initialize all the tools, they add themselves to the master.tools list
   var selectionTool = new SelectionTool("Selection Tool", "select", this.master);
@@ -123,7 +121,7 @@ UI.prototype._paletteButtonClicked = function (selector) {
   }
 
   if (oldPalette && newPalette) {
-    oldPalette.hide(function(){newPalette.show()});
+    oldPalette.hide(function () { newPalette.show(); });
   } else if (newPalette) { newPalette.show(); }
 
   var links = this.palettes[selector].$palette.find('.dt-link');

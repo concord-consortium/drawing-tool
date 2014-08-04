@@ -3,10 +3,6 @@ var ShapeTool = require('scripts/tools/shape-tool');
 
 function FreeDrawTool(name, selector, drawTool) {
   ShapeTool.call(this, name, selector, drawTool);
-
-  var self = this;
-  this.addEventListener("mouse:down", function (e) { self.mouseDown(e); });
-  this.addEventListener("mouse:up", function (e) { self.mouseUp(e); });
 }
 
 inherit(FreeDrawTool, ShapeTool);

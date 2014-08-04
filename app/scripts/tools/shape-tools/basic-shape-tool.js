@@ -24,11 +24,6 @@ var SUPPORTED_SHAPES = {
 function BasicShapeTool(name, selector, drawTool, type) {
   ShapeTool.call(this, name, selector, drawTool);
 
-  var self = this;
-  this.addEventListener("mouse:down", function (e) { self.mouseDown(e); });
-  this.addEventListener("mouse:move", function (e) { self.mouseMove(e); });
-  this.addEventListener("mouse:up", function (e) { self.mouseUp(e); });
-
   this._type = SUPPORTED_SHAPES[type];
   this._shapeKlass = fabric.util.getKlass(this._type.fabricType);
 }

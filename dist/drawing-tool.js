@@ -1188,6 +1188,11 @@ var Util    = require('scripts/util');
 function ShapeTool(name, selector, drawTool) {
   Tool.call(this, name, selector, drawTool);
 
+  var self = this;
+  this.addEventListener("mouse:down", function (e) { self.mouseDown(e); });
+  this.addEventListener("mouse:move", function (e) { self.mouseMove(e); });
+  this.addEventListener("mouse:up", function (e) { self.mouseUp(e); });
+
   this.down = false; // mouse down
   this._firstAction = false; // special behavior on first action
   this._locked = false; // locked into first action mode
@@ -1327,11 +1332,6 @@ var SUPPORTED_SHAPES = {
 function BasicShapeTool(name, selector, drawTool, type) {
   ShapeTool.call(this, name, selector, drawTool);
 
-  var self = this;
-  this.addEventListener("mouse:down", function (e) { self.mouseDown(e); });
-  this.addEventListener("mouse:move", function (e) { self.mouseMove(e); });
-  this.addEventListener("mouse:up", function (e) { self.mouseUp(e); });
-
   this._type = SUPPORTED_SHAPES[type];
   this._shapeKlass = fabric.util.getKlass(this._type.fabricType);
 }
@@ -1438,10 +1438,6 @@ var ShapeTool = require('scripts/tools/shape-tool');
 
 function FreeDrawTool(name, selector, drawTool) {
   ShapeTool.call(this, name, selector, drawTool);
-
-  var self = this;
-  this.addEventListener("mouse:down", function (e) { self.mouseDown(e); });
-  this.addEventListener("mouse:up", function (e) { self.mouseUp(e); });
 }
 
 inherit(FreeDrawTool, ShapeTool);
@@ -1507,11 +1503,6 @@ require('scripts/fabric-extensions/arrow');
 
 function LineTool(name, selector, drawTool, lineType, lineOptions) {
   ShapeTool.call(this, name, selector, drawTool);
-
-  var self = this;
-  this.addEventListener("mouse:down", function (e) { self.mouseDown(e); });
-  this.addEventListener("mouse:move", function (e) { self.mouseMove(e); });
-  this.addEventListener("mouse:up", function (e) { self.mouseUp(e); });
 
   lineType = lineType || 'line';
   this._lineKlass = fabric.util.getKlass(lineType);
@@ -1586,11 +1577,6 @@ var ShapeTool               = require('scripts/tools/shape-tool');
 
 function TextTool(name, selector, drawTool) {
   ShapeTool.call(this, name, selector, drawTool);
-
-  var self = this;
-  this.addEventListener("mouse:down", function (e) { self.mouseDown(e); });
-  this.addEventListener("mouse:move", function (e) { self.mouseMove(e); });
-  this.addEventListener("mouse:up", function (e) { self.mouseUp(e); });
 }
 
 inherit(TextTool, ShapeTool);

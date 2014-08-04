@@ -5,6 +5,11 @@ var Util    = require('scripts/util');
 function ShapeTool(name, selector, drawTool) {
   Tool.call(this, name, selector, drawTool);
 
+  var self = this;
+  this.addEventListener("mouse:down", function (e) { self.mouseDown(e); });
+  this.addEventListener("mouse:move", function (e) { self.mouseMove(e); });
+  this.addEventListener("mouse:up", function (e) { self.mouseUp(e); });
+
   this.down = false; // mouse down
   this._firstAction = false; // special behavior on first action
   this._locked = false; // locked into first action mode

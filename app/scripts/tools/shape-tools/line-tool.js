@@ -12,11 +12,6 @@ require('scripts/fabric-extensions/arrow');
 function LineTool(name, selector, drawTool, lineType, lineOptions) {
   ShapeTool.call(this, name, selector, drawTool);
 
-  var self = this;
-  this.addEventListener("mouse:down", function (e) { self.mouseDown(e); });
-  this.addEventListener("mouse:move", function (e) { self.mouseMove(e); });
-  this.addEventListener("mouse:up", function (e) { self.mouseUp(e); });
-
   lineType = lineType || 'line';
   this._lineKlass = fabric.util.getKlass(lineType);
   this._lineOptions = lineOptions;

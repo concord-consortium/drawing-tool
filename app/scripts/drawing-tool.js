@@ -205,8 +205,12 @@ DrawingTool.prototype._setBackgroundImage = function (imageSrc, options, backgro
 DrawingTool.prototype._initFabricJS = function () {
   this.canvas = new fabric.Canvas(this.ui.$canvas[0]);
   // Target find would be more tolerant on touch devices.
-  this.canvas.perPixelTargetFind = !fabric.isTouchSupported;
-
+  if (fabric.isTouchSupported) {
+    this.canvas.perPixelTargetFind = false;
+  } else {
+    this.canvas.perPixelTargetFind = true;
+    this.canvas.targetFindTolerance = 12;
+  }
   this.canvas.setBackgroundColor("#fff");
 };
 

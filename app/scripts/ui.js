@@ -29,14 +29,23 @@ UI.prototype.initTools = function (p) {
   var freeDrawTool = new FreeDrawTool("Free Draw Tool", "free", this.master);
   var deleteTool = new DeleteTool("Delete Tool", "trash", this.master);
 
-  new ColorTool('color1', 'stroke', 'black', this.master);
-  new ColorTool('color2', 'stroke', 'white', this.master);
-  new ColorTool('color3', 'stroke', 'red', this.master);
-  new ColorTool('color4', 'stroke', 'blue', this.master);
-  new ColorTool('color5', 'stroke', 'purple', this.master);
-  new ColorTool('color6', 'stroke', 'green', this.master);
-  new ColorTool('color7', 'stroke', 'yellow', this.master);
-  new ColorTool('color8', 'stroke', 'orange', this.master);
+  new ColorTool('color1s', 'stroke', 'black', this.master);
+  new ColorTool('color2s', 'stroke', 'white', this.master);
+  new ColorTool('color3s', 'stroke', 'red', this.master);
+  new ColorTool('color4s', 'stroke', 'blue', this.master);
+  new ColorTool('color5s', 'stroke', 'purple', this.master);
+  new ColorTool('color6s', 'stroke', 'green', this.master);
+  new ColorTool('color7s', 'stroke', 'yellow', this.master);
+  new ColorTool('color8s', 'stroke', 'orange', this.master);
+
+  new ColorTool('color1f', 'fill', 'black', this.master);
+  new ColorTool('color2f', 'fill', 'white', this.master);
+  new ColorTool('color3f', 'fill', 'red', this.master);
+  new ColorTool('color4f', 'fill', 'blue', this.master);
+  new ColorTool('color5f', 'fill', 'purple', this.master);
+  new ColorTool('color6f', 'fill', 'green', this.master);
+  new ColorTool('color7f', 'fill', 'yellow', this.master);
+  new ColorTool('color8f', 'fill', 'orange', this.master);
 
   // tool palettes
   // TODO: document this portion
@@ -44,7 +53,8 @@ UI.prototype.initTools = function (p) {
     shapes: ['-select', 'rect', 'ellipse', 'square', 'circle'],
     lines: ['-select', 'line', 'arrow', 'doubleArrow'],
     main: ['select', '-lines', '-shapes', 'free', 'trash'],
-    perm_color_stroke: ['color1', 'color2', 'color3', 'color4', 'color5', 'color6', 'color7', 'color8']
+    perm_colorstroke: ['color1s', 'color2s', 'color3s', 'color4s', 'color5s', 'color6s', 'color7s', 'color8s'],
+    perm_colorfill: ['color1f', 'color2f', 'color3f', 'color4f', 'color5f', 'color6f', 'color7f', 'color8f'],
   };
   this._initToolUI(palettes); // initialize the palettes and buttons
   this._initButtonUpdates(); // set up the listeners
@@ -139,7 +149,9 @@ UI.prototype._paletteButtonClicked = function (selector) {
     if ($(links[i]).data('dt-btn-type') === 'palette') {
       var paletteName = $(links[i]).data('dt-target-id');
       var currToolId = this.palettes[paletteName].currentTool;
-      $(links[i]).find('span').text(this.$tools.find('.'+currToolId).find('span').text());
+      if (currToolId) {
+        $(links[i]).find('span').text(this.$tools.find('.'+currToolId).find('span').text());
+      }
     }
   }
 };

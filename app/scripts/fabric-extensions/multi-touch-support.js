@@ -39,8 +39,9 @@ module.exports = function addMultiTouchSupport(canvas) {
       angle: initialAngle + e.rotation
     });
 
-    canvas.fire('object:scaling', {target: target, e: e.srcEvent});
-    canvas.fire('object:rotating', {target: target, e: e.srcEvent});
+    fire(target, 'scaling', e.srcEvent);
+    fire(target, 'rotating', e.srcEvent);
+
     if (target.get('scaleX') !== e.scale * initialScale) {
       // rescale-2-resize mod used.
       initialScale = 1 / e.scale;
@@ -49,13 +50,16 @@ module.exports = function addMultiTouchSupport(canvas) {
 
   mc.on('pinchend', function (e) {
     var target = getTarget();
-    if (shouldCenterOrigin) {
-      resetOrigin(target);
-    }
     if (!target || isLine(target)) {
       return;
     }
+    if (shouldCenterOrigin) {
+      resetOrigin(target);
+    }
     setLocked(target, false);
+    // In theory we should also call:
+    // fire(target, 'modified', e.srcEvent);
+    // but fabric automatically fies 'modified' event on mouseup.
   });
 
   function isLine(object) {
@@ -73,6 +77,11 @@ module.exports = function addMultiTouchSupport(canvas) {
       lockScalingX: v,
       lockScalingY: v
     });
+  }
+
+  function fire(target, eventName, e) {
+    canvas.fire('object:' + eventName, {target: target, e: e});
+    target.fire(eventName, {e: e});
   }
 
   // Note that these functions are based on Fabric's _setOriginToCenter and _resetOrigin

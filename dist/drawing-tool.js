@@ -749,8 +749,9 @@ module.exports = function addMultiTouchSupport(canvas) {
       angle: initialAngle + e.rotation
     });
 
-    canvas.fire('object:scaling', {target: target, e: e.srcEvent});
-    canvas.fire('object:rotating', {target: target, e: e.srcEvent});
+    fire(target, 'scaling', e.srcEvent);
+    fire(target, 'rotating', e.srcEvent);
+
     if (target.get('scaleX') !== e.scale * initialScale) {
       // rescale-2-resize mod used.
       initialScale = 1 / e.scale;
@@ -759,13 +760,16 @@ module.exports = function addMultiTouchSupport(canvas) {
 
   mc.on('pinchend', function (e) {
     var target = getTarget();
-    if (shouldCenterOrigin) {
-      resetOrigin(target);
-    }
     if (!target || isLine(target)) {
       return;
     }
+    if (shouldCenterOrigin) {
+      resetOrigin(target);
+    }
     setLocked(target, false);
+    // In theory we should also call:
+    // fire(target, 'modified', e.srcEvent);
+    // but fabric automatically fies 'modified' event on mouseup.
   });
 
   function isLine(object) {
@@ -783,6 +787,11 @@ module.exports = function addMultiTouchSupport(canvas) {
       lockScalingX: v,
       lockScalingY: v
     });
+  }
+
+  function fire(target, eventName, e) {
+    canvas.fire('object:' + eventName, {target: target, e: e});
+    target.fire(eventName, {e: e});
   }
 
   // Note that these functions are based on Fabric's _setOriginToCenter and _resetOrigin
@@ -821,9 +830,14 @@ var LineTool = require('scripts/tools/shape-tools/line-tool');
 function basicWidthHeightTransform(s) {
   s.width = s.width * s.scaleX + s.strokeWidth * (s.scaleX - 1);
   s.height = s.height * s.scaleY + s.strokeWidth * (s.scaleY - 1);
+  s.scaleX = 1;
+  s.scaleY = 1;
 }
 
-var resizers = {
+// These handlers will be called during resizing (e.g. every single 1px change).
+// Add handler here when you need "live" update, as otherwise resizing would look
+// strange (e.g. due to incorrect stroke width).
+var duringResize = {
   rect: function (s) {
     basicWidthHeightTransform(s);
   },
@@ -853,24 +867,27 @@ var resizers = {
     this.line(s);
   },
   path: function (s) {
-    // we have two options to adjust width/height:
-
-    // 1) this makes inaccurate bounding box dimensions but
-    //    eliminates "floating" or weird behavior at edges
-    basicWidthHeightTransform(s);
-
-    // 2) this approach "floats" and has strange bugs but
-    //    generates accurate bounding boxes
-    // s.width = s.width * s.scaleX;
-    // s.height = s.height * s.scaleY;
-
     for (var i = 0; i < s.path.length; i++) {
       s.path[i][1] *= s.scaleX;
       s.path[i][2] *= s.scaleY;
       s.path[i][3] *= s.scaleX;
       s.path[i][4] *= s.scaleY;
     }
-  },
+    // We have two options to adjust width/height:
+    // 1) this makes inaccurate bounding box dimensions but
+    //    eliminates "floating" or weird behavior at edges
+    basicWidthHeightTransform(s);
+    // 2) this approach "floats" and has strange bugs but
+    //    generates accurate bounding boxes
+    // s.width = s.width * s.scaleX;
+    // s.height = s.height * s.scaleY;
+  }
+};
+
+// These handlers will be called just once, after resizing is complete.
+// Add handler here when you don't need "live" update, as there is no
+// visual difference between rescaling and resizing for given object type.
+var afterResize = $.extend(true, {}, duringResize, {
   'i-text': function (s) {
     // Note that actually there is no rescale to resize transformation.
     // Rescaling is fine for text, we only just move scale from scaleX/Y
@@ -881,8 +898,9 @@ var resizers = {
       scaleX: 1,
       scaleY: 1
     });
+    s.setCoords();
   }
-};
+});
 
 // This function expects FabricJS canvas object as an argument.
 // It replaces native FabricJS rescaling behavior with resizing.
@@ -890,10 +908,16 @@ module.exports = function rescale2resize(canvas) {
   canvas.on('object:scaling', function (opt) {
     var shape = opt.target;
     var type = shape.type;
-    if (resizers[type] !== undefined) {
-      resizers[type](shape);
-      shape.scaleX = 1;
-      shape.scaleY = 1;
+    if (duringResize[type]) {
+      duringResize[type](shape);
+    }
+  });
+
+  canvas.on('object:modified', function (opt) {
+    var shape = opt.target;
+    var type = shape.type;
+    if ((shape.scaleX !== 1 || shape.scaleY !== 1) && afterResize[type]) {
+      afterResize[type](shape);
     }
   });
 
@@ -908,7 +932,7 @@ module.exports = function rescale2resize(canvas) {
     var items = group.getObjects();
     var tempStrokeWidth;
     for (var i = 0; i < items.length; i++) {
-      if (resizers[items[i].type] !== undefined) {
+      if (afterResize[items[i].type] !== undefined) {
 
         // little hack to get adapt the current code
         // (eliminates the end of lines 2 and 3)
@@ -920,7 +944,7 @@ module.exports = function rescale2resize(canvas) {
         items[i].scaleX = scale;
         items[i].scaleY = scale;
 
-        resizers[items[i].type](items[i]);
+        afterResize[items[i].type](items[i]);
 
         items[i].strokeWidth = tempStrokeWidth * scale;
 

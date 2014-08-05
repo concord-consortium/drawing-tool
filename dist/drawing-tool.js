@@ -1605,6 +1605,16 @@ TextTool.prototype.mouseDown = function (e) {
   text.enterEditing();
 };
 
+TextTool.prototype.deactivate = function () {
+  TextTool.super.deactivate.call(this);
+
+  // If text is in edit mode, deactivate it before changing the tool.
+  var activeObj = this.canvas.getActiveObject();
+  if (activeObj && activeObj.isEditing) {
+    this.canvas.deactivateAllWithDispatch();
+  }
+};
+
 module.exports = TextTool;
 
 });

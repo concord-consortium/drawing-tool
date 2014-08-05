@@ -29,7 +29,14 @@ UI.prototype.initTools = function (p) {
   var freeDrawTool = new FreeDrawTool("Free Draw Tool", "free", this.master);
   var deleteTool = new DeleteTool("Delete Tool", "trash", this.master);
 
-  var strokeBlack = new ColorTool('black', 'stroke', '#000', this.master);
+  new ColorTool('color1', 'stroke', 'black', this.master);
+  new ColorTool('color2', 'stroke', 'white', this.master);
+  new ColorTool('color3', 'stroke', 'red', this.master);
+  new ColorTool('color4', 'stroke', 'blue', this.master);
+  new ColorTool('color5', 'stroke', 'purple', this.master);
+  new ColorTool('color6', 'stroke', 'green', this.master);
+  new ColorTool('color7', 'stroke', 'yellow', this.master);
+  new ColorTool('color8', 'stroke', 'orange', this.master);
 
   // tool palettes
   // TODO: document this portion
@@ -37,7 +44,7 @@ UI.prototype.initTools = function (p) {
     shapes: ['-select', 'rect', 'ellipse', 'square', 'circle'],
     lines: ['-select', 'line', 'arrow', 'doubleArrow'],
     main: ['select', '-lines', '-shapes', 'free', 'trash'],
-    perm_strokeColor: ['black-stroke']
+    perm_color_stroke: ['color1', 'color2', 'color3', 'color4', 'color5', 'color6', 'color7', 'color8']
   };
   this._initToolUI(palettes); // initialize the palettes and buttons
   this._initButtonUpdates(); // set up the listeners
@@ -227,6 +234,8 @@ UI.prototype._initToolUI = function (palettes) {
           $btn = this._initBtn(btnNames[i], 'toolLink');
         }
 
+      } else if (btnNames[i].substring(0, 5) === 'color') {
+        $btn = this._initBtn(btnNames[i], 'color');
       } else { $btn = this._initBtn(btnNames[i]); }
 
       buttons[i] = $btn;
@@ -242,6 +251,7 @@ UI.prototype._initToolUI = function (palettes) {
 // initializes each button
 UI.prototype._initBtn = function (toolId, type) {
   var $element = $('<div class="dt-btn">');
+
   if (!type) { // normal button
     $element.addClass(toolId)
       .data('dt-btn-type', 'tool')
@@ -256,6 +266,12 @@ UI.prototype._initBtn = function (toolId, type) {
       .data('dt-target-id', toolId.substring(1))
       .addClass('dt-target-'+toolId.substring(1))
       .addClass('dt-link');
+  } else if (type === 'color') {
+    $element.data('dt-btn-type', "tool")
+      .data('dt-target-id', toolId)
+      .addClass('dt-target-'+toolId)
+      .addClass('dt-btn-color')
+      .css('background-color', this.master.tools[toolId].color);
   }
   $('<span>') // for the label
     .appendTo($element);

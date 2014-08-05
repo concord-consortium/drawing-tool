@@ -5,6 +5,15 @@ function FreeDrawTool(name, selector, drawTool) {
   ShapeTool.call(this, name, selector, drawTool);
 
   var self = this;
+
+  self.canvas.freeDrawingBrush.color = this.master.state.stroke;
+  self.canvas.freeDrawingBrush.width = this.master.state.strokeWidth;
+
+  this.master.addStateListener(function(e) {
+    self.canvas.freeDrawingBrush.color = self.master.state.stroke;
+    self.canvas.freeDrawingBrush.width = self.master.state.strokeWidth;
+  });
+
   this.addEventListener("mouse:down", function (e) { self.mouseDown(e); });
   this.addEventListener("mouse:up", function (e) { self.mouseUp(e); });
 }
@@ -12,9 +21,9 @@ function FreeDrawTool(name, selector, drawTool) {
 inherit(FreeDrawTool, ShapeTool);
 
 FreeDrawTool.prototype.mouseDown = function (opt) {
-
-  this.canvas.freeDrawingBrush.color = this.master.state.stroke;
-  this.canvas.freeDrawingBrush.width = this.master.state.strokeWidth;
+  console.log (this._locked);
+  // this.canvas.freeDrawingBrush.color = this.master.state.stroke;
+  // this.canvas.freeDrawingBrush.width = this.master.state.strokeWidth;
 
   FreeDrawTool.super.mouseDown.call(this, opt);
   if (!this.active) { return; }

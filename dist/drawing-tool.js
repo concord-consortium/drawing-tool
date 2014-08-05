@@ -102,7 +102,8 @@ var DEF_OPTIONS = {
 };
 
 var DEF_STATE = {
-  stroke: "rgba(100,200,200,.75)",
+  // stroke: "rgba(100,200,200,.75)",
+  stroke: 'black',
   strokeWidth: 10,
   fill: ""
 };
@@ -117,6 +118,7 @@ function DrawingTool(selector, options, settings) {
   this.options = $.extend(true, {}, DEF_OPTIONS, options);
 
   this.state = $.extend(true, {}, DEF_STATE, settings);
+  this._stateListeners = [];
 
   this.tools = {};
 
@@ -191,14 +193,17 @@ DrawingTool.prototype.load = function (jsonString) {
 
 DrawingTool.prototype.setStrokeColor = function (color) {
   this.state.color = color;
+  this._fireStateEvent();
 };
 
 DrawingTool.prototype.setStrokeWidth = function (width) {
   this.state.strokeWidth = width;
+  this._fireStateEvent();
 };
 
 DrawingTool.prototype.setFill = function (color) {
   this.state.fill = color;
+  this._fireStateEvent();
 };
 
 DrawingTool.prototype.setBackgroundImage = function (imageSrc, fit) {
@@ -294,6 +299,31 @@ DrawingTool.prototype._setBackgroundImage = function (imageSrc, options, backgro
     }
   }
 };
+
+DrawingTool.prototype.addStateListener = function (stateHandler) {
+  this._stateListeners.push(stateHandler);
+}
+
+DrawingTool.prototype.removeStateListener = function (stateHandler) {
+  for (var i = 0; i < this._stateListeners.length; i++) {
+    if (this._stateListeners[i] === stateHandler) {
+      return this._stateListeners.splice(i, 1);
+    }
+  }
+  return false;
+}
+
+DrawingTool.prototype._fireStateEvent = function (changedKey, val) {
+  var e = {};
+  if (arguments.length > 0) {
+    e['changedKey'] = changedKey;
+    e['changedValue'] = val;
+  }
+  for (var i = 0; i < this._stateListeners.length; i++) {
+    // console.log(this._stateListeners[i]);
+    this._stateListeners[i].call(this, e);
+  }
+}
 
 DrawingTool.prototype._initFabricJS = function () {
   this.canvas = new fabric.Canvas(this.ui.$canvas[0]);
@@ -1046,9 +1076,8 @@ var Tool    = require('scripts/tool');
  *          NOTE: this string is used to compare equivilancies
  *  - drawTool: the 'master'
  */
-function ColorTool(colorName, type, colorCode, drawTool) {
+function ColorTool(name, type, colorCode, drawTool) {
   this.type = type || "stroke";
-  var name = colorName + "-" + this.type;
   Tool.call(this, name, name, drawTool);
 
   this.color = colorCode;
@@ -1075,6 +1104,11 @@ ColorTool.prototype.use = function () {
 
   // set color of property of state object
   this.master.state[this.type] = this.color;
+  if (this.type === 'stroke') {
+    this.master.setStrokeColor(this.color);
+  } else if (this.type === 'fill') {
+    this.master.setFill(this.color);
+  } else {console.warn("Unrecognized color type!");}
 };
 
 module.exports = ColorTool;
@@ -1443,6 +1477,15 @@ function FreeDrawTool(name, selector, drawTool) {
   ShapeTool.call(this, name, selector, drawTool);
 
   var self = this;
+
+  self.canvas.freeDrawingBrush.color = this.master.state.stroke;
+  self.canvas.freeDrawingBrush.width = this.master.state.strokeWidth;
+
+  this.master.addStateListener(function(e) {
+    self.canvas.freeDrawingBrush.color = self.master.state.stroke;
+    self.canvas.freeDrawingBrush.width = self.master.state.strokeWidth;
+  });
+
   this.addEventListener("mouse:down", function (e) { self.mouseDown(e); });
   this.addEventListener("mouse:up", function (e) { self.mouseUp(e); });
 }
@@ -1450,9 +1493,9 @@ function FreeDrawTool(name, selector, drawTool) {
 inherit(FreeDrawTool, ShapeTool);
 
 FreeDrawTool.prototype.mouseDown = function (opt) {
-
-  this.canvas.freeDrawingBrush.color = this.master.state.stroke;
-  this.canvas.freeDrawingBrush.width = this.master.state.strokeWidth;
+  console.log (this._locked);
+  // this.canvas.freeDrawingBrush.color = this.master.state.stroke;
+  // this.canvas.freeDrawingBrush.width = this.master.state.strokeWidth;
 
   FreeDrawTool.super.mouseDown.call(this, opt);
   if (!this.active) { return; }
@@ -1615,7 +1658,14 @@ UI.prototype.initTools = function (p) {
   var freeDrawTool = new FreeDrawTool("Free Draw Tool", "free", this.master);
   var deleteTool = new DeleteTool("Delete Tool", "trash", this.master);
 
-  var strokeBlack = new ColorTool('black', 'stroke', '#000', this.master);
+  new ColorTool('color1', 'stroke', 'black', this.master);
+  new ColorTool('color2', 'stroke', 'white', this.master);
+  new ColorTool('color3', 'stroke', 'red', this.master);
+  new ColorTool('color4', 'stroke', 'blue', this.master);
+  new ColorTool('color5', 'stroke', 'purple', this.master);
+  new ColorTool('color6', 'stroke', 'green', this.master);
+  new ColorTool('color7', 'stroke', 'yellow', this.master);
+  new ColorTool('color8', 'stroke', 'orange', this.master);
 
   // tool palettes
   // TODO: document this portion
@@ -1623,7 +1673,7 @@ UI.prototype.initTools = function (p) {
     shapes: ['-select', 'rect', 'ellipse', 'square', 'circle'],
     lines: ['-select', 'line', 'arrow', 'doubleArrow'],
     main: ['select', '-lines', '-shapes', 'free', 'trash'],
-    perm_strokeColor: ['black-stroke']
+    perm_color_stroke: ['color1', 'color2', 'color3', 'color4', 'color5', 'color6', 'color7', 'color8']
   };
   this._initToolUI(palettes); // initialize the palettes and buttons
   this._initButtonUpdates(); // set up the listeners
@@ -1813,6 +1863,8 @@ UI.prototype._initToolUI = function (palettes) {
           $btn = this._initBtn(btnNames[i], 'toolLink');
         }
 
+      } else if (btnNames[i].substring(0, 5) === 'color') {
+        $btn = this._initBtn(btnNames[i], 'color');
       } else { $btn = this._initBtn(btnNames[i]); }
 
       buttons[i] = $btn;
@@ -1828,6 +1880,7 @@ UI.prototype._initToolUI = function (palettes) {
 // initializes each button
 UI.prototype._initBtn = function (toolId, type) {
   var $element = $('<div class="dt-btn">');
+
   if (!type) { // normal button
     $element.addClass(toolId)
       .data('dt-btn-type', 'tool')
@@ -1842,6 +1895,12 @@ UI.prototype._initBtn = function (toolId, type) {
       .data('dt-target-id', toolId.substring(1))
       .addClass('dt-target-'+toolId.substring(1))
       .addClass('dt-link');
+  } else if (type === 'color') {
+    $element.data('dt-btn-type', "tool")
+      .data('dt-target-id', toolId)
+      .addClass('dt-target-'+toolId)
+      .addClass('dt-btn-color')
+      .css('background-color', this.master.tools[toolId].color);
   }
   $('<span>') // for the label
     .appendTo($element);
@@ -1897,7 +1956,61 @@ module.exports = BtnGroup;
 
 });
 
-require.register("scripts/util", function(exports, require, module) {
+require.register("scripts/ui/color-palette", function(exports, require, module) {
+var UI        = require('scripts/ui');
+var BtnGroup  = require('scripts/ui/btn-group');
+var ColorTool = require('scripts/tools/color-tool');
+var inherit   = require('scripts/inherit');
+
+/*
+ * Color Palette extends button group and creates a series
+ * of color tools of a specified type.
+ * constructor parameters:
+ *  - colorVals: array of color values
+ *  - type: 'stroke' or 'fill'
+ *  - drawTool
+ */
+function ColorPalette (colorVals, type, drawTool) {
+  this.master = drawTool;
+
+  var $btns = this._initBtns(colorVals, type);
+
+  var name = type.length === undefined ? type + "ColorPalette" : "colorPalette";
+  BtnGroup.call(this, name, $btns, true);
+}
+
+inherit(ColorPalette, BtnGroup);
+
+/*
+ * This helper function initalizes the color buttons.
+ * It calls the ColorTool constructor, applies the proper styling,
+ * and returns them as an array
+ */
+ColorPalette.prototype._initBtns = function (colorVals, type) {
+  var i = 0;
+  var $buttons = []
+  if (type.length === undefined) { // single string for type
+    for (i = 0; i < colorVals.length; i++) {
+      $buttons.append(this.__initBtn(colorVals[i], type));
+    }
+  } else { // array of types
+    if (colorVals.length !== type.length) {
+      console.warn("The number of color values and types do not match!");
+    }
+    for (i = 0; i < colorVals.length; i++) {
+      $buttons.append(this.__initBtn(colorVals[i], type[i]));
+    }
+  }
+  return $buttons;
+}
+
+ColorPalette.prototype.__initBtn = function (color, type) {
+  var ct = new ColorTool(color, type, color, this.master);
+}
+
+});
+
+;require.register("scripts/util", function(exports, require, module) {
 module.exports = {
   dist: function dist(dx, dy){
     var dx2 = Math.pow(dx, 2);

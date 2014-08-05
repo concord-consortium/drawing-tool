@@ -16,8 +16,6 @@
     vertical-align: top;
     width: 44px;
     margin: 0 2px 0 0; }
-  .dt-container .dt-color-palette .dt-btn {
-    height: 22px; }
   .dt-container .dt-btn {
     font-family: 'Draw Tool Icons', Arial, sans-serif;
     font-size: 32px;
@@ -42,4 +40,8 @@
     .dt-container .dt-btn.dt-locked {
       background: #60819d;
       border-color: dimgray; }
+    .dt-container .dt-btn.dt-btn-color {
+      height: 22px;
+      display: block;
+      float: left; }
 

@@ -15,9 +15,8 @@ var Tool    = require('scripts/tool');
  *          NOTE: this string is used to compare equivilancies
  *  - drawTool: the 'master'
  */
-function ColorTool(colorName, type, colorCode, drawTool) {
+function ColorTool(name, type, colorCode, drawTool) {
   this.type = type || "stroke";
-  var name = colorName + "-" + this.type;
   Tool.call(this, name, name, drawTool);
 
   this.color = colorCode;
@@ -44,6 +43,11 @@ ColorTool.prototype.use = function () {
 
   // set color of property of state object
   this.master.state[this.type] = this.color;
+  if (this.type === 'stroke') {
+    this.master.setStrokeColor(this.color);
+  } else if (this.type === 'fill') {
+    this.master.setFill(this.color);
+  } else {console.warn("Unrecognized color type!");}
 };
 
 module.exports = ColorTool;

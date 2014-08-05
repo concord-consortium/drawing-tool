@@ -73,6 +73,9 @@ TextTool.prototype.exitTextEditingOnFirstClick = function () {
       // and mark that this click shouldn't add new text object.
       canvas.deactivateAllWithDispatch();
       e._dt_doNotCreateNewTextObj = true;
+      // Workaround - note that .deactivateAllWithDispatch() call above always set
+      // .selecatble attribute to true, what sometimes is definitely unwanted (lock mode).
+      activeObj.selectable = !self._locked;
     }
   }
 };

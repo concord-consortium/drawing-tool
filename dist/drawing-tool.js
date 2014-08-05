@@ -1347,6 +1347,9 @@ ShapeTool.prototype.mouseUp = function (e) {
 };
 
 ShapeTool.prototype.actionComplete = function (newObject) {
+  if (newObject) {
+    newObject.selectable = !this._locked;
+  }
   if (this._locked) {
     return;
   }
@@ -1355,9 +1358,6 @@ ShapeTool.prototype.actionComplete = function (newObject) {
     // After first action we do want all objects to be selectable,
     // so user can immediately move object that he just created.
     this._setAllObjectsSelectable(true);
-  }
-  if (newObject) {
-    newObject.selectable = true;
   }
 };
 
@@ -1732,6 +1732,9 @@ TextTool.prototype.exitTextEditingOnFirstClick = function () {
       // and mark that this click shouldn't add new text object.
       canvas.deactivateAllWithDispatch();
       e._dt_doNotCreateNewTextObj = true;
+      // Workaround - note that .deactivateAllWithDispatch() call above always set
+      // .selecatble attribute to true, what sometimes is definitely unwanted (lock mode).
+      activeObj.selectable = !self._locked;
     }
   }
 };

@@ -1273,7 +1273,8 @@ function SelectionTool(name, selector, drawTool) {
 
   this.canvas.on("object:selected", function (opt) {
     opt.target.set(BASIC_SELECTION_PROPERTIES);
-  });
+    this.canvas.renderAll();
+  }.bind(this));
 
   // Set visual options of custom line control points.
   lineCustomControlPoints.controlPointColor = '#bcd2ff';
@@ -1565,8 +1566,6 @@ var ShapeTool = require('scripts/tools/shape-tool');
 
 function FreeDrawTool(name, selector, drawTool) {
   ShapeTool.call(this, name, selector, drawTool);
-<<<<<<< HEAD
-=======
 
   var self = this;
 
@@ -1580,7 +1579,6 @@ function FreeDrawTool(name, selector, drawTool) {
 
   this.addEventListener("mouse:down", function (e) { self.mouseDown(e); });
   this.addEventListener("mouse:up", function (e) { self.mouseUp(e); });
->>>>>>> colorTool
 }
 
 inherit(FreeDrawTool, ShapeTool);
@@ -1798,27 +1796,16 @@ module.exports = TextTool;
 });
 
 require.register("scripts/ui", function(exports, require, module) {
-<<<<<<< HEAD
-var Tool           = require('scripts/tool');
-var SelectionTool  = require('scripts/tools/select-tool');
-var LineTool       = require('scripts/tools/shape-tools/line-tool');
-var BasicShapeTool = require('scripts/tools/shape-tools/basic-shape-tool');
-var FreeDrawTool   = require('scripts/tools/shape-tools/free-draw');
-var TextTool       = require('scripts/tools/shape-tools/text-tool');
-var DeleteTool     = require('scripts/tools/delete-tool');
-var ColorTool      = require('scripts/tools/color-tool');
-var BtnGroup       = require('scripts/ui/btn-group');
-=======
 var Tool                 = require('scripts/tool');
 var SelectionTool        = require('scripts/tools/select-tool');
 var LineTool             = require('scripts/tools/shape-tools/line-tool');
 var BasicShapeTool       = require('scripts/tools/shape-tools/basic-shape-tool');
 var FreeDrawTool         = require('scripts/tools/shape-tools/free-draw');
+var TextTool             = require('scripts/tools/shape-tools/text-tool');
 var DeleteTool           = require('scripts/tools/delete-tool');
 var ColorTool            = require('scripts/tools/color-tool');
 var BtnGroup             = require('scripts/ui/btn-group');
 var generateColorPalette = require('scripts/ui/color-palette');
->>>>>>> colorTool
 
 function UI (master, selector, options) {
   this.master = master;
@@ -1848,12 +1835,7 @@ UI.prototype.initTools = function (p) {
   var palettes = p || {
     shapes: ['-select', 'rect', 'ellipse', 'square', 'circle'],
     lines: ['-select', 'line', 'arrow', 'doubleArrow'],
-<<<<<<< HEAD
     main: ['select', '-lines', '-shapes', 'free', 'text', 'trash']
-    // ,_strokeColor: ['black-stroke']
-=======
-    main: ['select', '-lines', '-shapes', 'free', 'trash']
->>>>>>> colorTool
   };
   this._initToolUI(palettes); // initialize the palettes and buttons
   this._initColorTools();
@@ -2107,9 +2089,7 @@ UI.prototype._initColorTools = function () {
   for (i = 0; i < strokeColorTools.length; i++) {
     $fillColorBtns.push(this._initBtn(fillColorTools[i].selector, 'color'));
   }
-  var t = generateColorPalette(this.master, $strokeBtn, $strokeColorBtns, $fillBtn, $fillColorBtns).appendTo(this.$tools);
-
-  console.log(t);
+  generateColorPalette(this.master, $strokeBtn, $strokeColorBtns, $fillBtn, $fillColorBtns).appendTo(this.$tools);
 }
 
 // initializes each button
@@ -2194,10 +2174,11 @@ module.exports = BtnGroup;
 
 require.register("scripts/ui/color-palette", function(exports, require, module) {
 module.exports = function generateColorPalette (drawTool, $strokeBtn, $strokeColorBtns, $fillBtn, $fillColorBtns) {
-  var $el = $('<div class="dt-colorPalette">').css('margin-top', '15px');
+  var $el = $('<div class="dt-colorPalette">');
+    // .css('margin-top', '15px');
 
-  $('<div class="dt-btn-innerColor dt-link">').appendTo($strokeBtn);
-  $('<div class="dt-btn-innerColor dt-link">').appendTo($fillBtn);
+  // $('<div class="dt-btn-innerColor">').appendTo($strokeBtn);
+  $('<div class="dt-btn-innerColor">').appendTo($fillBtn);
 
   $strokeBtn.appendTo($el);
   var $strokePalette = $('<div class="dt-toolpalette">').appendTo($el);
@@ -2230,19 +2211,7 @@ module.exports = function generateColorPalette (drawTool, $strokeBtn, $strokeCol
     // $strokeBtn.show(100);
   });
 
-  for (i = 0; i < $strokeColorBtns.length; i++) {
-    if (drawTool.state.color === drawTool.tools[$strokeColorBtns[i].data('dt-target-id')].color) {
-      $strokeColorBtns[i].addClass('selected');
-    } else { $strokeColorBtns[i].removeClass('selected'); }
-  }
-  for (i = 0; i < $fillColorBtns.length; i++) {
-    if (drawTool.state.fill === drawTool.tools[$fillColorBtns[i].data('dt-target-id')].color) {
-      $fillColorBtns[i].addClass('selected');
-    } else { $fillColorBtns[i].removeClass('selected'); }
-  }
-
-  drawTool.addStateListener(function (e) {
-    console.log($strokeColorBtns[2].css('background-color'));
+  var syncUI = function(e) {
     var i = 0;
     for (i = 0; i < $strokeColorBtns.length; i++) {
       if (drawTool.state.color === drawTool.tools[$strokeColorBtns[i].data('dt-target-id')].color) {
@@ -2254,7 +2223,14 @@ module.exports = function generateColorPalette (drawTool, $strokeBtn, $strokeCol
         $fillColorBtns[i].addClass('selected');
       } else { $fillColorBtns[i].removeClass('selected'); }
     }
-  });
+    // console.log(drawTool.state.color);
+    $strokeBtn.css('color', drawTool.state.color);
+    $fillBtn.find('.dt-btn-innerColor').css('background-color', drawTool.state.fill);
+  }
+
+  syncUI();
+
+  drawTool.addStateListener(function (e) { syncUI(e); });
 
   return $el;
 }

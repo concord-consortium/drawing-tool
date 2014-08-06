@@ -18,8 +18,12 @@
     margin: 0 2px 0 0; }
   .dt-container .dt-btn {
     display: block;
+    overflow: hidden;
+    position: relative;
+    text-indent: 0;
+    white-space: nowrap;
     font-family: 'Draw Tool Icons', Arial, sans-serif;
-    font-size: 32px;
+    font-size: 35px;
     line-height: 50px;
     height: 44px;
     width: 44px;
@@ -34,6 +38,9 @@
     -moz-user-select: none;
     -webkit-user-select: none;
     -ms-user-select: none; }
+    .dt-container .dt-btn:hover {
+      background: #2e7abc;
+      cursor: pointer; }
     .dt-container .dt-btn.dt-active {
       background: #2e75b3; }
     .dt-container .dt-btn:first-child {
@@ -41,47 +48,34 @@
     .dt-container .dt-btn.dt-locked {
       background: #60819d;
       border-color: dimgray; }
-    .dt-container .dt-btn.dt-target-select {
-      margin-bottom: 15px; }
-    .dt-container .dt-btn.select {
-      margin-bottom: 15px; }
     .dt-container .dt-btn.dt-btn-color {
       height: 15px;
       width: 75%;
       margin: auto;
       display: block; }
-      .dt-container .dt-btn.dt-btn-color.selected {
-        border: 300000000e8acc 4px; }
     .dt-container .dt-btn.stroke-color:before {
       content: 'S'; }
-    .dt-container .dt-btn.fill-color:before {
-      content: 'S'; }
-    .dt-container .dt-btn .dt-btn-innerColor {
-      background: #fc0;
-      border: solid 1px #1c68aa;
-      height: 18px;
-      left: 10px;
-      position: absolute;
-      top: 12px;
-      width: 19px; }
-    .dt-container .dt-btn .dt-btn-innerColor:before {
-      background: #fff;
-      border: solid 1px #1c68aa;
-      content: '';
-      height: 8px;
-      left: 4px;
-      position: absolute;
-      top: 4px;
-      width: 9px; }
-    .dt-container .dt-btn .dt-btn-innerColor:after {
+    .dt-container .dt-btn.stroke-color .dt-btn-innerColor:after {
+      /* inset/overlay blue box with no border */
       background: #3e8acc;
       border: none;
       content: '';
       height: 6px;
-      left: 6px;
+      left: 8px;
       position: absolute;
       top: 6px;
       width: 7px; }
+    .dt-container .dt-btn.fill-color:before {
+      content: 'S'; }
+    .dt-container .dt-btn .dt-btn-innerColor {
+      /* a class for the stroke and fill color boxes */
+      background: #fc0;
+      border: solid 1px #1c68aa;
+      height: 17px;
+      left: 12px;
+      position: absolute;
+      top: 13px;
+      width: 18px; }
   .dt-container .selected {
     width: 90%;
     height: 25px; }

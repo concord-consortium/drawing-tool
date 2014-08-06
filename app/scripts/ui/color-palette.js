@@ -48,7 +48,7 @@ module.exports = function generateColorPalette (drawTool, $strokeBtn, $strokeCol
         $fillColorBtns[i].addClass('selected');
       } else { $fillColorBtns[i].removeClass('selected'); }
     }
-    console.log(drawTool.state.color);
+    // console.log(drawTool.state.color);
     $strokeBtn.css('color', drawTool.state.color);
     $fillBtn.find('.dt-btn-innerColor').css('background-color', drawTool.state.fill);
   }

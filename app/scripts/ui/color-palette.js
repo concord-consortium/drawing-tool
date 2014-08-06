@@ -1,5 +1,6 @@
 module.exports = function generateColorPalette (drawTool, $strokeBtn, $strokeColorBtns, $fillBtn, $fillColorBtns) {
-  var $el = $('<div class="dt-colorPalette">').css('margin-top', '15px');
+  var $el = $('<div class="dt-colorPalette">');
+    // .css('margin-top', '15px');
 
   // $('<div class="dt-btn-innerColor">').appendTo($strokeBtn);
   $('<div class="dt-btn-innerColor">').appendTo($fillBtn);

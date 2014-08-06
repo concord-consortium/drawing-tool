@@ -1,6 +1,6 @@
 $buttonSize: 44px;
 $halfButtonSize: 22px;
-$buttonFontSize: 32px;
+$buttonFontSize: 35px;
 $buttonLineHeight: 50px;
 
 $icons: 'Draw Tool Icons', Arial, sans-serif;
@@ -37,6 +37,10 @@ $icons: 'Draw Tool Icons', Arial, sans-serif;
 
   .dt-btn {
     display: block;
+    overflow: hidden;
+    position: relative;
+    text-indent: 0;
+    white-space: nowrap;
     font-family: $icons;
     font-size: $buttonFontSize;
     line-height: $buttonLineHeight;
@@ -53,6 +57,11 @@ $icons: 'Draw Tool Icons', Arial, sans-serif;
     -moz-user-select: none;
     -webkit-user-select: none;
     -ms-user-select: none;
+
+    &:hover {
+      background: #2e7abc;
+      cursor: pointer;
+    }
 
     &.dt-active {
       background: #2e75b3;
@@ -82,50 +91,53 @@ $icons: 'Draw Tool Icons', Arial, sans-serif;
       margin: auto;
       display: block;
 
-      &.selected {
-        border: 3e8acc 4px;
-      }
+      // &.selected {
+      //   border: #3e8acc 4px;
+      // }
     }
 
     &.stroke-color:before {
       content: 'S';
     }
 
+    &.stroke-color {
+      // .dt-btn-innerColor:before { /* inset/overlay white box with black border */
+      //   background: #fff;
+      //   border: solid 1px #1c68aa;
+      //   content: '';
+      //   height: 8px;
+      //   left: 6px;
+      //   position: absolute;
+      //   top: 4px;
+      //   width: 9px;
+      // }
+
+      .dt-btn-innerColor:after { /* inset/overlay blue box with no border */
+        background: #3e8acc;
+        border: none;
+        content: '';
+        height: 6px;
+        left: 8px;
+        position: absolute;
+        top: 6px;
+        width: 7px;
+      }
+    }
+
     &.fill-color:before {
       content: 'S';
     }
 
-    .dt-btn-innerColor {
+    .dt-btn-innerColor { /* a class for the stroke and fill color boxes */
       background: #fc0;
       border: solid 1px #1c68aa;
-      height: 18px;
-      left: 10px;
+      height: 17px;
+      left: 12px;
       position: absolute;
-      top: 12px;
-      width: 19px;
+      top: 13px;
+      width: 18px;
     }
 
-    .dt-btn-innerColor:before {
-      background: #fff;
-      border: solid 1px #1c68aa;
-      content: '';
-      height: 8px;
-      left: 4px;
-      position: absolute;
-      top: 4px;
-      width: 9px;
-    }
-
-    .dt-btn-innerColor:after {
-      background: #3e8acc;
-      border: none;
-      content: '';
-      height: 6px;
-      left: 6px;
-      position: absolute;
-      top: 6px;
-      width: 7px;
-    }
   }
   .selected {
     width: 90%;

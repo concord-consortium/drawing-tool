@@ -288,9 +288,7 @@ UI.prototype._initColorTools = function () {
   for (i = 0; i < strokeColorTools.length; i++) {
     $fillColorBtns.push(this._initBtn(fillColorTools[i].selector, 'color'));
   }
-  var t = generateColorPalette(this.master, $strokeBtn, $strokeColorBtns, $fillBtn, $fillColorBtns).appendTo(this.$tools);
-
-  console.log(t);
+  generateColorPalette(this.master, $strokeBtn, $strokeColorBtns, $fillBtn, $fillColorBtns).appendTo(this.$tools);
 }
 
 // initializes each button

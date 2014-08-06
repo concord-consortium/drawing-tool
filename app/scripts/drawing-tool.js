@@ -222,6 +222,7 @@ DrawingTool.prototype.removeStateListener = function (stateHandler) {
 
 DrawingTool.prototype._fireStateEvent = function (changedKey, val) {
   var e = {};
+  // TODO: implement this functionality in the actual setters in drawing-tool
   if (arguments.length > 0) {
     e['changedKey'] = changedKey;
     e['changedValue'] = val;

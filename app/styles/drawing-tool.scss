@@ -1,4 +1,5 @@
 $buttonSize: 44px;
+$halfButtonSize: 22px;
 $buttonFontSize: 32px;
 $buttonLineHeight: 50px;
 
@@ -35,6 +36,7 @@ $icons: 'Draw Tool Icons', Arial, sans-serif;
   // }
 
   .dt-btn {
+    display: block;
     font-family: $icons;
     font-size: $buttonFontSize;
     line-height: $buttonLineHeight;
@@ -65,12 +67,68 @@ $icons: 'Draw Tool Icons', Arial, sans-serif;
       border-color: dimgray;
     }
 
+    &.dt-target-select {
+      margin-bottom: 15px;
+    }
+
+    &.select {
+      margin-bottom: 15px;
+    }
+
     &.dt-btn-color {
       // border: 0;
-      height: $buttonSize / 2;
-      // width: $buttonSize / 2 - 2;
+      height: 15px;
+      width: 75%;
+      margin: auto;
       display: block;
-      float: left;
+
+      &.selected {
+        border: 3e8acc 4px;
+      }
     }
+
+    &.stroke-color:before {
+      content: 'S';
+    }
+
+    &.fill-color:before {
+      content: 'S';
+    }
+
+    .dt-btn-innerColor {
+      background: #fc0;
+      border: solid 1px #1c68aa;
+      height: 18px;
+      left: 10px;
+      position: absolute;
+      top: 12px;
+      width: 19px;
+    }
+
+    .dt-btn-innerColor:before {
+      background: #fff;
+      border: solid 1px #1c68aa;
+      content: '';
+      height: 8px;
+      left: 4px;
+      position: absolute;
+      top: 4px;
+      width: 9px;
+    }
+
+    .dt-btn-innerColor:after {
+      background: #3e8acc;
+      border: none;
+      content: '';
+      height: 6px;
+      left: 6px;
+      position: absolute;
+      top: 6px;
+      width: 7px;
+    }
+  }
+  .selected {
+    width: 90%;
+    height: 25px;
   }
 }

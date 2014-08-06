@@ -17,6 +17,7 @@
     width: 44px;
     margin: 0 2px 0 0; }
   .dt-container .dt-btn {
+    display: block;
     font-family: 'Draw Tool Icons', Arial, sans-serif;
     font-size: 32px;
     line-height: 50px;
@@ -40,8 +41,48 @@
     .dt-container .dt-btn.dt-locked {
       background: #60819d;
       border-color: dimgray; }
+    .dt-container .dt-btn.dt-target-select {
+      margin-bottom: 15px; }
+    .dt-container .dt-btn.select {
+      margin-bottom: 15px; }
     .dt-container .dt-btn.dt-btn-color {
-      height: 22px;
-      display: block;
-      float: left; }
+      height: 15px;
+      width: 75%;
+      margin: auto;
+      display: block; }
+      .dt-container .dt-btn.dt-btn-color.selected {
+        border: 300000000e8acc 4px; }
+    .dt-container .dt-btn.stroke-color:before {
+      content: 'S'; }
+    .dt-container .dt-btn.fill-color:before {
+      content: 'S'; }
+    .dt-container .dt-btn .dt-btn-innerColor {
+      background: #fc0;
+      border: solid 1px #1c68aa;
+      height: 18px;
+      left: 10px;
+      position: absolute;
+      top: 12px;
+      width: 19px; }
+    .dt-container .dt-btn .dt-btn-innerColor:before {
+      background: #fff;
+      border: solid 1px #1c68aa;
+      content: '';
+      height: 8px;
+      left: 4px;
+      position: absolute;
+      top: 4px;
+      width: 9px; }
+    .dt-container .dt-btn .dt-btn-innerColor:after {
+      background: #3e8acc;
+      border: none;
+      content: '';
+      height: 6px;
+      left: 6px;
+      position: absolute;
+      top: 6px;
+      width: 7px; }
+  .dt-container .selected {
+    width: 90%;
+    height: 25px; }
 

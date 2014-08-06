@@ -1,11 +1,12 @@
-var Tool           = require('scripts/tool');
-var SelectionTool  = require('scripts/tools/select-tool');
-var LineTool       = require('scripts/tools/shape-tools/line-tool');
-var BasicShapeTool = require('scripts/tools/shape-tools/basic-shape-tool');
-var FreeDrawTool   = require('scripts/tools/shape-tools/free-draw');
-var DeleteTool     = require('scripts/tools/delete-tool');
-var ColorTool      = require('scripts/tools/color-tool');
-var BtnGroup       = require('scripts/ui/btn-group');
+var Tool                 = require('scripts/tool');
+var SelectionTool        = require('scripts/tools/select-tool');
+var LineTool             = require('scripts/tools/shape-tools/line-tool');
+var BasicShapeTool       = require('scripts/tools/shape-tools/basic-shape-tool');
+var FreeDrawTool         = require('scripts/tools/shape-tools/free-draw');
+var DeleteTool           = require('scripts/tools/delete-tool');
+var ColorTool            = require('scripts/tools/color-tool');
+var BtnGroup             = require('scripts/ui/btn-group');
+var generateColorPalette = require('scripts/ui/color-palette');
 
 function UI (master, selector, options) {
   this.master = master;
@@ -29,34 +30,15 @@ UI.prototype.initTools = function (p) {
   var freeDrawTool = new FreeDrawTool("Free Draw Tool", "free", this.master);
   var deleteTool = new DeleteTool("Delete Tool", "trash", this.master);
 
-  new ColorTool('color1s', 'stroke', 'black', this.master);
-  new ColorTool('color2s', 'stroke', 'white', this.master);
-  new ColorTool('color3s', 'stroke', 'red', this.master);
-  new ColorTool('color4s', 'stroke', 'blue', this.master);
-  new ColorTool('color5s', 'stroke', 'purple', this.master);
-  new ColorTool('color6s', 'stroke', 'green', this.master);
-  new ColorTool('color7s', 'stroke', 'yellow', this.master);
-  new ColorTool('color8s', 'stroke', 'orange', this.master);
-
-  new ColorTool('color1f', 'fill', 'black', this.master);
-  new ColorTool('color2f', 'fill', 'white', this.master);
-  new ColorTool('color3f', 'fill', 'red', this.master);
-  new ColorTool('color4f', 'fill', 'blue', this.master);
-  new ColorTool('color5f', 'fill', 'purple', this.master);
-  new ColorTool('color6f', 'fill', 'green', this.master);
-  new ColorTool('color7f', 'fill', 'yellow', this.master);
-  new ColorTool('color8f', 'fill', 'orange', this.master);
-
   // tool palettes
   // TODO: document this portion
   var palettes = p || {
     shapes: ['-select', 'rect', 'ellipse', 'square', 'circle'],
     lines: ['-select', 'line', 'arrow', 'doubleArrow'],
-    main: ['select', '-lines', '-shapes', 'free', 'trash'],
-    perm_colorstroke: ['color1s', 'color2s', 'color3s', 'color4s', 'color5s', 'color6s', 'color7s', 'color8s'],
-    perm_colorfill: ['color1f', 'color2f', 'color3f', 'color4f', 'color5f', 'color6f', 'color7f', 'color8f'],
+    main: ['select', '-lines', '-shapes', 'free', 'trash']
   };
   this._initToolUI(palettes); // initialize the palettes and buttons
+  this._initColorTools();
   this._initButtonUpdates(); // set up the listeners
 
   // TODO: rewrite/refactor this with classes and css
@@ -140,7 +122,9 @@ UI.prototype._paletteButtonClicked = function (selector) {
 
   if (oldPalette && newPalette) {
     oldPalette.hide(function () { newPalette.show(); });
-  } else if (newPalette) { newPalette.show(); }
+  } else if (newPalette) {
+    newPalette.show();
+  } else { return; }
 
   // refreshing any palette buttons that need new/updated
   // current tool icons
@@ -159,7 +143,12 @@ UI.prototype._paletteButtonClicked = function (selector) {
 // Handles all the tool palette clicks and tool changes
 UI.prototype._toolButtonClicked = function (toolSelector) {
   var newTool = this.master.tools[toolSelector];
-  var $newPalette = this.$buttons[newTool.selector].parent();
+  if (!newTool) {
+    console.warn('Unable to find tool with selector: '+toolSelector);
+    return;
+  }
+  var $newPalette;
+  if (this.$buttons[newTool.selector]) { $newPalette = this.$buttons[newTool.selector].parent(); }
 
   if (this.master.currentTool !== undefined &&
     this.master.currentTool.selector === toolSelector) {
@@ -260,6 +249,50 @@ UI.prototype._initToolUI = function (palettes) {
 
 };
 
+UI.prototype._initColorTools = function () {
+
+  var $strokeBtn = this._initBtn('stroke-color');
+  // $strokeBtn.find('span').text('Q');
+  var $fillBtn = this._initBtn('fill-color');
+  // $fillBtn.find('span').text('X');
+
+  var strokeColorTools = [
+    new ColorTool('color1s', 'stroke', 'black', this.master),
+    new ColorTool('color2s', 'stroke', 'white', this.master),
+    new ColorTool('color3s', 'stroke', 'red', this.master),
+    new ColorTool('color4s', 'stroke', 'blue', this.master),
+    new ColorTool('color5s', 'stroke', 'purple', this.master),
+    new ColorTool('color6s', 'stroke', 'green', this.master),
+    new ColorTool('color7s', 'stroke', 'yellow', this.master),
+    new ColorTool('color8s', 'stroke', 'orange', this.master)
+  ];
+
+  // TODO: implement a "no fill" button
+  var fillColorTools = [
+    new ColorTool('color1f', 'fill', 'black', this.master),
+    new ColorTool('color2f', 'fill', 'white', this.master),
+    new ColorTool('color3f', 'fill', 'red', this.master),
+    new ColorTool('color4f', 'fill', 'blue', this.master),
+    new ColorTool('color5f', 'fill', 'purple', this.master),
+    new ColorTool('color6f', 'fill', 'green', this.master),
+    new ColorTool('color7f', 'fill', 'yellow', this.master),
+    new ColorTool('color8f', 'fill', 'orange', this.master)
+  ];
+
+  var i = 0;
+  var $strokeColorBtns = [];
+  var $fillColorBtns = [];
+  for (i = 0; i < strokeColorTools.length; i++) {
+    $strokeColorBtns.push(this._initBtn(strokeColorTools[i].selector, 'color'));
+  }
+  for (i = 0; i < strokeColorTools.length; i++) {
+    $fillColorBtns.push(this._initBtn(fillColorTools[i].selector, 'color'));
+  }
+  var t = generateColorPalette(this.master, $strokeBtn, $strokeColorBtns, $fillBtn, $fillColorBtns).appendTo(this.$tools);
+
+  console.log(t);
+}
+
 // initializes each button
 UI.prototype._initBtn = function (toolId, type) {
   var $element = $('<div class="dt-btn">');
@@ -281,6 +314,7 @@ UI.prototype._initBtn = function (toolId, type) {
   } else if (type === 'color') {
     $element.data('dt-btn-type', "tool")
       .data('dt-target-id', toolId)
+      .addClass(toolId)
       .addClass('dt-target-'+toolId)
       .addClass('dt-btn-color')
       .css('background-color', this.master.tools[toolId].color);

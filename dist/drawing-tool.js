@@ -315,6 +315,7 @@ DrawingTool.prototype.removeStateListener = function (stateHandler) {
 
 DrawingTool.prototype._fireStateEvent = function (changedKey, val) {
   var e = {};
+  // TODO: implement this functionality in the actual setters in drawing-tool
   if (arguments.length > 0) {
     e['changedKey'] = changedKey;
     e['changedValue'] = val;
@@ -1493,10 +1494,6 @@ function FreeDrawTool(name, selector, drawTool) {
 inherit(FreeDrawTool, ShapeTool);
 
 FreeDrawTool.prototype.mouseDown = function (opt) {
-  console.log (this._locked);
-  // this.canvas.freeDrawingBrush.color = this.master.state.stroke;
-  // this.canvas.freeDrawingBrush.width = this.master.state.strokeWidth;
-
   FreeDrawTool.super.mouseDown.call(this, opt);
   if (!this.active) { return; }
   if (!this.canvas.isDrawingMode) {
@@ -1627,14 +1624,15 @@ module.exports = LineTool;
 });
 
 require.register("scripts/ui", function(exports, require, module) {
-var Tool           = require('scripts/tool');
-var SelectionTool  = require('scripts/tools/select-tool');
-var LineTool       = require('scripts/tools/shape-tools/line-tool');
-var BasicShapeTool = require('scripts/tools/shape-tools/basic-shape-tool');
-var FreeDrawTool   = require('scripts/tools/shape-tools/free-draw');
-var DeleteTool     = require('scripts/tools/delete-tool');
-var ColorTool      = require('scripts/tools/color-tool');
-var BtnGroup       = require('scripts/ui/btn-group');
+var Tool                 = require('scripts/tool');
+var SelectionTool        = require('scripts/tools/select-tool');
+var LineTool             = require('scripts/tools/shape-tools/line-tool');
+var BasicShapeTool       = require('scripts/tools/shape-tools/basic-shape-tool');
+var FreeDrawTool         = require('scripts/tools/shape-tools/free-draw');
+var DeleteTool           = require('scripts/tools/delete-tool');
+var ColorTool            = require('scripts/tools/color-tool');
+var BtnGroup             = require('scripts/ui/btn-group');
+var generateColorPalette = require('scripts/ui/color-palette');
 
 function UI (master, selector, options) {
   this.master = master;
@@ -1658,24 +1656,15 @@ UI.prototype.initTools = function (p) {
   var freeDrawTool = new FreeDrawTool("Free Draw Tool", "free", this.master);
   var deleteTool = new DeleteTool("Delete Tool", "trash", this.master);
 
-  new ColorTool('color1', 'stroke', 'black', this.master);
-  new ColorTool('color2', 'stroke', 'white', this.master);
-  new ColorTool('color3', 'stroke', 'red', this.master);
-  new ColorTool('color4', 'stroke', 'blue', this.master);
-  new ColorTool('color5', 'stroke', 'purple', this.master);
-  new ColorTool('color6', 'stroke', 'green', this.master);
-  new ColorTool('color7', 'stroke', 'yellow', this.master);
-  new ColorTool('color8', 'stroke', 'orange', this.master);
-
   // tool palettes
   // TODO: document this portion
   var palettes = p || {
     shapes: ['-select', 'rect', 'ellipse', 'square', 'circle'],
     lines: ['-select', 'line', 'arrow', 'doubleArrow'],
-    main: ['select', '-lines', '-shapes', 'free', 'trash'],
-    perm_color_stroke: ['color1', 'color2', 'color3', 'color4', 'color5', 'color6', 'color7', 'color8']
+    main: ['select', '-lines', '-shapes', 'free', 'trash']
   };
   this._initToolUI(palettes); // initialize the palettes and buttons
+  this._initColorTools();
   this._initButtonUpdates(); // set up the listeners
 
   // TODO: rewrite/refactor this with classes and css
@@ -1759,7 +1748,9 @@ UI.prototype._paletteButtonClicked = function (selector) {
 
   if (oldPalette && newPalette) {
     oldPalette.hide(function () { newPalette.show(); });
-  } else if (newPalette) { newPalette.show(); }
+  } else if (newPalette) {
+    newPalette.show();
+  } else { return; }
 
   // refreshing any palette buttons that need new/updated
   // current tool icons
@@ -1768,7 +1759,9 @@ UI.prototype._paletteButtonClicked = function (selector) {
     if ($(links[i]).data('dt-btn-type') === 'palette') {
       var paletteName = $(links[i]).data('dt-target-id');
       var currToolId = this.palettes[paletteName].currentTool;
-      $(links[i]).find('span').text(this.$tools.find('.'+currToolId).find('span').text());
+      if (currToolId) {
+        $(links[i]).find('span').text(this.$tools.find('.'+currToolId).find('span').text());
+      }
     }
   }
 };
@@ -1776,7 +1769,12 @@ UI.prototype._paletteButtonClicked = function (selector) {
 // Handles all the tool palette clicks and tool changes
 UI.prototype._toolButtonClicked = function (toolSelector) {
   var newTool = this.master.tools[toolSelector];
-  var $newPalette = this.$buttons[newTool.selector].parent();
+  if (!newTool) {
+    console.warn('Unable to find tool with selector: '+toolSelector);
+    return;
+  }
+  var $newPalette;
+  if (this.$buttons[newTool.selector]) { $newPalette = this.$buttons[newTool.selector].parent(); }
 
   if (this.master.currentTool !== undefined &&
     this.master.currentTool.selector === toolSelector) {
@@ -1877,6 +1875,50 @@ UI.prototype._initToolUI = function (palettes) {
 
 };
 
+UI.prototype._initColorTools = function () {
+
+  var $strokeBtn = this._initBtn('stroke-color');
+  // $strokeBtn.find('span').text('Q');
+  var $fillBtn = this._initBtn('fill-color');
+  // $fillBtn.find('span').text('X');
+
+  var strokeColorTools = [
+    new ColorTool('color1s', 'stroke', 'black', this.master),
+    new ColorTool('color2s', 'stroke', 'white', this.master),
+    new ColorTool('color3s', 'stroke', 'red', this.master),
+    new ColorTool('color4s', 'stroke', 'blue', this.master),
+    new ColorTool('color5s', 'stroke', 'purple', this.master),
+    new ColorTool('color6s', 'stroke', 'green', this.master),
+    new ColorTool('color7s', 'stroke', 'yellow', this.master),
+    new ColorTool('color8s', 'stroke', 'orange', this.master)
+  ];
+
+  // TODO: implement a "no fill" button
+  var fillColorTools = [
+    new ColorTool('color1f', 'fill', 'black', this.master),
+    new ColorTool('color2f', 'fill', 'white', this.master),
+    new ColorTool('color3f', 'fill', 'red', this.master),
+    new ColorTool('color4f', 'fill', 'blue', this.master),
+    new ColorTool('color5f', 'fill', 'purple', this.master),
+    new ColorTool('color6f', 'fill', 'green', this.master),
+    new ColorTool('color7f', 'fill', 'yellow', this.master),
+    new ColorTool('color8f', 'fill', 'orange', this.master)
+  ];
+
+  var i = 0;
+  var $strokeColorBtns = [];
+  var $fillColorBtns = [];
+  for (i = 0; i < strokeColorTools.length; i++) {
+    $strokeColorBtns.push(this._initBtn(strokeColorTools[i].selector, 'color'));
+  }
+  for (i = 0; i < strokeColorTools.length; i++) {
+    $fillColorBtns.push(this._initBtn(fillColorTools[i].selector, 'color'));
+  }
+  var t = generateColorPalette(this.master, $strokeBtn, $strokeColorBtns, $fillBtn, $fillColorBtns).appendTo(this.$tools);
+
+  console.log(t);
+}
+
 // initializes each button
 UI.prototype._initBtn = function (toolId, type) {
   var $element = $('<div class="dt-btn">');
@@ -1898,6 +1940,7 @@ UI.prototype._initBtn = function (toolId, type) {
   } else if (type === 'color') {
     $element.data('dt-btn-type', "tool")
       .data('dt-target-id', toolId)
+      .addClass(toolId)
       .addClass('dt-target-'+toolId)
       .addClass('dt-btn-color')
       .css('background-color', this.master.tools[toolId].color);
@@ -1957,55 +2000,70 @@ module.exports = BtnGroup;
 });
 
 require.register("scripts/ui/color-palette", function(exports, require, module) {
-var UI        = require('scripts/ui');
-var BtnGroup  = require('scripts/ui/btn-group');
-var ColorTool = require('scripts/tools/color-tool');
-var inherit   = require('scripts/inherit');
+module.exports = function generateColorPalette (drawTool, $strokeBtn, $strokeColorBtns, $fillBtn, $fillColorBtns) {
+  var $el = $('<div class="dt-colorPalette">').css('margin-top', '15px');
 
-/*
- * Color Palette extends button group and creates a series
- * of color tools of a specified type.
- * constructor parameters:
- *  - colorVals: array of color values
- *  - type: 'stroke' or 'fill'
- *  - drawTool
- */
-function ColorPalette (colorVals, type, drawTool) {
-  this.master = drawTool;
+  $('<div class="dt-btn-innerColor dt-link">').appendTo($strokeBtn);
+  $('<div class="dt-btn-innerColor dt-link">').appendTo($fillBtn);
 
-  var $btns = this._initBtns(colorVals, type);
+  $strokeBtn.appendTo($el);
+  var $strokePalette = $('<div class="dt-toolpalette">').appendTo($el);
+  $fillBtn.appendTo($el);
+  var $fillPalette = $('<div class="dt-toolpalette">').appendTo($el);
 
-  var name = type.length === undefined ? type + "ColorPalette" : "colorPalette";
-  BtnGroup.call(this, name, $btns, true);
-}
-
-inherit(ColorPalette, BtnGroup);
-
-/*
- * This helper function initalizes the color buttons.
- * It calls the ColorTool constructor, applies the proper styling,
- * and returns them as an array
- */
-ColorPalette.prototype._initBtns = function (colorVals, type) {
   var i = 0;
-  var $buttons = []
-  if (type.length === undefined) { // single string for type
-    for (i = 0; i < colorVals.length; i++) {
-      $buttons.append(this.__initBtn(colorVals[i], type));
-    }
-  } else { // array of types
-    if (colorVals.length !== type.length) {
-      console.warn("The number of color values and types do not match!");
-    }
-    for (i = 0; i < colorVals.length; i++) {
-      $buttons.append(this.__initBtn(colorVals[i], type[i]));
-    }
+  for(i = 0; i < $strokeColorBtns.length; i++) {
+    $strokeColorBtns[i].appendTo($strokePalette);
   }
-  return $buttons;
-}
+  for(i = 0; i < $fillColorBtns.length; i++) {
+    $fillColorBtns[i].appendTo($fillPalette);
+  }
 
-ColorPalette.prototype.__initBtn = function (color, type) {
-  var ct = new ColorTool(color, type, color, this.master);
+  $strokePalette.css('display', 'block')
+    .hide();
+  $fillPalette.css('display', 'block')
+    .hide();
+
+  $strokeBtn.on('click touchstart', function () {
+    // $strokeBtn.hide(100);
+    $fillPalette.hide(100);
+    $strokePalette.toggle(100);
+    // $fillBtn.show(100);
+  });
+  $fillBtn.on('click touchstart', function () {
+    // $fillBtn.hide(100);
+    $strokePalette.hide(100);
+    $fillPalette.toggle(100);
+    // $strokeBtn.show(100);
+  });
+
+  for (i = 0; i < $strokeColorBtns.length; i++) {
+    if (drawTool.state.color === drawTool.tools[$strokeColorBtns[i].data('dt-target-id')].color) {
+      $strokeColorBtns[i].addClass('selected');
+    } else { $strokeColorBtns[i].removeClass('selected'); }
+  }
+  for (i = 0; i < $fillColorBtns.length; i++) {
+    if (drawTool.state.fill === drawTool.tools[$fillColorBtns[i].data('dt-target-id')].color) {
+      $fillColorBtns[i].addClass('selected');
+    } else { $fillColorBtns[i].removeClass('selected'); }
+  }
+
+  drawTool.addStateListener(function (e) {
+    console.log($strokeColorBtns[2].css('background-color'));
+    var i = 0;
+    for (i = 0; i < $strokeColorBtns.length; i++) {
+      if (drawTool.state.color === drawTool.tools[$strokeColorBtns[i].data('dt-target-id')].color) {
+        $strokeColorBtns[i].addClass('selected');
+      } else { $strokeColorBtns[i].removeClass('selected'); }
+    }
+    for (i = 0; i < $fillColorBtns.length; i++) {
+      if (drawTool.state.fill === drawTool.tools[$fillColorBtns[i].data('dt-target-id')].color) {
+        $fillColorBtns[i].addClass('selected');
+      } else { $fillColorBtns[i].removeClass('selected'); }
+    }
+  });
+
+  return $el;
 }
 
 });

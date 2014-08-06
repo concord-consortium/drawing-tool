@@ -9,7 +9,8 @@ var DEF_OPTIONS = {
 };
 
 var DEF_STATE = {
-  stroke: "rgba(100,200,200,.75)",
+  // stroke: "rgba(100,200,200,.75)",
+  stroke: 'black',
   strokeWidth: 10,
   fill: ""
 };
@@ -24,6 +25,7 @@ function DrawingTool(selector, options, settings) {
   this.options = $.extend(true, {}, DEF_OPTIONS, options);
 
   this.state = $.extend(true, {}, DEF_STATE, settings);
+  this._stateListeners = [];
 
   this.tools = {};
 
@@ -98,14 +100,17 @@ DrawingTool.prototype.load = function (jsonString) {
 
 DrawingTool.prototype.setStrokeColor = function (color) {
   this.state.color = color;
+  this._fireStateEvent();
 };
 
 DrawingTool.prototype.setStrokeWidth = function (width) {
   this.state.strokeWidth = width;
+  this._fireStateEvent();
 };
 
 DrawingTool.prototype.setFill = function (color) {
   this.state.fill = color;
+  this._fireStateEvent();
 };
 
 DrawingTool.prototype.setBackgroundImage = function (imageSrc, fit) {
@@ -201,6 +206,32 @@ DrawingTool.prototype._setBackgroundImage = function (imageSrc, options, backgro
     }
   }
 };
+
+DrawingTool.prototype.addStateListener = function (stateHandler) {
+  this._stateListeners.push(stateHandler);
+}
+
+DrawingTool.prototype.removeStateListener = function (stateHandler) {
+  for (var i = 0; i < this._stateListeners.length; i++) {
+    if (this._stateListeners[i] === stateHandler) {
+      return this._stateListeners.splice(i, 1);
+    }
+  }
+  return false;
+}
+
+DrawingTool.prototype._fireStateEvent = function (changedKey, val) {
+  var e = {};
+  // TODO: implement this functionality in the actual setters in drawing-tool
+  if (arguments.length > 0) {
+    e['changedKey'] = changedKey;
+    e['changedValue'] = val;
+  }
+  for (var i = 0; i < this._stateListeners.length; i++) {
+    // console.log(this._stateListeners[i]);
+    this._stateListeners[i].call(this, e);
+  }
+}
 
 DrawingTool.prototype._initFabricJS = function () {
   this.canvas = new fabric.Canvas(this.ui.$canvas[0]);

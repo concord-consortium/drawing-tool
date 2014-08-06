@@ -12,7 +12,8 @@ function SelectionTool(name, selector, drawTool) {
 
   this.canvas.on("object:selected", function (opt) {
     opt.target.set(BASIC_SELECTION_PROPERTIES);
-  });
+    this.canvas.renderAll();
+  }.bind(this));
 
   // Set visual options of custom line control points.
   lineCustomControlPoints.controlPointColor = '#bcd2ff';

@@ -42,7 +42,6 @@ ColorTool.prototype.use = function () {
   this.canvas.renderAll(false);
 
   // set color of property of state object
-  this.master.state[this.type] = this.color;
   if (this.type === 'stroke') {
     this.master.setStrokeColor(this.color);
   } else if (this.type === 'fill') {

@@ -2,7 +2,7 @@ module.exports = function generateColorPalette (drawTool, $strokeBtn, $strokeCol
   var $el = $('<div class="dt-colorPalette">');
     // .css('margin-top', '15px');
 
-  // $('<div class="dt-btn-innerColor">').appendTo($strokeBtn);
+  $('<div class="dt-btn-innerColor">').appendTo($strokeBtn);
   $('<div class="dt-btn-innerColor">').appendTo($fillBtn);
 
   $strokeBtn.appendTo($el);
@@ -36,6 +36,7 @@ module.exports = function generateColorPalette (drawTool, $strokeBtn, $strokeCol
     // $strokeBtn.show(100);
   });
 
+  // TODO: some representation of ""/undefined/transparent color (ie: white with red 'x')
   var syncUI = function(e) {
     var i = 0;
     for (i = 0; i < $strokeColorBtns.length; i++) {
@@ -49,10 +50,11 @@ module.exports = function generateColorPalette (drawTool, $strokeBtn, $strokeCol
       } else { $fillColorBtns[i].removeClass('selected'); }
     }
     // console.log(drawTool.state.color);
-    $strokeBtn.css('color', drawTool.state.color);
+    $strokeBtn.find('.dt-btn-innerColor').css('background-color', drawTool.state.stroke);
     $fillBtn.find('.dt-btn-innerColor').css('background-color', drawTool.state.fill);
   }
 
+  // Initially synchronize stroke color and fill color icons
   syncUI();
 
   drawTool.addStateListener(function (e) { syncUI(e); });

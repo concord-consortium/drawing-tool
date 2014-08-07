@@ -101,26 +101,26 @@ $icons: 'Draw Tool Icons', Arial, sans-serif;
     }
 
     &.stroke-color {
-      // .dt-btn-innerColor:before { /* inset/overlay white box with black border */
-      //   background: #fff;
-      //   border: solid 1px #1c68aa;
-      //   content: '';
-      //   height: 8px;
-      //   left: 6px;
-      //   position: absolute;
-      //   top: 4px;
-      //   width: 9px;
-      // }
+      .dt-btn-innerColor:before { /* inset/overlay white box with black border */
+        background: #fff;
+        border: solid 1px #1c68aa;
+        content: '';
+        height: 8px;
+        left: 4px;
+        position: absolute;
+        top: 4px;
+        width: 8px;
+      }
 
       .dt-btn-innerColor:after { /* inset/overlay blue box with no border */
         background: #3e8acc;
         border: none;
         content: '';
         height: 6px;
-        left: 8px;
+        left: 6px;
         position: absolute;
         top: 6px;
-        width: 7px;
+        width: 6px;
       }
     }
 
@@ -131,7 +131,7 @@ $icons: 'Draw Tool Icons', Arial, sans-serif;
     .dt-btn-innerColor { /* a class for the stroke and fill color boxes */
       background: #fc0;
       border: solid 1px #1c68aa;
-      height: 17px;
+      height: 18px;
       left: 12px;
       position: absolute;
       top: 13px;

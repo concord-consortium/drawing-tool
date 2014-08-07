@@ -99,7 +99,7 @@ DrawingTool.prototype.load = function (jsonString) {
 };
 
 DrawingTool.prototype.setStrokeColor = function (color) {
-  this.state.color = color;
+  this.state.stroke = color;
   this._fireStateEvent();
 };
 

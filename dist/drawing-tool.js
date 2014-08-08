@@ -91,7 +91,6 @@
   globals.require.brunch = true;
 })();
 require.register("scripts/drawing-tool", function(exports, require, module) {
-var Util              = require('scripts/util');
 var rescale2resize    = require('scripts/fabric-extensions/rescale-2-resize');
 var multitouchSupport = require('scripts/fabric-extensions/multi-touch-support');
 var UI                = require('scripts/ui');
@@ -112,7 +111,16 @@ var DEF_STATE = {
 // List them here so they can be serialized.
 var ADDITIONAL_PROPS_TO_SERIALIZE = ['lockUniScaling'];
 
-// Constructor function.
+/**
+ * DrawingTool Constructor
+ * This does the work of initializing the entire webapp. It constructs the
+ * `DrawingTool` as well as the fabric.js canvas and UI.
+ *
+ * parameters:
+ *  - selector: this is the selector for the div of where the DrawingTool will be housed
+ *  - options: custom width and height for the drawTool canvas (see `DEF_OPTIONS` above)
+ *  - settings: settings for starting state (see `DEF_STATE` above)
+ */
 function DrawingTool(selector, options, settings) {
   this.selector = selector;
   this.options = $.extend(true, {}, DEF_OPTIONS, options);
@@ -122,15 +130,23 @@ function DrawingTool(selector, options, settings) {
 
   this.tools = {};
 
-  this.ui = new UI(this, selector, this.options);
-  this._initFabricJS();
-  this.ui.initTools();
+  // TODO: decouple this part? Seems very intertwined
+  this.ui = new UI(this, selector, this.options); // initialize the UI and containers
+  this._initFabricJS(); // fill the container intialized above with the fabricjs canvas
+  this.ui.initTools(); // initialize tools after fabricjs has been constructed
 
   // Apply a fix that changes native FabricJS rescaling behavior into resizing.
   rescale2resize(this.canvas);
+  // Adds support for multitouch support (pinching resize, two finger rotate, etc)
   multitouchSupport(this.canvas);
 }
 
+/**
+ * Clears all objects from the fabric canvas and can also clear the background image
+ *
+ * parameters:
+ *  - clearBackground: if true, this function will also remove the background image
+ */
 DrawingTool.prototype.clear = function (clearBackground) {
   this.canvas.clear();
   if (clearBackground) {
@@ -140,12 +156,19 @@ DrawingTool.prototype.clear = function (clearBackground) {
   this.canvas.renderAll();
 };
 
+/**
+ * Deselects any selected objects and re-renders the fabricjs canvas
+ */
 DrawingTool.prototype.clearSelection = function () {
   // Important! It will cause that all custom control points will be removed (e.g. for lines).
   this.canvas.deactivateAllWithDispatch();
   this.canvas.renderAll();
 };
 
+/**
+ * Saves the current state of the fabricjs canvas into a JSON format.
+ * (used in conjunction with `load()`)
+ */
 DrawingTool.prototype.save = function () {
   // It ensures that all custom control points will be removed before serialization!
   this.clearSelection();
@@ -159,6 +182,13 @@ DrawingTool.prototype.save = function () {
   });
 };
 
+/*
+ * Loads a previous state of the fabricjs canvas from JSON.
+ * (used in conjunction with `save()`)
+ *
+ * parameters:
+ *  - jsonString: JSON data
+ */
 DrawingTool.prototype.load = function (jsonString) {
   // Undefined, null or empty string just clears drawing tool.
   if (!jsonString) {
@@ -191,27 +221,60 @@ DrawingTool.prototype.load = function (jsonString) {
   this.canvas.renderAll();
 };
 
+/**
+ * Sets the stroke color for new shapes and fires a `stateEvent` to signal a
+ * change in the stroke color.
+ *
+ * parameters:
+ *  - color: can be in any web-friendly format
+ *          ex: literal-'black', hex-'#444444', or rgba-'rgba(100,200,200,.75)'
+ */
 DrawingTool.prototype.setStrokeColor = function (color) {
   this.state.stroke = color;
+  // TODO: utilize the `changedKey` and `changedVal` fields
   this._fireStateEvent();
 };
 
+/**
+ * Sets the stroke width for new shapes and fires a `stateEvent` to signal a
+ * change in the stroke width. This is also the font size for the text tool.
+ *
+ * parameters:
+ *  - width: integer for the desired width
+ */
 DrawingTool.prototype.setStrokeWidth = function (width) {
   this.state.strokeWidth = width;
   this._fireStateEvent();
 };
 
+/**
+ * Sets the fill color for new shapes and fires a `stateEvent` to signal a
+ * change in the fill color.
+ *
+ * parameters:
+ *  - color: can be in any web-friendly format
+ *          ex: literal-'black', hex-'#444444', or rgba-'rgba(100,200,200,.75)'
+ */
 DrawingTool.prototype.setFill = function (color) {
   this.state.fill = color;
   this._fireStateEvent();
 };
 
+/**
+ * Set the background image for the fabricjs canvas.
+ *
+ * parameters:
+ *  - imageSrc: string with location of the image
+ *  - fit: (string) how to put the image into the canvas
+ *        ex: "resizeBackgroundToCanvas" or "resizeCanvasToBackground"
+ */
 DrawingTool.prototype.setBackgroundImage = function (imageSrc, fit) {
   var self = this;
   this._setBackgroundImage(imageSrc, null, function () {
     switch (fit) {
       case "resizeBackgroundToCanvas": self.resizeBackgroundToCanvas(); return;
       case "resizeCanvasToBackground": self.resizeCanvasToBackground(); return;
+      // TODO: default fit?
     }
   });
 };
@@ -251,13 +314,24 @@ DrawingTool.prototype.calcOffset = function () {
   this.canvas.calcOffset();
 };
 
+/**
+ * Changes the current tool by 'clicking' on the button for the tool.
+ *
+ * parameters:
+ *  - toolSelector: selector for the tool as sepecified in the contruction of the tool
+ */
 DrawingTool.prototype.chooseTool = function (toolSelector){
   $(this.selector).find('.'+toolSelector).click();
 };
 
-// Changing the current tool out of this current tool
-// to the default tool aka 'select' tool
-// TODO: make this better and less bad... add default as drawingTool property
+/**
+ * Changing the current tool out of this current tool to the default tool
+ * aka 'select' tool
+ *
+ * parameters:
+ *  - oldToolSelector: selector of the old tool (currently unused data)
+ */
+//TODO: add default as drawingTool property
 DrawingTool.prototype.changeOutOfTool = function (oldToolSelector){
   this.chooseTool('select');
 };
@@ -300,10 +374,22 @@ DrawingTool.prototype._setBackgroundImage = function (imageSrc, options, backgro
   }
 };
 
+/**
+ * Add a state listener to listen for changes in the `DrawingTool.state` object
+ *
+ * parameters:
+ *  - stateHandler: listener function that is called when an event is fired
+ */
 DrawingTool.prototype.addStateListener = function (stateHandler) {
   this._stateListeners.push(stateHandler);
 }
 
+/**
+ * Removes a state listener
+ *
+ * parameters:
+ *  - stateHandler: listener to be removed
+ */
 DrawingTool.prototype.removeStateListener = function (stateHandler) {
   for (var i = 0; i < this._stateListeners.length; i++) {
     if (this._stateListeners[i] === stateHandler) {
@@ -1031,8 +1117,13 @@ module.exports = function inherit(Child, Parent) {
 });
 
 require.register("scripts/tool", function(exports, require, module) {
-/*
+/**
  * Tool "Class"
+ *
+ * parameters:
+ *  - name: string with the human-readable name of the tool (mainly used for debugging)
+ *  - selector: shorter 'code' for the tool, used in the corresponding HTML element
+ *  - drawTool: the master node that this tool belongs too
  */
 function Tool(name, selector, drawTool) {
   this.name = name || "Tool";
@@ -1096,6 +1187,9 @@ Tool.prototype.deactivate = function () {
   this._fireStateEvent();
 };
 
+// A tool's event listeners are attached to the `fabricjs` canvas
+// and allow the tool to interact with a user's clicks and drags etc
+
 // Add the tool's event listeners to a list that will be added
 // to the canvas upon the tool's activation
 Tool.prototype.addEventListener = function (eventTrigger, eventHandler) {
@@ -1114,6 +1208,9 @@ Tool.prototype.removeEventListener = function (trigger) {
     }
   }
 };
+
+// State events(listeners) are to monitor the state of the tool itself (active, locked etc)
+// It allows the UI to keep track of the tool itself.
 
 // Adds a state listener to the tool
 Tool.prototype.addStateListener = function (stateHandler) {
@@ -1176,9 +1273,13 @@ function ColorTool(name, type, colorCode, drawTool) {
 
 inherit(ColorTool, Tool);
 
+/**
+ * `ColorTool`'s functionality.
+ * If any objects are currently selected, their property (defined by `ColorTool.type`)
+ * is set to the color of this ColorTool (`ColorTool.color`).
+ * This function also sets corresponding poperty of `drawingTool.state`.
+ */
 ColorTool.prototype.use = function () {
-  // TODO: implement color tool
-  // set color of property of currently selected object
   if (this.master.canvas.getActiveObject()) {
     var obj = this.master.canvas.getActiveObject();
     obj.set(this.type, this.color);
@@ -1208,12 +1309,16 @@ require.register("scripts/tools/delete-tool", function(exports, require, module)
 var inherit  = require('scripts/inherit');
 var Tool     = require('scripts/tool');
 
+/**
+ * Single use tool that deletes the currently selected object(s).
+ * This tool also captures the backspace/delete key and is triggered that way as well.
+ */
 function DeleteTool(name, selector, drawTool) {
   Tool.call(this, name, selector, drawTool);
 
   this.singleUse = true;
 
-  // delete the selected object(s)
+  // delete the selected object(s) with the backspace key
   // see: https://www.pivotaltracker.com/story/show/74415780
   var self = this;
   $('.dt-canvas-container').keydown(function(e) {
@@ -1222,18 +1327,14 @@ function DeleteTool(name, selector, drawTool) {
       self._delete();
     }
   });
-
-  // this.canvas.on("object:selected", function () { self.show(); });
-  // this.canvas.on("selection:cleared", function () { self.hide(); });
 }
 
 inherit(DeleteTool, Tool);
 
+/**
+ * Deletes the currently selected object(s) from the fabricjs canvas.
+ */
 DeleteTool.prototype.use = function () {
-  this._delete();
-};
-
-DeleteTool.prototype._delete = function () {
   var canvas = this.canvas;
   if (canvas.getActiveObject()) {
     canvas.remove(canvas.getActiveObject());
@@ -1250,9 +1351,6 @@ DeleteTool.prototype._delete = function () {
   // }
 };
 
-DeleteTool.prototype.show = function () { this.$element.show(); };
-DeleteTool.prototype.hide = function () { this.$element.hide(); };
-
 module.exports = DeleteTool;
 
 });
@@ -1267,6 +1365,11 @@ var BASIC_SELECTION_PROPERTIES = {
   transparentCorners: false
 };
 
+/**
+ * Defacto default tool for DrawingTool.
+ * When activated it puts the canvas into a selectable state so objects
+ * can be moved and manipulated.
+ */
 function SelectionTool(name, selector, drawTool) {
   Tool.call(this, name, selector, drawTool);
 
@@ -1341,6 +1444,11 @@ ShapeTool.prototype.activate = function () {
   this.canvas.defaultCursor = "crosshair";
 };
 
+/**
+ * If the tool is already activated then another click will redirect here.
+ * The second activation will lock the tool so it will not exit without explicitly
+ * selecting another tool on the tool palette.
+ */
 ShapeTool.prototype.activateAgain = function () {
   this._setFirstActionMode();
   this._locked = true;
@@ -1352,11 +1460,17 @@ ShapeTool.prototype.deactivate = function () {
   this.unlock();
 };
 
+/**
+ * Undoes the lock set by `activateAgain()`
+ */
 ShapeTool.prototype.unlock = function () {
   this._locked = false;
   this._fireStateEvent({ state: this.active, locked: false });
 };
 
+/**
+ * Tries to exit from the currently active tool. If it is locked, it won't do anything
+ */
 ShapeTool.prototype.exit = function () {
   if (this._locked) {
     return;
@@ -1368,9 +1482,11 @@ ShapeTool.prototype.exit = function () {
   this.canvas.defaultCursor = "default";
 };
 
-// check if this is the first mouse down action
-// if not and the mouse down is on an existing object,
-// set that object as active and change into selection mode
+/**
+ * check if this is the first mouse down action
+ * if not and the mouse down is on an existing object,
+ * set that object as active and change into selection mode
+ */
 ShapeTool.prototype.mouseDown = function (e) {
   this.down = true;
   if (this._firstAction === false && e.target !== undefined) {
@@ -1412,10 +1528,12 @@ ShapeTool.prototype.setCentralOrigin = function (object) {
   });
 };
 
-// This is a special mode which ensures that first action of the shape tool
-// always draws an object, even if user starts drawing over existing object.
-// Later that will cause interaction with the existing object unless user reselects
-// the tool. Please see: https://www.pivotaltracker.com/story/show/73959546
+/**
+ * This is a special mode which ensures that first action of the shape tool
+ * always draws an object, even if user starts drawing over existing object.
+ * Later that will cause interaction with the existing object unless user reselects
+ * the tool. Please see: https://www.pivotaltracker.com/story/show/73959546
+ */
 ShapeTool.prototype._setFirstActionMode = function () {
   this._firstAction = true;
   this._setAllObjectsSelectable(false);
@@ -1767,7 +1885,7 @@ TextTool.prototype.exitTextEditingOnFirstClick = function () {
   var self = this;
   var canvas = this.canvas;
 
-  // TODO: should we cleanup this handlers somewhere?
+  // TODO: should we cleanup these handlers somewhere?
   // The perfect option would be to add handler to upperCanvasEl itself, but then
   // there is no way to execute it before Fabric's mousedown handler (which e.g.
   // will remove selection and deactivate object we are interested in).
@@ -1840,7 +1958,9 @@ UI.prototype.initTools = function (p) {
   this._initColorTools();
   this._initButtonUpdates(); // set up the listeners
 
-  // TODO: rewrite/refactor this with classes and css
+  // TODO: rewrite/refactor this with classes and css like in the
+  // [font-icons branch](https://github.com/concord-consortium/drawing-tool/tree/font-icons)
+
   // set the labels
   this.setLabel(selectionTool.selector,   "s");
   this.setLabel(lineTool.selector,        "L");
@@ -2172,6 +2292,18 @@ module.exports = BtnGroup;
 });
 
 require.register("scripts/ui/color-palette", function(exports, require, module) {
+// This file is kind of a mess but mainly to be a proof of concept before
+// any final UI/UX/layout decisions are made.
+
+// Future implementations might want to utilize the `BtnGroup` class
+
+/**
+ * parameters:
+ *  - drawTool
+ *  - $strokeBtn: jQuery "button" for the stroke color palette
+ *  - $strokeColorBtns: array of jQuery "buttons", put into a div and hidden when inactive
+ *  - rinse and repeat for $fillBtn and $fillColorBtns
+ */
 module.exports = function generateColorPalette (drawTool, $strokeBtn, $strokeColorBtns, $fillBtn, $fillColorBtns) {
   var $el = $('<div class="dt-colorPalette">');
     // .css('margin-top', '15px');

@@ -1,12 +1,16 @@
 var inherit  = require('scripts/inherit');
 var Tool     = require('scripts/tool');
 
+/**
+ * Single use tool that deletes the currently selected object(s).
+ * This tool also captures the backspace/delete key and is triggered that way as well.
+ */
 function DeleteTool(name, selector, drawTool) {
   Tool.call(this, name, selector, drawTool);
 
   this.singleUse = true;
 
-  // delete the selected object(s)
+  // delete the selected object(s) with the backspace key
   // see: https://www.pivotaltracker.com/story/show/74415780
   var self = this;
   $('.dt-canvas-container').keydown(function(e) {
@@ -15,18 +19,14 @@ function DeleteTool(name, selector, drawTool) {
       self._delete();
     }
   });
-
-  // this.canvas.on("object:selected", function () { self.show(); });
-  // this.canvas.on("selection:cleared", function () { self.hide(); });
 }
 
 inherit(DeleteTool, Tool);
 
+/**
+ * Deletes the currently selected object(s) from the fabricjs canvas.
+ */
 DeleteTool.prototype.use = function () {
-  this._delete();
-};
-
-DeleteTool.prototype._delete = function () {
   var canvas = this.canvas;
   if (canvas.getActiveObject()) {
     canvas.remove(canvas.getActiveObject());
@@ -42,8 +42,5 @@ DeleteTool.prototype._delete = function () {
   //   // canvas.setActiveObject(canvas.item(canvas.getObjects().length - 1));
   // }
 };
-
-DeleteTool.prototype.show = function () { this.$element.show(); };
-DeleteTool.prototype.hide = function () { this.$element.hide(); };
 
 module.exports = DeleteTool;

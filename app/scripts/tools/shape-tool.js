@@ -31,6 +31,11 @@ ShapeTool.prototype.activate = function () {
   this.canvas.defaultCursor = "crosshair";
 };
 
+/**
+ * If the tool is already activated then another click will redirect here.
+ * The second activation will lock the tool so it will not exit without explicitly
+ * selecting another tool on the tool palette.
+ */
 ShapeTool.prototype.activateAgain = function () {
   this._setFirstActionMode();
   this._locked = true;
@@ -42,11 +47,17 @@ ShapeTool.prototype.deactivate = function () {
   this.unlock();
 };
 
+/**
+ * Undoes the lock set by `activateAgain()`
+ */
 ShapeTool.prototype.unlock = function () {
   this._locked = false;
   this._fireStateEvent({ state: this.active, locked: false });
 };
 
+/**
+ * Tries to exit from the currently active tool. If it is locked, it won't do anything
+ */
 ShapeTool.prototype.exit = function () {
   if (this._locked) {
     return;
@@ -58,9 +69,11 @@ ShapeTool.prototype.exit = function () {
   this.canvas.defaultCursor = "default";
 };
 
-// check if this is the first mouse down action
-// if not and the mouse down is on an existing object,
-// set that object as active and change into selection mode
+/**
+ * check if this is the first mouse down action
+ * if not and the mouse down is on an existing object,
+ * set that object as active and change into selection mode
+ */
 ShapeTool.prototype.mouseDown = function (e) {
   this.down = true;
   if (this._firstAction === false && e.target !== undefined) {
@@ -102,10 +115,12 @@ ShapeTool.prototype.setCentralOrigin = function (object) {
   });
 };
 
-// This is a special mode which ensures that first action of the shape tool
-// always draws an object, even if user starts drawing over existing object.
-// Later that will cause interaction with the existing object unless user reselects
-// the tool. Please see: https://www.pivotaltracker.com/story/show/73959546
+/**
+ * This is a special mode which ensures that first action of the shape tool
+ * always draws an object, even if user starts drawing over existing object.
+ * Later that will cause interaction with the existing object unless user reselects
+ * the tool. Please see: https://www.pivotaltracker.com/story/show/73959546
+ */
 ShapeTool.prototype._setFirstActionMode = function () {
   this._firstAction = true;
   this._setAllObjectsSelectable(false);

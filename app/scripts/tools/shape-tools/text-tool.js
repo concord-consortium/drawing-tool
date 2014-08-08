@@ -57,7 +57,7 @@ TextTool.prototype.exitTextEditingOnFirstClick = function () {
   var self = this;
   var canvas = this.canvas;
 
-  // TODO: should we cleanup this handlers somewhere?
+  // TODO: should we cleanup these handlers somewhere?
   // The perfect option would be to add handler to upperCanvasEl itself, but then
   // there is no way to execute it before Fabric's mousedown handler (which e.g.
   // will remove selection and deactivate object we are interested in).

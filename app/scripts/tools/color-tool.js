@@ -25,9 +25,13 @@ function ColorTool(name, type, colorCode, drawTool) {
 
 inherit(ColorTool, Tool);
 
+/**
+ * `ColorTool`'s functionality.
+ * If any objects are currently selected, their property (defined by `ColorTool.type`)
+ * is set to the color of this ColorTool (`ColorTool.color`).
+ * This function also sets corresponding poperty of `drawingTool.state`.
+ */
 ColorTool.prototype.use = function () {
-  // TODO: implement color tool
-  // set color of property of currently selected object
   if (this.master.canvas.getActiveObject()) {
     var obj = this.master.canvas.getActiveObject();
     obj.set(this.type, this.color);

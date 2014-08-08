@@ -1,5 +1,10 @@
-/*
+/**
  * Tool "Class"
+ *
+ * parameters:
+ *  - name: string with the human-readable name of the tool (mainly used for debugging)
+ *  - selector: shorter 'code' for the tool, used in the corresponding HTML element
+ *  - drawTool: the master node that this tool belongs too
  */
 function Tool(name, selector, drawTool) {
   this.name = name || "Tool";
@@ -63,6 +68,9 @@ Tool.prototype.deactivate = function () {
   this._fireStateEvent();
 };
 
+// A tool's event listeners are attached to the `fabricjs` canvas
+// and allow the tool to interact with a user's clicks and drags etc
+
 // Add the tool's event listeners to a list that will be added
 // to the canvas upon the tool's activation
 Tool.prototype.addEventListener = function (eventTrigger, eventHandler) {
@@ -81,6 +89,9 @@ Tool.prototype.removeEventListener = function (trigger) {
     }
   }
 };
+
+// State events(listeners) are to monitor the state of the tool itself (active, locked etc)
+// It allows the UI to keep track of the tool itself.
 
 // Adds a state listener to the tool
 Tool.prototype.addStateListener = function (stateHandler) {

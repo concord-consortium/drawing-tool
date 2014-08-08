@@ -1,3 +1,15 @@
+// This file is kind of a mess but mainly to be a proof of concept before
+// any final UI/UX/layout decisions are made.
+
+// Future implementations might want to utilize the `BtnGroup` class
+
+/**
+ * parameters:
+ *  - drawTool
+ *  - $strokeBtn: jQuery "button" for the stroke color palette
+ *  - $strokeColorBtns: array of jQuery "buttons", put into a div and hidden when inactive
+ *  - rinse and repeat for $fillBtn and $fillColorBtns
+ */
 module.exports = function generateColorPalette (drawTool, $strokeBtn, $strokeColorBtns, $fillBtn, $fillColorBtns) {
   var $el = $('<div class="dt-colorPalette">');
     // .css('margin-top', '15px');

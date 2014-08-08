@@ -43,7 +43,9 @@ UI.prototype.initTools = function (p) {
   this._initColorTools();
   this._initButtonUpdates(); // set up the listeners
 
-  // TODO: rewrite/refactor this with classes and css
+  // TODO: rewrite/refactor this with classes and css like in the
+  // [font-icons branch](https://github.com/concord-consortium/drawing-tool/tree/font-icons)
+
   // set the labels
   this.setLabel(selectionTool.selector,   "s");
   this.setLabel(lineTool.selector,        "L");

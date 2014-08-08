@@ -7,6 +7,11 @@ var BASIC_SELECTION_PROPERTIES = {
   transparentCorners: false
 };
 
+/**
+ * Defacto default tool for DrawingTool.
+ * When activated it puts the canvas into a selectable state so objects
+ * can be moved and manipulated.
+ */
 function SelectionTool(name, selector, drawTool) {
   Tool.call(this, name, selector, drawTool);
 

@@ -100,10 +100,10 @@ UI.prototype._initButtonUpdates = function () {
 // listens for a click in the tools area and delivers the action to
 // the proper recipient (either `_paletteButtonClicked` or `_toolButtonClicked`)
 UI.prototype._uiClicked = function (target) {
-  if ($(target).data('dt-btn-type') === 'palette') {
-    this._paletteButtonClicked($(target).data('dt-target-id'));
+  if (jQuery(target).data('dt-btn-type') === 'palette') {
+    this._paletteButtonClicked(jQuery(target).data('dt-target-id'));
   } else {
-    this._toolButtonClicked($(target).data('dt-target-id'));
+    this._toolButtonClicked(jQuery(target).data('dt-target-id'));
   }
 };
 
@@ -135,11 +135,11 @@ UI.prototype._paletteButtonClicked = function (selector) {
   // current tool icons
   var links = this.palettes[selector].$palette.find('.dt-link');
   for (var i = 0; i < links.length; i++) {
-    if ($(links[i]).data('dt-btn-type') === 'palette') {
-      var paletteName = $(links[i]).data('dt-target-id');
+    if (jQuery(links[i]).data('dt-btn-type') === 'palette') {
+      var paletteName = jQuery(links[i]).data('dt-target-id');
       var currToolId = this.palettes[paletteName].currentTool;
       if (currToolId) {
-        $(links[i]).find('span').text(this.$tools.find('.'+currToolId).find('span').text());
+        jQuery(links[i]).find('span').text(this.$tools.find('.'+currToolId).find('span').text());
       }
     }
   }
@@ -207,14 +207,14 @@ UI.prototype.updateUI = function (e) {
 
 // initializes the UI (divs and canvas size)
 UI.prototype._initUI = function (selector) {
-  $(selector).empty();
-  this.$element = $('<div class="dt-container">').appendTo(selector);
-  this.$tools = $('<div class="dt-tools">')
+  jQuery(selector).empty();
+  this.$element = jQuery('<div class="dt-container">').appendTo(selector);
+  this.$tools = jQuery('<div class="dt-tools">')
     .appendTo(this.$element);
-  var $canvasContainer = $('<div class="dt-canvas-container">')
+  var $canvasContainer = jQuery('<div class="dt-canvas-container">')
     .attr('tabindex', 0) // makes the canvas focusable for keyboard events
     .appendTo(this.$element);
-  this.$canvas = $('<canvas>')
+  this.$canvas = jQuery('<canvas>')
     .attr('width', this.options.width + 'px')
     .attr('height', this.options.height + 'px')
     .appendTo($canvasContainer);
@@ -298,7 +298,7 @@ UI.prototype._initColorTools = function () {
 
 // initializes each button
 UI.prototype._initBtn = function (toolId, type) {
-  var $element = $('<div class="dt-btn">');
+  var $element = jQuery('<div class="dt-btn">');
 
   if (!type) { // normal button
     $element.addClass(toolId)
@@ -322,7 +322,7 @@ UI.prototype._initBtn = function (toolId, type) {
       .addClass('dt-btn-color')
       .css('background-color', this.master.tools[toolId].color);
   }
-  $('<span>') // for the label
+  jQuery('<span>') // for the label
     .appendTo($element);
   return $element;
 };

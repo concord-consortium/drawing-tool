@@ -123,9 +123,9 @@ var ADDITIONAL_PROPS_TO_SERIALIZE = ['lockUniScaling'];
  */
 function DrawingTool(selector, options, settings) {
   this.selector = selector;
-  this.options = $.extend(true, {}, DEF_OPTIONS, options);
+  this.options = jQuery.extend(true, {}, DEF_OPTIONS, options);
 
-  this.state = $.extend(true, {}, DEF_STATE, settings);
+  this.state = jQuery.extend(true, {}, DEF_STATE, settings);
   this._stateListeners = [];
 
   this.tools = {};
@@ -321,7 +321,7 @@ DrawingTool.prototype.calcOffset = function () {
  *  - toolSelector: selector for the tool as sepecified in the contruction of the tool
  */
 DrawingTool.prototype.chooseTool = function (toolSelector){
-  $(this.selector).find('.'+toolSelector).click();
+  jQuery(this.selector).find('.'+toolSelector).click();
 };
 
 /**
@@ -359,7 +359,7 @@ DrawingTool.prototype._setBackgroundImage = function (imageSrc, options, backgro
     // If image is null and crossOrigin settings are available, it probably means that loading failed
     // due to lack of CORS headers. Try again without them.
     if ((options.crossOrigin === 'anonymous' || options.crossOrigin === '') && !img) {
-      options = $.extend(true, {}, options);
+      options = jQuery.extend(true, {}, options);
       delete options.crossOrigin;
       console.log('Background could not be loaded due to lack of CORS headers. Trying to load it again without CORS support.');
       loadImage();
@@ -1008,7 +1008,7 @@ var duringResize = {
 // These handlers will be called just once, after resizing is complete.
 // Add handler here when you don't need "live" update, as there is no
 // visual difference between rescaling and resizing for given object type.
-var afterResize = $.extend(true, {}, duringResize, {
+var afterResize = jQuery.extend(true, {}, duringResize, {
   'i-text': function (s) {
     // Note that actually there is no rescale to resize transformation.
     // Rescaling is fine for text, we only just move scale from scaleX/Y
@@ -1321,7 +1321,7 @@ function DeleteTool(name, selector, drawTool) {
   // delete the selected object(s) with the backspace key
   // see: https://www.pivotaltracker.com/story/show/74415780
   var self = this;
-  $('.dt-canvas-container').keydown(function(e) {
+  jQuery('.dt-canvas-container').keydown(function(e) {
     if (e.keyCode === 8) {
       e.preventDefault();
       self._delete();
@@ -1776,7 +1776,7 @@ LineTool.prototype.mouseDown = function (e) {
   var x = loc.x;
   var y = loc.y;
 
-  this.curr = new this._lineKlass([x, y, x, y], $.extend(true, {
+  this.curr = new this._lineKlass([x, y, x, y], jQuery.extend(true, {
     originX: 'center', // important due to custom line control points!
     originY: 'center',
     selectable: false,
@@ -2015,10 +2015,10 @@ UI.prototype._initButtonUpdates = function () {
 // listens for a click in the tools area and delivers the action to
 // the proper recipient (either `_paletteButtonClicked` or `_toolButtonClicked`)
 UI.prototype._uiClicked = function (target) {
-  if ($(target).data('dt-btn-type') === 'palette') {
-    this._paletteButtonClicked($(target).data('dt-target-id'));
+  if (jQuery(target).data('dt-btn-type') === 'palette') {
+    this._paletteButtonClicked(jQuery(target).data('dt-target-id'));
   } else {
-    this._toolButtonClicked($(target).data('dt-target-id'));
+    this._toolButtonClicked(jQuery(target).data('dt-target-id'));
   }
 };
 
@@ -2050,11 +2050,11 @@ UI.prototype._paletteButtonClicked = function (selector) {
   // current tool icons
   var links = this.palettes[selector].$palette.find('.dt-link');
   for (var i = 0; i < links.length; i++) {
-    if ($(links[i]).data('dt-btn-type') === 'palette') {
-      var paletteName = $(links[i]).data('dt-target-id');
+    if (jQuery(links[i]).data('dt-btn-type') === 'palette') {
+      var paletteName = jQuery(links[i]).data('dt-target-id');
       var currToolId = this.palettes[paletteName].currentTool;
       if (currToolId) {
-        $(links[i]).find('span').text(this.$tools.find('.'+currToolId).find('span').text());
+        jQuery(links[i]).find('span').text(this.$tools.find('.'+currToolId).find('span').text());
       }
     }
   }
@@ -2122,14 +2122,14 @@ UI.prototype.updateUI = function (e) {
 
 // initializes the UI (divs and canvas size)
 UI.prototype._initUI = function (selector) {
-  $(selector).empty();
-  this.$element = $('<div class="dt-container">').appendTo(selector);
-  this.$tools = $('<div class="dt-tools">')
+  jQuery(selector).empty();
+  this.$element = jQuery('<div class="dt-container">').appendTo(selector);
+  this.$tools = jQuery('<div class="dt-tools">')
     .appendTo(this.$element);
-  var $canvasContainer = $('<div class="dt-canvas-container">')
+  var $canvasContainer = jQuery('<div class="dt-canvas-container">')
     .attr('tabindex', 0) // makes the canvas focusable for keyboard events
     .appendTo(this.$element);
-  this.$canvas = $('<canvas>')
+  this.$canvas = jQuery('<canvas>')
     .attr('width', this.options.width + 'px')
     .attr('height', this.options.height + 'px')
     .appendTo($canvasContainer);
@@ -2213,7 +2213,7 @@ UI.prototype._initColorTools = function () {
 
 // initializes each button
 UI.prototype._initBtn = function (toolId, type) {
-  var $element = $('<div class="dt-btn">');
+  var $element = jQuery('<div class="dt-btn">');
 
   if (!type) { // normal button
     $element.addClass(toolId)
@@ -2237,7 +2237,7 @@ UI.prototype._initBtn = function (toolId, type) {
       .addClass('dt-btn-color')
       .css('background-color', this.master.tools[toolId].color);
   }
-  $('<span>') // for the label
+  jQuery('<span>') // for the label
     .appendTo($element);
   return $element;
 };
@@ -2257,7 +2257,7 @@ function BtnGroup (groupName, buttons, permanent) {
     this.name = groupName;
   }
   this.$buttons = buttons;
-  this.$palette = $('<div class="dt-toolpalette dt-palette-' + this.name + '">')
+  this.$palette = jQuery('<div class="dt-toolpalette dt-palette-' + this.name + '">')
     .data('dt-palette-id', this.name);
 
   if (!this.permanent) { this.$palette.hide(); }
@@ -2305,16 +2305,16 @@ require.register("scripts/ui/color-palette", function(exports, require, module) 
  *  - rinse and repeat for $fillBtn and $fillColorBtns
  */
 module.exports = function generateColorPalette (drawTool, $strokeBtn, $strokeColorBtns, $fillBtn, $fillColorBtns) {
-  var $el = $('<div class="dt-colorPalette">');
+  var $el = jQuery('<div class="dt-colorPalette">');
     // .css('margin-top', '15px');
 
-  $('<div class="dt-btn-innerColor">').appendTo($strokeBtn);
-  $('<div class="dt-btn-innerColor">').appendTo($fillBtn);
+  jQuery('<div class="dt-btn-innerColor">').appendTo($strokeBtn);
+  jQuery('<div class="dt-btn-innerColor">').appendTo($fillBtn);
 
   $strokeBtn.appendTo($el);
-  var $strokePalette = $('<div class="dt-toolpalette">').appendTo($el);
+  var $strokePalette = jQuery('<div class="dt-toolpalette">').appendTo($el);
   $fillBtn.appendTo($el);
-  var $fillPalette = $('<div class="dt-toolpalette">').appendTo($el);
+  var $fillPalette = jQuery('<div class="dt-toolpalette">').appendTo($el);
 
   var i = 0;
   for(i = 0; i < $strokeColorBtns.length; i++) {

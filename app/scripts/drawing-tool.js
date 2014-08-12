@@ -30,9 +30,9 @@ var ADDITIONAL_PROPS_TO_SERIALIZE = ['lockUniScaling'];
  */
 function DrawingTool(selector, options, settings) {
   this.selector = selector;
-  this.options = $.extend(true, {}, DEF_OPTIONS, options);
+  this.options = jQuery.extend(true, {}, DEF_OPTIONS, options);
 
-  this.state = $.extend(true, {}, DEF_STATE, settings);
+  this.state = jQuery.extend(true, {}, DEF_STATE, settings);
   this._stateListeners = [];
 
   this.tools = {};
@@ -228,7 +228,7 @@ DrawingTool.prototype.calcOffset = function () {
  *  - toolSelector: selector for the tool as sepecified in the contruction of the tool
  */
 DrawingTool.prototype.chooseTool = function (toolSelector){
-  $(this.selector).find('.'+toolSelector).click();
+  jQuery(this.selector).find('.'+toolSelector).click();
 };
 
 /**
@@ -266,7 +266,7 @@ DrawingTool.prototype._setBackgroundImage = function (imageSrc, options, backgro
     // If image is null and crossOrigin settings are available, it probably means that loading failed
     // due to lack of CORS headers. Try again without them.
     if ((options.crossOrigin === 'anonymous' || options.crossOrigin === '') && !img) {
-      options = $.extend(true, {}, options);
+      options = jQuery.extend(true, {}, options);
       delete options.crossOrigin;
       console.log('Background could not be loaded due to lack of CORS headers. Trying to load it again without CORS support.');
       loadImage();

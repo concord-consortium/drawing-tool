@@ -13,7 +13,7 @@ function DeleteTool(name, selector, drawTool) {
   // delete the selected object(s) with the backspace key
   // see: https://www.pivotaltracker.com/story/show/74415780
   var self = this;
-  $('.dt-canvas-container').keydown(function(e) {
+  jQuery('.dt-canvas-container').keydown(function(e) {
     if (e.keyCode === 8) {
       e.preventDefault();
       self._delete();

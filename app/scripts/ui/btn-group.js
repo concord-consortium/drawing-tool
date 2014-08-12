@@ -8,7 +8,7 @@ function BtnGroup (groupName, buttons, permanent) {
     this.name = groupName;
   }
   this.$buttons = buttons;
-  this.$palette = $('<div class="dt-toolpalette dt-palette-' + this.name + '">')
+  this.$palette = jQuery('<div class="dt-toolpalette dt-palette-' + this.name + '">')
     .data('dt-palette-id', this.name);
 
   if (!this.permanent) { this.$palette.hide(); }

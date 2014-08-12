@@ -11,16 +11,16 @@
  *  - rinse and repeat for $fillBtn and $fillColorBtns
  */
 module.exports = function generateColorPalette (drawTool, $strokeBtn, $strokeColorBtns, $fillBtn, $fillColorBtns) {
-  var $el = $('<div class="dt-colorPalette">');
+  var $el = jQuery('<div class="dt-colorPalette">');
     // .css('margin-top', '15px');
 
-  $('<div class="dt-btn-innerColor">').appendTo($strokeBtn);
-  $('<div class="dt-btn-innerColor">').appendTo($fillBtn);
+  jQuery('<div class="dt-btn-innerColor">').appendTo($strokeBtn);
+  jQuery('<div class="dt-btn-innerColor">').appendTo($fillBtn);
 
   $strokeBtn.appendTo($el);
-  var $strokePalette = $('<div class="dt-toolpalette">').appendTo($el);
+  var $strokePalette = jQuery('<div class="dt-toolpalette">').appendTo($el);
   $fillBtn.appendTo($el);
-  var $fillPalette = $('<div class="dt-toolpalette">').appendTo($el);
+  var $fillPalette = jQuery('<div class="dt-toolpalette">').appendTo($el);
 
   var i = 0;
   for(i = 0; i < $strokeColorBtns.length; i++) {

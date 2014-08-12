@@ -30,7 +30,7 @@ LineTool.prototype.mouseDown = function (e) {
   var x = loc.x;
   var y = loc.y;
 
-  this.curr = new this._lineKlass([x, y, x, y], $.extend(true, {
+  this.curr = new this._lineKlass([x, y, x, y], jQuery.extend(true, {
     originX: 'center', // important due to custom line control points!
     originY: 'center',
     selectable: false,

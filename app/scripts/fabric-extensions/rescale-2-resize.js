@@ -60,7 +60,7 @@ var duringResize = {
 // These handlers will be called just once, after resizing is complete.
 // Add handler here when you don't need "live" update, as there is no
 // visual difference between rescaling and resizing for given object type.
-var afterResize = $.extend(true, {}, duringResize, {
+var afterResize = jQuery.extend(true, {}, duringResize, {
   'i-text': function (s) {
     // Note that actually there is no rescale to resize transformation.
     // Rescaling is fine for text, we only just move scale from scaleX/Y

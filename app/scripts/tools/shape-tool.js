@@ -12,7 +12,11 @@ function ShapeTool(name, selector, drawTool) {
 
   this.down = false; // mouse down
   this._firstAction = false; // special behavior on first action
-  this._locked = false; // locked into first action mode
+
+  // Make locked mode default one. Note that this never changes.
+  // It used to be optional mode that now is a default one, see:
+  // https://www.pivotaltracker.com/story/show/77436218
+  this._locked = true;
 }
 
 inherit(ShapeTool, Tool);
@@ -24,44 +28,20 @@ ShapeTool.prototype.activate = function () {
   // console.warn(this.name + " at shape tool activation");
   ShapeTool.super.activate.call(this);
   this.down = false;
-  this._setFirstActionMode();
 
   // Changes cursor to crosshair when drawing a shape
   // see https://www.pivotaltracker.com/n/projects/1103712/stories/73647372
   this.canvas.defaultCursor = "crosshair";
 };
 
-/**
- * If the tool is already activated then another click will redirect here.
- * The second activation will lock the tool so it will not exit without explicitly
- * selecting another tool on the tool palette.
- */
+
 ShapeTool.prototype.activateAgain = function () {
-  this._setFirstActionMode();
-  this._locked = true;
-  this._fireStateEvent({ state: this.active, locked: true });
+  // This used to activate 'locked' mode. However now it's activated by default.
+  // However this logic may be useful in the future when we decide to do something
+  // during a "second activation" (usually second click).
 };
 
-ShapeTool.prototype.deactivate = function () {
-  ShapeTool.super.deactivate.call(this);
-  this.unlock();
-};
-
-/**
- * Undoes the lock set by `activateAgain()`
- */
-ShapeTool.prototype.unlock = function () {
-  this._locked = false;
-  this._fireStateEvent({ state: this.active, locked: false });
-};
-
-/**
- * Tries to exit from the currently active tool. If it is locked, it won't do anything
- */
 ShapeTool.prototype.exit = function () {
-  if (this._locked) {
-    return;
-  }
   this.down = false;
   this.master.changeOutOfTool(this.selector);
   // Changes cursor back to default
@@ -69,22 +49,16 @@ ShapeTool.prototype.exit = function () {
   this.canvas.defaultCursor = "default";
 };
 
-/**
- * check if this is the first mouse down action
- * if not and the mouse down is on an existing object,
- * set that object as active and change into selection mode
- */
 ShapeTool.prototype.mouseDown = function (e) {
   this.down = true;
-  if (this._firstAction === false && e.target !== undefined) {
-    // Note that in #mouseUp handler we already set all objects to be
-    // selectable. Interaction with an object will be handled by Fabric.
-    // We have to exit to avoid drawing a new shape.
+  if (!this._locked && !this._firstAction && e.target !== undefined) {
+    // Not in a locked mode, not the first action and cursor is over some shape.
     this.exit();
   }
 };
 
 ShapeTool.prototype.mouseMove = function (e) {
+  // noop
 };
 
 ShapeTool.prototype.mouseUp = function (e) {
@@ -119,7 +93,8 @@ ShapeTool.prototype.setCentralOrigin = function (object) {
  * This is a special mode which ensures that first action of the shape tool
  * always draws an object, even if user starts drawing over existing object.
  * Later that will cause interaction with the existing object unless user reselects
- * the tool. Please see: https://www.pivotaltracker.com/story/show/73959546
+ * the tool. This is currently unused feature, as locked mode is enabed by default
+ * in #activate method.
  */
 ShapeTool.prototype._setFirstActionMode = function () {
   this._firstAction = true;

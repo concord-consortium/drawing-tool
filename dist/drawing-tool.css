@@ -89,4 +89,12 @@
   .dt-container .selected {
     width: 90%;
     height: 25px; }
+  .dt-container .dt-expand {
+    position: relative; }
+    .dt-container .dt-expand:after {
+      content: 't';
+      font-size: 35px;
+      position: absolute;
+      bottom: -23px;
+      right: -11px; }
 

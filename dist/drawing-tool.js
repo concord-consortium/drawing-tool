@@ -1925,9 +1925,9 @@ UI.prototype.initTools = function (p) {
   // tool palettes
   // TODO: document this portion
   var palettes = p || {
+    main: ['select', '-lines', '-shapes', 'free', 'text', 'trash'],
     shapes: ['-select', 'rect', 'ellipse', 'square', 'circle'],
-    lines: ['-select', 'line', 'arrow', 'doubleArrow'],
-    main: ['select', '-lines', '-shapes', 'free', 'text', 'trash']
+    lines: ['-select', 'line', 'arrow', 'doubleArrow']
   };
   this._initToolUI(palettes); // initialize the palettes and buttons
   this._initColorTools();
@@ -2197,7 +2197,7 @@ UI.prototype._initBtn = function (toolId, type) {
   } else if (type === 'palette') { // button that links to a subpalette
     $element.data('dt-btn-type', 'palette')
       .data('dt-target-id', toolId.substring(1))
-      .addClass('dt-target-'+toolId.substring(1))
+      .addClass('dt-expand')
       .addClass('dt-link');
   } else if (type === 'toolLink') { // link to tool (ex: selector)
     $element.data('dt-btn-type', 'toolLink')

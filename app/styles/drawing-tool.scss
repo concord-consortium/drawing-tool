@@ -76,14 +76,6 @@ $icons: 'Draw Tool Icons', Arial, sans-serif;
       border-color: dimgray;
     }
 
-    &.dt-target-select {
-      // margin-bottom: 15px;
-    }
-
-    &.select {
-      // margin-bottom: 15px;
-    }
-
     &.dt-btn-color {
       // border: 0;
       height: 15px;
@@ -142,5 +134,16 @@ $icons: 'Draw Tool Icons', Arial, sans-serif;
   .selected {
     width: 90%;
     height: 25px;
+  }
+
+  .dt-expand {
+    position: relative;
+    &:after {
+      content: 't';
+      font-size: $buttonFontSize;
+      position: absolute;
+      bottom: -23px;
+      right: -11px;
+    }
   }
 }

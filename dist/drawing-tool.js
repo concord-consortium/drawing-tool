@@ -1899,6 +1899,28 @@ var ColorTool            = require('scripts/tools/color-tool');
 var BtnGroup             = require('scripts/ui/btn-group');
 var generateColorPalette = require('scripts/ui/color-palette');
 
+var UI_STRUCT = {
+  // Main palette (vertical).
+  main:   ['select', '-lines', '-shapes', 'free', 'text', 'trash'],
+  // Sub-palettes (horizontal).
+  shapes: ['rect', 'ellipse', 'square', 'circle'],
+  lines:  ['line', 'arrow', 'doubleArrow']
+};
+
+var LABELS = {
+  select: 's',
+  line:   'l',
+  arrow:  'A',
+  doubleArrow: 'D',
+  rect: 'R',
+  ellipse: 'E',
+  square: 'S',
+  circle: 'C',
+  free: 'F',
+  text: 'T',
+  trash: 'd'
+};
+
 function UI (master, selector, options) {
   this.master = master;
   this.options = options;
@@ -1907,7 +1929,7 @@ function UI (master, selector, options) {
 }
 
 // initialize tools, config palettes, set labels, and setup trash behavior
-UI.prototype.initTools = function (p) {
+UI.prototype.initTools = function () {
 
   // Initialize all the tools, they add themselves to the master.tools list
   var selectionTool = new SelectionTool("Selection Tool", "select", this.master);
@@ -1923,13 +1945,7 @@ UI.prototype.initTools = function (p) {
   var deleteTool = new DeleteTool("Delete Tool", "trash", this.master);
 
   // tool palettes
-  // TODO: document this portion
-  var palettes = p || {
-    main: ['select', '-lines', '-shapes', 'free', 'text', 'trash'],
-    shapes: ['-select', 'rect', 'ellipse', 'square', 'circle'],
-    lines: ['-select', 'line', 'arrow', 'doubleArrow']
-  };
-  this._initToolUI(palettes); // initialize the palettes and buttons
+  this._initToolUI(UI_STRUCT);
   this._initColorTools();
   this._initButtonUpdates(); // set up the listeners
 
@@ -1948,19 +1964,20 @@ UI.prototype.initTools = function (p) {
   this.setLabel(freeDrawTool.selector,    "F");
   this.setLabel(textTool.selector,        "T");
   this.setLabel(deleteTool.selector,      "d");
-  this.setLabel("-shapes", "Sh"); // immediately replaced by the currently active shape tool (rect)
-  this.setLabel("-lines",  "Li"); // immediately replaced by the currently active line tool (line)
-  this.setLabel("-select", "s");
 
   // show/hide trash button when objects are selected/deselected
   var trash = this.$buttons.trash;
   trash.addClass('dt-locked');
-  this.master.canvas.on("object:selected", function () { trash.removeClass('dt-locked'); });
-  this.master.canvas.on("selection:cleared", function () { trash.addClass('dt-locked'); });
+  this.master.canvas.on("object:selected", function () {
+    trash.removeClass('dt-locked');
+  });
+  this.master.canvas.on("selection:cleared", function () {
+    trash.addClass('dt-locked');
+  });
 
-  // start on the select tool and show the main menu
-  // this.palettes.main.$palette.show();
   this.master.chooseTool('select');
+  this._updateMainPalette();
+  this.palettes.main.$palette.show();
 };
 
 // Note: this function is bypassed in the _paletteButtonClicked function
@@ -1999,40 +2016,30 @@ UI.prototype._uiClicked = function (target) {
 
 // switches active palette
 UI.prototype._paletteButtonClicked = function (selector) {
-
   var oldPalette;
   var newPalette;
 
+  newPalette = this.palettes[selector];
+  // if the palette's current tool is already selected, don't select again!
+  if (this.master.currentTool.selector !== this.palettes[selector].currentTool) {
+    this.master.chooseTool(this.palettes[selector].currentTool);
+  }
+
   for (var p in this.palettes) {
-    if (p === selector) {
-      newPalette = this.palettes[p];
-      // if the palette's current tool is already selected, don't select again!
-      if (this.master.currentTool.selector !== this.palettes[p].currentTool) {
-        this.master.chooseTool(this.palettes[p].currentTool);
-      }
-    } else if (this.palettes[p].$palette.is(':visible') && !this.palettes[p].permanent){
-        oldPalette = this.palettes[p];
-    }
+    this._hidePalette(p);
   }
 
-  if (oldPalette && newPalette) {
-    oldPalette.hide(function () { newPalette.show(); });
-  } else if (newPalette) {
-    newPalette.show();
-  } else { return; }
+  newPalette.show();
+};
 
-  // refreshing any palette buttons that need new/updated
-  // current tool icons
-  var links = this.palettes[selector].$palette.find('.dt-link');
-  for (var i = 0; i < links.length; i++) {
-    if ($(links[i]).data('dt-btn-type') === 'palette') {
-      var paletteName = $(links[i]).data('dt-target-id');
-      var currToolId = this.palettes[paletteName].currentTool;
-      if (currToolId) {
-        $(links[i]).find('span').text(this.$tools.find('.'+currToolId).find('span').text());
-      }
-    }
-  }
+UI.prototype._updateMainPalette = function (selector) {
+  var self = this;
+  this.palettes.main.$palette.find('.dt-link').each(function () {
+    var $btn = $(this);
+    var paletteName = $btn.data('dt-target-id');
+    var currToolId = self.palettes[paletteName].currentTool;
+    $btn.find('span').text(self.$tools.find('.'+currToolId).find('span').text());
+  });
 };
 
 // Handles all the tool palette clicks and tool changes
@@ -2042,30 +2049,22 @@ UI.prototype._toolButtonClicked = function (toolSelector) {
     console.warn('Unable to find tool with selector: '+toolSelector);
     return;
   }
-  var $newPalette;
-  if (this.$buttons[newTool.selector]) { $newPalette = this.$buttons[newTool.selector].parent(); }
 
   if (this.master.currentTool !== undefined &&
-    this.master.currentTool.selector === toolSelector) {
+      this.master.currentTool.selector === toolSelector) {
     // Some tools may implement .activateAgain() method and
     // enable some special behavior.
     this.master.currentTool.activateAgain();
     return;
   }
 
-  // search for tool
-  if (newTool === undefined){
-    console.warn("Warning! Could not find tool with selector \"" + toolSelector +
-      "\"\nExiting tool chooser.");
-    return;
-  } else if (newTool.singleUse === true) {
+  if (newTool.singleUse === true) {
     // special single use tools should not be set as the current tool
     newTool.use();
     return;
   }
 
   // activate and deactivate the new and old tools
-
   if (this.master.currentTool !== undefined) {
     this.master.currentTool.setActive(false);
   }
@@ -2073,26 +2072,44 @@ UI.prototype._toolButtonClicked = function (toolSelector) {
   this.master.currentTool = newTool;
   newTool.setActive(true);
 
-  this.palettes[$newPalette.data('dt-palette-id')].currentTool = newTool.selector;
+  var paletteName = this.$buttons[newTool.selector].parent().data('dt-palette-id');
+  var palette = this.palettes[paletteName];
+  palette.currentTool = newTool.selector;
+  this._updateMainPalette();
 
-  // if the palette that the tool belongs to is not visible
-  // then make it visible
-  if (!$newPalette.is(':visible')) {
-    this._paletteButtonClicked($newPalette.data('dt-palette-id'));
-  }
-
+  // ??
   this.master.canvas.renderAll();
+};
+
+UI.prototype._hidePalette = function (name) {
+  // Never hide main palette.
+  if (name === 'main') return;
+  var palette = this.palettes[name];
+  if (!palette.$palette.is(':visible')) return;
+  palette.hide();
 };
 
 // Updates the UI when the internal state changes
 // object e = {source, active: true/false, locked: true/false}
 UI.prototype.updateUI = function (e) {
   var $element = this.$buttons[e.source.selector];
-  if (e.active) { $element.addClass('dt-active'); }
-  else { $element.removeClass('dt-active'); }
+  var $paletteAnchor = this.palettes[$element.parent().data('dt-palette-id')].$anchor || $('fake-element');
 
-  if (e.locked) { $element.addClass('dt-locked'); }
-  else { $element.removeClass('dt-locked'); }
+  if (e.active) {
+    $element.addClass('dt-active');
+    $paletteAnchor.addClass('dt-active');
+  } else {
+    $element.removeClass('dt-active');
+    $paletteAnchor.removeClass('dt-active');
+  }
+
+  if (e.locked) {
+    $element.addClass('dt-locked');
+    $paletteAnchor.addClass('dt-locked');
+  } else {
+    $element.removeClass('dt-locked');
+    $paletteAnchor.removeClass('dt-locked');
+  }
 };
 
 // initializes the UI (divs and canvas size)
@@ -2123,13 +2140,7 @@ UI.prototype._initToolUI = function (palettes) {
       var $btn;
 
       if (btnNames[i].charAt(0) === '-') {
-
-        if (btnNames[i].substring(1) in palettes) {
-          $btn = this._initBtn(btnNames[i], 'palette');
-        } else {
-          $btn = this._initBtn(btnNames[i], 'toolLink');
-        }
-
+        $btn = this._initBtn(btnNames[i], 'palette');
       } else if (btnNames[i].substring(0, 5) === 'color') {
         $btn = this._initBtn(btnNames[i], 'color');
       } else { $btn = this._initBtn(btnNames[i]); }
@@ -2137,11 +2148,9 @@ UI.prototype._initToolUI = function (palettes) {
       buttons[i] = $btn;
       this.$buttons[btnNames[i]] = $btn;
     }
-    // if the palette name begins with '_' then it is a permanent palette
-    this.palettes[palette] = new BtnGroup(palette, buttons, palette.substring(0, 5) === 'perm_');
+    this.palettes[palette] = new BtnGroup(palette, buttons, this.$buttons['-' + palette]);
     this.palettes[palette].$palette.appendTo(this.$tools);
   }
-
 };
 
 UI.prototype._initColorTools = function () {
@@ -2184,7 +2193,7 @@ UI.prototype._initColorTools = function () {
     $fillColorBtns.push(this._initBtn(fillColorTools[i].selector, 'color'));
   }
   generateColorPalette(this.master, $strokeBtn, $strokeColorBtns, $fillBtn, $fillColorBtns).appendTo(this.$tools);
-}
+};
 
 // initializes each button
 UI.prototype._initBtn = function (toolId, type) {
@@ -2198,11 +2207,6 @@ UI.prototype._initBtn = function (toolId, type) {
     $element.data('dt-btn-type', 'palette')
       .data('dt-target-id', toolId.substring(1))
       .addClass('dt-expand')
-      .addClass('dt-link');
-  } else if (type === 'toolLink') { // link to tool (ex: selector)
-    $element.data('dt-btn-type', 'toolLink')
-      .data('dt-target-id', toolId.substring(1))
-      .addClass('dt-target-'+toolId.substring(1))
       .addClass('dt-link');
   } else if (type === 'color') {
     $element.data('dt-btn-type', "tool")
@@ -2223,43 +2227,44 @@ module.exports = UI;
 
 require.register("scripts/ui/btn-group", function(exports, require, module) {
 // Object contains the jQuery div with the subpalette
-// in addition to other information (name and currently used tool)
-function BtnGroup (groupName, buttons, permanent) {
-  this.permanent = permanent || false;
-  if (this.permanent) {
-    this.name = groupName.substring(5);
-  } else {
-    this.name = groupName;
-  }
-  this.$buttons = buttons;
-  this.$palette = $('<div class="dt-toolpalette dt-palette-' + this.name + '">')
-    .data('dt-palette-id', this.name);
+// in addition to other information (name and currently used tool).
+function BtnGroup (groupName, $buttons, $anchor) {
+  this.name = groupName;
+  this.$buttons = $buttons;
+  this.$anchor = $anchor;
 
-  if (!this.permanent) { this.$palette.hide(); }
-  else { this.$palette.addClass('dt-permanent'); }
-
-  // append the tools to the palette div
+  this.$palette = $('<div class="dt-toolpalette ' + groupName + '">').data('dt-palette-id', this.name);
+  // Append the tools to the palette div
   for (var i = 0; i < this.$buttons.length; i++) {
-    // TODO: the "if" is temporary
-    if (this.$buttons[i] === undefined) {}
-    else {this.$buttons[i].appendTo(this.$palette);}
+    this.$buttons[i].appendTo(this.$palette);
   }
+  // Set the default current tool of each palette to the first tool.
+  this.currentTool = $buttons[0].data('dt-target-id');
 
-  // set the default current tool of each palette to the first
-  // not 'link' tool
-  var j = 0;
-  for (; j < this.$buttons.length &&
-    this.$buttons[j].data('dt-btn-type') !== 'tool'; j++) {}
-  this.currentTool = buttons[j].data('dt-target-id');
+  this.$palette.hide();
 }
 
-BtnGroup.prototype.show = function(callback) {
-  this.$palette.fadeIn(100, callback);
+BtnGroup.prototype.show = function (callback) {
+  this.position();
+  this.$palette.show(0, callback);
+
+  var self = this;
+  $(document).one('mousedown touchstart', function () {
+    setTimeout(function () { self.hide(); }, 10);
+  });
 };
 
-BtnGroup.prototype.hide = function(callback) {
-  if (this.permanent) { callback.call(); return; }
-  this.$palette.fadeOut(100, callback);
+BtnGroup.prototype.hide = function (callback) {
+  this.$palette.hide(0, callback);
+};
+
+BtnGroup.prototype.position = function () {
+  var p = this.$anchor.position();
+  this.$palette.css({
+    position: 'absolute',
+    top: p.top,
+    left: p.left + this.$anchor.outerWidth()
+  });
 };
 
 module.exports = BtnGroup;

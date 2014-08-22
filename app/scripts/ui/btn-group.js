@@ -1,41 +1,42 @@
 // Object contains the jQuery div with the subpalette
-// in addition to other information (name and currently used tool)
-function BtnGroup (groupName, buttons, permanent) {
-  this.permanent = permanent || false;
-  if (this.permanent) {
-    this.name = groupName.substring(5);
-  } else {
-    this.name = groupName;
-  }
-  this.$buttons = buttons;
-  this.$palette = $('<div class="dt-toolpalette dt-palette-' + this.name + '">')
-    .data('dt-palette-id', this.name);
+// in addition to other information (name and currently used tool).
+function BtnGroup (groupName, $buttons, $anchor) {
+  this.name = groupName;
+  this.$buttons = $buttons;
+  this.$anchor = $anchor;
 
-  if (!this.permanent) { this.$palette.hide(); }
-  else { this.$palette.addClass('dt-permanent'); }
-
-  // append the tools to the palette div
+  this.$palette = $('<div class="dt-toolpalette ' + groupName + '">').data('dt-palette-id', this.name);
+  // Append the tools to the palette div
   for (var i = 0; i < this.$buttons.length; i++) {
-    // TODO: the "if" is temporary
-    if (this.$buttons[i] === undefined) {}
-    else {this.$buttons[i].appendTo(this.$palette);}
+    this.$buttons[i].appendTo(this.$palette);
   }
+  // Set the default current tool of each palette to the first tool.
+  this.currentTool = $buttons[0].data('dt-target-id');
 
-  // set the default current tool of each palette to the first
-  // not 'link' tool
-  var j = 0;
-  for (; j < this.$buttons.length &&
-    this.$buttons[j].data('dt-btn-type') !== 'tool'; j++) {}
-  this.currentTool = buttons[j].data('dt-target-id');
+  this.$palette.hide();
 }
 
-BtnGroup.prototype.show = function(callback) {
-  this.$palette.fadeIn(100, callback);
+BtnGroup.prototype.show = function (callback) {
+  this.position();
+  this.$palette.show(0, callback);
+
+  var self = this;
+  $(document).one('mousedown touchstart', function () {
+    setTimeout(function () { self.hide(); }, 10);
+  });
 };
 
-BtnGroup.prototype.hide = function(callback) {
-  if (this.permanent) { callback.call(); return; }
-  this.$palette.fadeOut(100, callback);
+BtnGroup.prototype.hide = function (callback) {
+  this.$palette.hide(0, callback);
+};
+
+BtnGroup.prototype.position = function () {
+  var p = this.$anchor.position();
+  this.$palette.css({
+    position: 'absolute',
+    top: p.top,
+    left: p.left + this.$anchor.outerWidth()
+  });
 };
 
 module.exports = BtnGroup;

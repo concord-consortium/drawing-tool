@@ -26,7 +26,8 @@ $icons: 'Draw Tool Icons', Arial, sans-serif;
     display: inline-block;
     vertical-align: top;
     width: $buttonSize;
-    margin: 0 2px 0 0;
+    margin: 0;
+    position: relative;
   }
 
   // .dt-color-palette {
@@ -50,8 +51,6 @@ $icons: 'Draw Tool Icons', Arial, sans-serif;
     background: #3e8acc;
     vertical-align: middle;
     text-align:center;
-    border: 1px solid #255a88;
-    border-top-width: 0px;
     padding: 0;
     cursor: pointer;
     -moz-user-select: none;
@@ -65,10 +64,6 @@ $icons: 'Draw Tool Icons', Arial, sans-serif;
 
     &.dt-active {
       background: #2e75b3;
-    }
-
-    &:first-child {
-      border-top-width: 1px;
     }
 
     &.dt-locked {
@@ -144,6 +139,19 @@ $icons: 'Draw Tool Icons', Arial, sans-serif;
       position: absolute;
       bottom: -23px;
       right: -11px;
+    }
+  }
+
+  .dt-toolpalette {
+    .dt-btn {
+      z-index: 1000;
+      display: inline-block;
+      vertical-align: middle;
+    }
+    &.main {
+      .dt-btn {
+        display: block;
+      }
     }
   }
 }

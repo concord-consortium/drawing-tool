@@ -15,7 +15,8 @@
     display: inline-block;
     vertical-align: top;
     width: 44px;
-    margin: 0 2px 0 0; }
+    margin: 0;
+    position: relative; }
   .dt-container .dt-btn {
     display: block;
     overflow: hidden;
@@ -31,8 +32,6 @@
     background: #3e8acc;
     vertical-align: middle;
     text-align: center;
-    border: 1px solid #255a88;
-    border-top-width: 0px;
     padding: 0;
     cursor: pointer;
     -moz-user-select: none;
@@ -43,8 +42,6 @@
       cursor: pointer; }
     .dt-container .dt-btn.dt-active {
       background: #2e75b3; }
-    .dt-container .dt-btn:first-child {
-      border-top-width: 1px; }
     .dt-container .dt-btn.dt-locked {
       background: #60819d;
       border-color: dimgray; }
@@ -97,4 +94,10 @@
       position: absolute;
       bottom: -23px;
       right: -11px; }
+  .dt-container .dt-toolpalette .dt-btn {
+    z-index: 1000;
+    display: inline-block;
+    vertical-align: middle; }
+  .dt-container .dt-toolpalette.main .dt-btn {
+    display: block; }
 

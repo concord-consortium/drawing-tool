@@ -185,6 +185,39 @@ DrawingTool.prototype.setFill = function (color) {
   this._fireStateChange();
 };
 
+DrawingTool.prototype.setSelectionStrokeColor = function (color) {
+  this._forEverySelectedObject(function (obj) {
+    this._setObjectColor(obj, 'stroke', color);
+  }.bind(this));
+  this.canvas.renderAll();
+};
+
+DrawingTool.prototype.setSelectionFillColor = function (color) {
+  this._forEverySelectedObject(function (obj) {
+    this._setObjectColor(obj, 'fill', color);
+  }.bind(this));
+  this.canvas.renderAll();
+};
+
+DrawingTool.prototype._forEverySelectedObject = function (callback) {
+  if (this.canvas.getActiveObject()) {
+    callback(this.canvas.getActiveObject());
+  } else if (this.canvas.getActiveGroup()) {
+    this.canvas.getActiveGroup().objects.forEach(callback);
+  }
+};
+
+DrawingTool.prototype._setObjectColor = function (object, type, color) {
+  if (object.type === 'i-text') {
+    // Special case for text. We assume that text color is defined by 'stroke', not fill.
+    if (type === 'stroke') {
+      object.set('fill', color);
+    }
+    return;
+  }
+  object.set(type, color);
+};
+
 /**
  * Set the background image for the fabricjs canvas.
  *

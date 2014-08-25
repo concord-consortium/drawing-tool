@@ -4,7 +4,6 @@ var BasicShapeTool    = require('scripts/tools/shape-tools/basic-shape-tool');
 var FreeDrawTool      = require('scripts/tools/shape-tools/free-draw');
 var TextTool          = require('scripts/tools/shape-tools/text-tool');
 var DeleteTool        = require('scripts/tools/delete-tool');
-var ColorTool         = require('scripts/tools/color-tool');
 var UIManager         = require('scripts/ui/ui-manager');
 var rescale2resize    = require('scripts/fabric-extensions/rescale-2-resize');
 var multitouchSupport = require('scripts/fabric-extensions/multi-touch-support');

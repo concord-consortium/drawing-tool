@@ -1,6 +1,9 @@
 require('scripts/jquery-longpress');
 
-function Button(options, ui, drawingTool) {
+function BasicButton(options, ui, drawingTool) {
+  this.ui = ui;
+  this.dt = drawingTool;
+
   this.name = options.name;
   this.palette = options.palette;
   // Note that this will be called later by UI manager.
@@ -8,7 +11,7 @@ function Button(options, ui, drawingTool) {
 
   this.$element = $('<div>')
     .addClass('dt-btn')
-    .addClass(options.class)
+    .addClass(options.classes)
     .appendTo(ui.getPalette(options.palette).$element);
 
   this.$label = $('<span>')
@@ -17,13 +20,13 @@ function Button(options, ui, drawingTool) {
 
   if (options.onClick) {
     this.$element.on('mousedown touchstart', function (e) {
-      options.onClick.call(this, e, ui);
+      options.onClick.call(this, e, ui, drawingTool);
     }.bind(this));
   }
 
   if (options.onLongPress) {
     this.$element.longPress(function (e) {
-      options.onLongPress.call(this, e, ui);
+      options.onLongPress.call(this, e, ui, drawingTool);
     }.bind(this));
   }
 
@@ -66,19 +69,19 @@ function Button(options, ui, drawingTool) {
   }
 }
 
-Button.prototype.setLabel = function (label) {
+BasicButton.prototype.setLabel = function (label) {
   this.$label.text(label);
 };
 
-Button.prototype.getLabel = function () {
+BasicButton.prototype.getLabel = function () {
   return this.$label.text();
 };
 
-Button.prototype.click = function () {
+BasicButton.prototype.click = function () {
   this.$element.mousedown();
 };
 
-Button.prototype.setActive = function (v) {
+BasicButton.prototype.setActive = function (v) {
   if (v) {
     this.$element.addClass('dt-active');
   } else {
@@ -86,7 +89,7 @@ Button.prototype.setActive = function (v) {
   }
 };
 
-Button.prototype.setLocked = function (v) {
+BasicButton.prototype.setLocked = function (v) {
   if (v) {
     this.$element.addClass('dt-locked');
   } else {
@@ -94,4 +97,4 @@ Button.prototype.setLocked = function (v) {
   }
 };
 
-module.exports = Button;
+module.exports = BasicButton;

@@ -1,3 +1,6 @@
+var StrokeButton = require('scripts/ui/stroke-button');
+var ColorButton  = require('scripts/ui/color-button');
+
 module.exports = {
   /***
    * Palettes
@@ -15,6 +18,14 @@ module.exports = {
     {
       name: 'shapes',
       anchor: 'shapesPalette'
+    },
+    {
+      name: 'strokeColors',
+      anchor: 'strokeColorPalette'
+    },
+    {
+      name: 'fillColors',
+      anchor: 'fillColorPalette'
     }
   ],
   buttons: [
@@ -28,7 +39,7 @@ module.exports = {
     },
     {
       name: 'linesPalette',
-      class: 'dt-expand',
+      classes: 'dt-expand',
       reflectsTools: ['line', 'arrow', 'doubleArrow'],
       palette: 'main',
       onInit: function (ui) {
@@ -43,7 +54,7 @@ module.exports = {
     },
     {
       name: 'shapesPalette',
-      class: 'dt-expand',
+      classes: 'dt-expand',
       reflectsTools: ['rect', 'ellipse', 'square', 'circle'],
       palette: 'main',
       onInit: function (ui) {
@@ -67,6 +78,18 @@ module.exports = {
       label: 'T',
       activatesTool: 'text',
       palette: 'main'
+    },
+    {
+      name: 'strokeColorPalette',
+      buttonClass: StrokeButton,
+      classes: 'dt-expand',
+      palette: 'main',
+      onInit: function (ui) {
+
+      },
+      onClick: function (e, ui) {
+        ui.openPalette('strokeColors');
+      }
     },
     {
       name: 'trash',
@@ -130,6 +153,27 @@ module.exports = {
       label: 'C',
       activatesTool: 'circle',
       palette: 'shapes'
+    },
+    /***
+     * Stroke colors
+     ***/
+    {
+      buttonClass: ColorButton,
+      color: 'red',
+      type: 'stroke',
+      palette: 'strokeColors'
+    },
+    {
+      buttonClass: ColorButton,
+      color: 'green',
+      type: 'stroke',
+      palette: 'strokeColors'
+    },
+    {
+      buttonClass: ColorButton,
+      color: 'blue',
+      type: 'stroke',
+      palette: 'strokeColors'
     }
   ]
 };

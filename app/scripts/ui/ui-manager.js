@@ -1,5 +1,5 @@
-var DtButton     = require('scripts/ui/button');
-var DtPalette    = require('scripts/ui/palette');
+var BasicButton  = require('scripts/ui/basic-button');
+var Palette      = require('scripts/ui/palette');
 var uiDefinition = require('scripts/ui/ui-definition');
 
 function UIManager(drawingTool) {
@@ -45,13 +45,14 @@ UIManager.prototype.getPaletteActiveButton = function (name) {
 };
 
 UIManager.prototype._createPalette = function (paletteOptions) {
-  var palette = new DtPalette(paletteOptions, this);
+  var palette = new Palette(paletteOptions, this);
   palette.$element.appendTo(this.$tools);
   this._palettes[palette.name] = palette;
 };
 
 UIManager.prototype._createButton = function (buttonOptions) {
-  var button = new DtButton(buttonOptions, this, this.drawingTool);
+  var BtnClass = buttonOptions.buttonClass || BasicButton;
+  var button = new BtnClass(buttonOptions, this, this.drawingTool);
   this._buttons[button.name] = button;
 
   this._setupPaletteActiveButton(button);

@@ -20,6 +20,11 @@ var DEF_STATE = {
   fill: ""
 };
 
+var EVENTS = {
+  STATE_CHANGED: 'state:changed',
+  TOOL_CHANGED: 'tool:changed'
+};
+
 // Note that some object properties aren't serialized by default by FabricJS.
 // List them here so they can be serialized.
 var ADDITIONAL_PROPS_TO_SERIALIZE = ['lockUniScaling'];
@@ -39,7 +44,13 @@ function DrawingTool(selector, options, settings) {
 
   this.options = $.extend(true, {}, DEF_OPTIONS, options);
   this.state = $.extend(true, {}, DEF_STATE, settings);
-  this._stateListeners = [];
+
+  this._dispatch = new EventEmitter2({
+    wildcard: true,
+    newListener: false,
+    maxListeners: 100,
+    delimiter: ':'
+  });
 
   this._initDOM();
   this._initFabricJS(); // fill the container intialized above with the fabricjs canvas
@@ -144,8 +155,7 @@ DrawingTool.prototype.load = function (jsonString) {
  */
 DrawingTool.prototype.setStrokeColor = function (color) {
   this.state.stroke = color;
-  // TODO: utilize the `changedKey` and `changedVal` fields
-  this._fireStateEvent();
+  this._fireStateChange();
 };
 
 /**
@@ -157,7 +167,7 @@ DrawingTool.prototype.setStrokeColor = function (color) {
  */
 DrawingTool.prototype.setStrokeWidth = function (width) {
   this.state.strokeWidth = width;
-  this._fireStateEvent();
+  this._fireStateChange();
 };
 
 /**
@@ -170,7 +180,7 @@ DrawingTool.prototype.setStrokeWidth = function (width) {
  */
 DrawingTool.prototype.setFill = function (color) {
   this.state.fill = color;
-  this._fireStateEvent();
+  this._fireStateChange();
 };
 
 /**
@@ -272,6 +282,19 @@ DrawingTool.prototype.changeOutOfTool = function () {
   this.chooseTool('select');
 };
 
+
+DrawingTool.prototype.on = function () {
+  this._dispatch.on.apply(this._dispatch, arguments);
+};
+
+DrawingTool.prototype.off = function (name, handler) {
+  this._dispatch.off.apply(this._dispatch, arguments);
+};
+
+DrawingTool.prototype._fireStateChange = function () {
+  this._dispatch.emit(EVENTS.STATE_CHANGED, this.state);
+};
+
 DrawingTool.prototype._setBackgroundImage = function (imageSrc, options, backgroundLoadedCallback) {
   options = options || {
     originX: 'center',
@@ -307,44 +330,6 @@ DrawingTool.prototype._setBackgroundImage = function (imageSrc, options, backgro
     if (typeof backgroundLoadedCallback === 'function') {
       backgroundLoadedCallback();
     }
-  }
-};
-
-/**
- * Add a state listener to listen for changes in the `DrawingTool.state` object
- *
- * parameters:
- *  - stateHandler: listener function that is called when an event is fired
- */
-DrawingTool.prototype.addStateListener = function (stateHandler) {
-  this._stateListeners.push(stateHandler);
-};
-
-/**
- * Removes a state listener
- *
- * parameters:
- *  - stateHandler: listener to be removed
- */
-DrawingTool.prototype.removeStateListener = function (stateHandler) {
-  for (var i = 0; i < this._stateListeners.length; i++) {
-    if (this._stateListeners[i] === stateHandler) {
-      return this._stateListeners.splice(i, 1);
-    }
-  }
-  return false;
-};
-
-DrawingTool.prototype._fireStateEvent = function (changedKey, val) {
-  var e = {};
-  // TODO: implement this functionality in the actual setters in drawing-tool
-  if (arguments.length > 0) {
-    e.changedKey = changedKey;
-    e.changedValue = val;
-  }
-  for (var i = 0; i < this._stateListeners.length; i++) {
-    // console.log(this._stateListeners[i]);
-    this._stateListeners[i].call(this, e);
   }
 };
 

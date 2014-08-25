@@ -12,7 +12,7 @@ var Tool    = require('scripts/tool');
  *          (will either be 'stroke' or 'fill')
  *          default: 'stroke'
  *  - colorCode: the actual color (in hex or rgba etc)
- *          NOTE: this string is used to compare equivilancies
+ *          NOTE: this string is used to compare equivalences
  *  - drawTool: the 'master'
  */
 function ColorTool(name, type, colorCode, drawTool) {
@@ -29,7 +29,7 @@ inherit(ColorTool, Tool);
  * `ColorTool`'s functionality.
  * If any objects are currently selected, their property (defined by `ColorTool.type`)
  * is set to the color of this ColorTool (`ColorTool.color`).
- * This function also sets corresponding poperty of `drawingTool.state`.
+ * This function also sets corresponding property of `drawingTool.state`.
  */
 ColorTool.prototype.use = function () {
   if (this.master.canvas.getActiveObject()) {
@@ -42,15 +42,14 @@ ColorTool.prototype.use = function () {
       objs[i].set(this.type, this.color);
     }
   }
-
-  this.canvas.renderAll(false);
-
-  // set color of property of state object
+  // Set color of property of state object.
   if (this.type === 'stroke') {
     this.master.setStrokeColor(this.color);
   } else if (this.type === 'fill') {
     this.master.setFill(this.color);
-  } else {console.warn("Unrecognized color type!");}
+  }
+
+  this.canvas.renderAll();
 };
 
 module.exports = ColorTool;

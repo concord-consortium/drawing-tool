@@ -5,8 +5,8 @@ var Tool     = require('scripts/tool');
  * Single use tool that deletes the currently selected object(s).
  * This tool also captures the backspace/delete key and is triggered that way as well.
  */
-function DeleteTool(name, selector, drawTool) {
-  Tool.call(this, name, selector, drawTool);
+function DeleteTool(name, drawTool) {
+  Tool.call(this, name, drawTool);
 
   this.singleUse = true;
 

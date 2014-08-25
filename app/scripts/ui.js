@@ -1,13 +1,4 @@
-var Tool                 = require('scripts/tool');
-var SelectionTool        = require('scripts/tools/select-tool');
-var LineTool             = require('scripts/tools/shape-tools/line-tool');
-var BasicShapeTool       = require('scripts/tools/shape-tools/basic-shape-tool');
-var FreeDrawTool         = require('scripts/tools/shape-tools/free-draw');
-var TextTool             = require('scripts/tools/shape-tools/text-tool');
-var DeleteTool           = require('scripts/tools/delete-tool');
-var ColorTool            = require('scripts/tools/color-tool');
 var BtnGroup             = require('scripts/ui/btn-group');
-var generateColorPalette = require('scripts/ui/color-palette');
 
 var UI_STRUCT = {
   // Main palette (vertical).
@@ -19,7 +10,7 @@ var UI_STRUCT = {
 
 var LABELS = {
   select: 's',
-  line:   'l',
+  line:   'L',
   arrow:  'A',
   doubleArrow: 'D',
   rect: 'R',
@@ -36,44 +27,22 @@ function UI (master, selector, options) {
   this.options = options;
 
   this._initUI(selector);
+  this._initTools();
 }
 
 // initialize tools, config palettes, set labels, and setup trash behavior
-UI.prototype.initTools = function () {
-
-  // Initialize all the tools, they add themselves to the master.tools list
-  var selectionTool = new SelectionTool("Selection Tool", "select", this.master);
-  var lineTool = new LineTool("Line Tool", "line", this.master);
-  var arrowTool = new LineTool("Arrow Tool", "arrow", this.master, "arrow");
-  var doubleArrowTool = new LineTool("Double Arrow Tool", "doubleArrow", this.master, "arrow", {doubleArrowhead: true});
-  var rectangleTool = new BasicShapeTool("Rectangle Tool", "rect", this.master, "rect");
-  var ellipseTool = new BasicShapeTool("Ellipse Tool", "ellipse", this.master, "ellipse");
-  var squareTool = new BasicShapeTool("Square Tool", "square", this.master, "square");
-  var circleTool = new BasicShapeTool("Circle Tool", "circle", this.master, "circle");
-  var freeDrawTool = new FreeDrawTool("Free Draw Tool", "free", this.master);
-  var textTool = new TextTool("Text Tool", "text", this.master);
-  var deleteTool = new DeleteTool("Delete Tool", "trash", this.master);
-
+UI.prototype._initTools = function () {
   // tool palettes
   this._initToolUI(UI_STRUCT);
-  this._initColorTools();
   this._initButtonUpdates(); // set up the listeners
 
   // TODO: rewrite/refactor this with classes and css like in the
   // [font-icons branch](https://github.com/concord-consortium/drawing-tool/tree/font-icons)
 
   // set the labels
-  this.setLabel(selectionTool.selector,   "s");
-  this.setLabel(lineTool.selector,        "L");
-  this.setLabel(arrowTool.selector,       "A");
-  this.setLabel(doubleArrowTool.selector, "D");
-  this.setLabel(rectangleTool.selector,   "R");
-  this.setLabel(ellipseTool.selector,     "E");
-  this.setLabel(squareTool.selector,      "S");
-  this.setLabel(circleTool.selector,      "C");
-  this.setLabel(freeDrawTool.selector,    "F");
-  this.setLabel(textTool.selector,        "T");
-  this.setLabel(deleteTool.selector,      "d");
+  for (var k in LABELS) {
+    this.setLabel(k, LABELS[k]);
+  }
 
   // show/hide trash button when objects are selected/deselected
   var trash = this.$buttons.trash;
@@ -103,7 +72,7 @@ UI.prototype.setLabel = function (toolId, label) {
 UI.prototype._initButtonUpdates = function () {
   // handler that updates UI when the internal tool state changes
   for (var toolId in this.master.tools) {
-    this.master.tools[toolId].addStateListener(this.updateUI);
+    this.master.tools[toolId].addStateListener(this.updateUI.bind(this));
   }
 
   // handler that updates internal state when the UI changes
@@ -224,17 +193,8 @@ UI.prototype.updateUI = function (e) {
 
 // initializes the UI (divs and canvas size)
 UI.prototype._initUI = function (selector) {
-  $(selector).empty();
-  this.$element = $('<div class="dt-container">').appendTo(selector);
   this.$tools = $('<div class="dt-tools">')
-    .appendTo(this.$element);
-  var $canvasContainer = $('<div class="dt-canvas-container">')
-    .attr('tabindex', 0) // makes the canvas focusable for keyboard events
-    .appendTo(this.$element);
-  this.$canvas = $('<canvas>')
-    .attr('width', this.options.width + 'px')
-    .attr('height', this.options.height + 'px')
-    .appendTo($canvasContainer);
+    .prependTo(this.master.$element);
 };
 
 // initializes all the tools
@@ -261,48 +221,6 @@ UI.prototype._initToolUI = function (palettes) {
     this.palettes[palette] = new BtnGroup(palette, buttons, this.$buttons['-' + palette]);
     this.palettes[palette].$palette.appendTo(this.$tools);
   }
-};
-
-UI.prototype._initColorTools = function () {
-
-  var $strokeBtn = this._initBtn('stroke-color');
-  // $strokeBtn.find('span').text('Q');
-  var $fillBtn = this._initBtn('fill-color');
-  // $fillBtn.find('span').text('X');
-
-  var strokeColorTools = [
-    new ColorTool('color1s', 'stroke', 'black', this.master),
-    new ColorTool('color2s', 'stroke', 'white', this.master),
-    new ColorTool('color3s', 'stroke', 'red', this.master),
-    new ColorTool('color4s', 'stroke', 'blue', this.master),
-    new ColorTool('color5s', 'stroke', 'purple', this.master),
-    new ColorTool('color6s', 'stroke', 'green', this.master),
-    new ColorTool('color7s', 'stroke', 'yellow', this.master),
-    new ColorTool('color8s', 'stroke', 'orange', this.master)
-  ];
-
-  // TODO: implement a "no fill" button
-  var fillColorTools = [
-    new ColorTool('color1f', 'fill', 'black', this.master),
-    new ColorTool('color2f', 'fill', 'white', this.master),
-    new ColorTool('color3f', 'fill', 'red', this.master),
-    new ColorTool('color4f', 'fill', 'blue', this.master),
-    new ColorTool('color5f', 'fill', 'purple', this.master),
-    new ColorTool('color6f', 'fill', 'green', this.master),
-    new ColorTool('color7f', 'fill', 'yellow', this.master),
-    new ColorTool('color8f', 'fill', 'orange', this.master)
-  ];
-
-  var i = 0;
-  var $strokeColorBtns = [];
-  var $fillColorBtns = [];
-  for (i = 0; i < strokeColorTools.length; i++) {
-    $strokeColorBtns.push(this._initBtn(strokeColorTools[i].selector, 'color'));
-  }
-  for (i = 0; i < strokeColorTools.length; i++) {
-    $fillColorBtns.push(this._initBtn(fillColorTools[i].selector, 'color'));
-  }
-  generateColorPalette(this.master, $strokeBtn, $strokeColorBtns, $fillBtn, $fillColorBtns).appendTo(this.$tools);
 };
 
 // initializes each button

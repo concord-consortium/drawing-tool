@@ -2,8 +2,8 @@ var inherit = require('scripts/inherit');
 var Tool    = require('scripts/tool');
 var Util    = require('scripts/util');
 
-function ShapeTool(name, selector, drawTool) {
-  Tool.call(this, name, selector, drawTool);
+function ShapeTool(name, drawTool) {
+  Tool.call(this, name, drawTool);
 
   var self = this;
   this.addEventListener("mouse:down", function (e) { self.mouseDown(e); });
@@ -43,7 +43,7 @@ ShapeTool.prototype.activateAgain = function () {
 
 ShapeTool.prototype.exit = function () {
   this.down = false;
-  this.master.changeOutOfTool(this.selector);
+  this.master.changeOutOfTool();
   // Changes cursor back to default
   // see https://www.pivotaltracker.com/n/projects/1103712/stories/73647372
   this.canvas.defaultCursor = "default";

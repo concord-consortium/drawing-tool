@@ -9,8 +9,8 @@ require('scripts/fabric-extensions/arrow');
 // as part of this code base, not FabricJS itself). Pass 'lineType' argument
 // (e.g. "line" or "arrow").
 
-function LineTool(name, selector, drawTool, lineType, lineOptions) {
-  ShapeTool.call(this, name, selector, drawTool);
+function LineTool(name, drawTool, lineType, lineOptions) {
+  ShapeTool.call(this, name, drawTool);
 
   lineType = lineType || 'line';
   this._lineKlass = fabric.util.getKlass(lineType);

@@ -12,8 +12,8 @@ var BASIC_SELECTION_PROPERTIES = {
  * When activated it puts the canvas into a selectable state so objects
  * can be moved and manipulated.
  */
-function SelectionTool(name, selector, drawTool) {
-  Tool.call(this, name, selector, drawTool);
+function SelectionTool(name, drawTool) {
+  Tool.call(this, name, drawTool);
 
   this.canvas.on("object:selected", function (opt) {
     opt.target.set(BASIC_SELECTION_PROPERTIES);

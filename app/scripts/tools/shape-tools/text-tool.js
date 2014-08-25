@@ -1,8 +1,8 @@
-var inherit                 = require('scripts/inherit');
-var ShapeTool               = require('scripts/tools/shape-tool');
+var inherit   = require('scripts/inherit');
+var ShapeTool = require('scripts/tools/shape-tool');
 
-function TextTool(name, selector, drawTool) {
-  ShapeTool.call(this, name, selector, drawTool);
+function TextTool(name, drawTool) {
+  ShapeTool.call(this, name, drawTool);
 
   this.exitTextEditingOnFirstClick();
 }

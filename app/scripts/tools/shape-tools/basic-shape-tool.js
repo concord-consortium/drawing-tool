@@ -21,8 +21,8 @@ var SUPPORTED_SHAPES = {
   }
 };
 
-function BasicShapeTool(name, selector, drawTool, type) {
-  ShapeTool.call(this, name, selector, drawTool);
+function BasicShapeTool(name, drawTool, type) {
+  ShapeTool.call(this, name, drawTool);
 
   this._type = SUPPORTED_SHAPES[type];
   this._shapeKlass = fabric.util.getKlass(this._type.fabricType);

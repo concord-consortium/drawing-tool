@@ -6,15 +6,12 @@
  *  - selector: shorter 'code' for the tool, used in the corresponding HTML element
  *  - drawTool: the master node that this tool belongs too
  */
-function Tool(name, selector, drawTool) {
+function Tool(name, drawTool) {
   this.name = name || "Tool";
-  this.selector = selector || "";
   this.master = drawTool;
   this.canvas = drawTool.canvas;
   this.active = false;
   this.singleUse = false;
-
-  this.master.tools[selector] = this;
 
   // fabric.js listeners of the tool
   this._listeners = [];
@@ -46,8 +43,6 @@ Tool.prototype.activate = function () {
     this.canvas.on(trigger, action);
   }
   this._fireStateEvent();
-  // TODO: add this to the UI class
-  // this.$element.addClass('dt-active');
 };
 
 // This function will be called when user tries to activate a tool that

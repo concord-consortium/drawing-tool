@@ -1,8 +1,8 @@
 var inherit   = require('scripts/inherit');
 var ShapeTool = require('scripts/tools/shape-tool');
 
-function FreeDrawTool(name, selector, drawTool) {
-  ShapeTool.call(this, name, selector, drawTool);
+function FreeDrawTool(name, drawTool) {
+  ShapeTool.call(this, name, drawTool);
 
   var self = this;
 

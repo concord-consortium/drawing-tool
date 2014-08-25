@@ -1,6 +1,12 @@
+var SelectionTool     = require('scripts/tools/select-tool');
+var LineTool          = require('scripts/tools/shape-tools/line-tool');
+var BasicShapeTool    = require('scripts/tools/shape-tools/basic-shape-tool');
+var FreeDrawTool      = require('scripts/tools/shape-tools/free-draw');
+var TextTool          = require('scripts/tools/shape-tools/text-tool');
+var DeleteTool        = require('scripts/tools/delete-tool');
+var ColorTool         = require('scripts/tools/color-tool');
 var rescale2resize    = require('scripts/fabric-extensions/rescale-2-resize');
 var multitouchSupport = require('scripts/fabric-extensions/multi-touch-support');
-var UI                = require('scripts/ui');
 
 var DEF_OPTIONS = {
   width: 700,
@@ -30,22 +36,22 @@ var ADDITIONAL_PROPS_TO_SERIALIZE = ['lockUniScaling'];
  */
 function DrawingTool(selector, options, settings) {
   this.selector = selector;
-  this.options = $.extend(true, {}, DEF_OPTIONS, options);
 
+  this.options = $.extend(true, {}, DEF_OPTIONS, options);
   this.state = $.extend(true, {}, DEF_STATE, settings);
   this._stateListeners = [];
 
-  this.tools = {};
-
-  // TODO: decouple this part? Seems very intertwined
-  this.ui = new UI(this, selector, this.options); // initialize the UI and containers
+  this._initDOM();
   this._initFabricJS(); // fill the container intialized above with the fabricjs canvas
-  this.ui.initTools(); // initialize tools after fabricjs has been constructed
+
+  this._initTools();
 
   // Apply a fix that changes native FabricJS rescaling behavior into resizing.
   rescale2resize(this.canvas);
   // Adds support for multitouch support (pinching resize, two finger rotate, etc)
   multitouchSupport(this.canvas);
+
+  this.chooseTool('select');
 }
 
 /**
@@ -222,24 +228,47 @@ DrawingTool.prototype.calcOffset = function () {
 };
 
 /**
- * Changes the current tool by 'clicking' on the button for the tool.
+ * Changes the current tool.
  *
  * parameters:
  *  - toolSelector: selector for the tool as sepecified in the contruction of the tool
  */
-DrawingTool.prototype.chooseTool = function (toolSelector){
-  $(this.selector).find('.'+toolSelector).click();
+DrawingTool.prototype.chooseTool = function (toolSelector) {
+  var newTool = this.tools[toolSelector];
+  if (!newTool) {
+    return;
+  }
+
+  if (this.currentTool !== undefined &&
+      this.currentTool.selector === toolSelector) {
+    // Some tools may implement .activateAgain() method and
+    // enable some special behavior.
+    this.currentTool.activateAgain();
+    return;
+  }
+
+  if (newTool.singleUse === true) {
+    // special single use tools should not be set as the current tool
+    newTool.use();
+    return;
+  }
+
+  // activate and deactivate the new and old tools
+  if (this.currentTool !== undefined) {
+    this.currentTool.setActive(false);
+  }
+
+  this.currentTool = newTool;
+  this.currentTool.setActive(true);
+
+  this.canvas.renderAll();
 };
 
 /**
  * Changing the current tool out of this current tool to the default tool
  * aka 'select' tool
- *
- * parameters:
- *  - oldToolSelector: selector of the old tool (currently unused data)
  */
-//TODO: add default as drawingTool property
-DrawingTool.prototype.changeOutOfTool = function (oldToolSelector){
+DrawingTool.prototype.changeOutOfTool = function () {
   this.chooseTool('select');
 };
 
@@ -289,7 +318,7 @@ DrawingTool.prototype._setBackgroundImage = function (imageSrc, options, backgro
  */
 DrawingTool.prototype.addStateListener = function (stateHandler) {
   this._stateListeners.push(stateHandler);
-}
+};
 
 /**
  * Removes a state listener
@@ -304,23 +333,52 @@ DrawingTool.prototype.removeStateListener = function (stateHandler) {
     }
   }
   return false;
-}
+};
 
 DrawingTool.prototype._fireStateEvent = function (changedKey, val) {
   var e = {};
   // TODO: implement this functionality in the actual setters in drawing-tool
   if (arguments.length > 0) {
-    e['changedKey'] = changedKey;
-    e['changedValue'] = val;
+    e.changedKey = changedKey;
+    e.changedValue = val;
   }
   for (var i = 0; i < this._stateListeners.length; i++) {
     // console.log(this._stateListeners[i]);
     this._stateListeners[i].call(this, e);
   }
-}
+};
+
+DrawingTool.prototype._initTools = function () {
+  // Initialize all the tools, they add themselves to the tools hash.
+  this.tools = {
+    select:      new SelectionTool("Selection Tool", this),
+    line:        new LineTool("Line Tool", this),
+    arrow:       new LineTool("Arrow Tool", this, "arrow"),
+    doubleArrow: new LineTool("Double Arrow Tool", this, "arrow", {doubleArrowhead: true}),
+    rect:        new BasicShapeTool("Rectangle Tool", this, "rect"),
+    ellipse:     new BasicShapeTool("Ellipse Tool", this, "ellipse"),
+    square:      new BasicShapeTool("Square Tool", this, "square"),
+    circle:      new BasicShapeTool("Circle Tool", this, "circle"),
+    free:        new FreeDrawTool("Free Draw Tool", this),
+    text:        new TextTool("Text Tool", this),
+    trash:       new DeleteTool("Delete Tool", this)
+  };
+};
+
+DrawingTool.prototype._initDOM = function () {
+  $(this.selector).empty();
+  this.$element = $('<div class="dt-container">').appendTo(this.selector);
+  var $canvasContainer = $('<div class="dt-canvas-container">')
+    .attr('tabindex', 0) // makes the canvas focusable for keyboard events
+    .appendTo(this.$element);
+  this.$canvas = $('<canvas>')
+    .attr('width', this.options.width + 'px')
+    .attr('height', this.options.height + 'px')
+    .appendTo($canvasContainer);
+};
 
 DrawingTool.prototype._initFabricJS = function () {
-  this.canvas = new fabric.Canvas(this.ui.$canvas[0]);
+  this.canvas = new fabric.Canvas(this.$canvas[0]);
   // Target find would be more tolerant on touch devices.
   if (fabric.isTouchSupported) {
     this.canvas.perPixelTargetFind = false;

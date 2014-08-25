@@ -13,10 +13,10 @@ function DeleteTool(name, drawTool) {
   // delete the selected object(s) with the backspace key
   // see: https://www.pivotaltracker.com/story/show/74415780
   var self = this;
-  $('.dt-canvas-container').keydown(function(e) {
+  drawTool.$element.keydown(function(e) {
     if (e.keyCode === 8) {
       e.preventDefault();
-      self._delete();
+      self.use();
     }
   });
 }
@@ -31,16 +31,11 @@ DeleteTool.prototype.use = function () {
   if (canvas.getActiveObject()) {
     canvas.remove(canvas.getActiveObject());
   } else if (canvas.getActiveGroup()) {
-    canvas.getActiveGroup().forEachObject(function(o){ canvas.remove(o); });
+    canvas.getActiveGroup().forEachObject(function (o) {
+      canvas.remove(o);
+    });
     canvas.discardActiveGroup().renderAll();
   }
-  // Alternate UI pattern for 'inactive delete tool'
-  // else if (canvas.getObjects().length > 0) {
-  //   // OPTION 1: REMOVES the most recently created object
-  //   // canvas.remove(canvas.item(canvas.getObjects().length - 1));
-  //   // OPTION 2: SELECTS the most recently created object
-  //   // canvas.setActiveObject(canvas.item(canvas.getObjects().length - 1));
-  // }
 };
 
 module.exports = DeleteTool;

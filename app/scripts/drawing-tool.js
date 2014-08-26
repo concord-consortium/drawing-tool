@@ -14,8 +14,7 @@ var DEF_OPTIONS = {
 };
 
 var DEF_STATE = {
-  // stroke: "rgba(100,200,200,.75)",
-  stroke: 'black',
+  stroke: '#333',
   strokeWidth: 10,
   fill: ""
 };

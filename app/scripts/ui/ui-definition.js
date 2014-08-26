@@ -1,6 +1,18 @@
 var StrokeButton = require('scripts/ui/stroke-button');
 var ColorButton  = require('scripts/ui/color-button');
 
+var COLORS = [
+  '#efefef',
+  '#e66665',
+  '#75b792',
+  '#076bb6',
+  '#ffd605',
+  '#f47d43',
+  '#ae70af',
+  '#a9b2b1',
+  '#333333'
+];
+
 module.exports = {
   /***
    * Palettes
@@ -84,8 +96,11 @@ module.exports = {
       buttonClass: StrokeButton,
       classes: 'dt-expand',
       palette: 'main',
-      onInit: function (ui) {
-
+      onInit: function (ui, drawingTool) {
+        this.setColor(drawingTool.state.stroke);
+      },
+      onStateChange: function (state) {
+        this.setColor(state.stroke);
       },
       onClick: function (e, ui) {
         ui.openPalette('strokeColors');
@@ -159,19 +174,55 @@ module.exports = {
      ***/
     {
       buttonClass: ColorButton,
-      color: 'red',
+      color: COLORS[0],
       type: 'stroke',
       palette: 'strokeColors'
     },
     {
       buttonClass: ColorButton,
-      color: 'green',
+      color: COLORS[1],
       type: 'stroke',
       palette: 'strokeColors'
     },
     {
       buttonClass: ColorButton,
-      color: 'blue',
+      color: COLORS[2],
+      type: 'stroke',
+      palette: 'strokeColors'
+    },
+    {
+      buttonClass: ColorButton,
+      color: COLORS[3],
+      type: 'stroke',
+      palette: 'strokeColors'
+    },
+    {
+      buttonClass: ColorButton,
+      color: COLORS[4],
+      type: 'stroke',
+      palette: 'strokeColors'
+    },
+    {
+      buttonClass: ColorButton,
+      color: COLORS[5],
+      type: 'stroke',
+      palette: 'strokeColors'
+    },
+    {
+      buttonClass: ColorButton,
+      color: COLORS[6],
+      type: 'stroke',
+      palette: 'strokeColors'
+    },
+    {
+      buttonClass: ColorButton,
+      color: COLORS[7],
+      type: 'stroke',
+      palette: 'strokeColors'
+    },
+    {
+      buttonClass: ColorButton,
+      color: COLORS[8],
       type: 'stroke',
       palette: 'strokeColors'
     }

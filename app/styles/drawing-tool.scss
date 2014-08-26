@@ -2,6 +2,7 @@ $buttonSize: 44px;
 $halfButtonSize: 22px;
 $buttonFontSize: 35px;
 $buttonLineHeight: 50px;
+$buttonColor: #3e8acc;
 
 $icons: 'Draw Tool Icons', Arial, sans-serif;
 
@@ -30,12 +31,6 @@ $icons: 'Draw Tool Icons', Arial, sans-serif;
     position: relative;
   }
 
-  // .dt-color-palette {
-  //   .dt-btn {
-  //     height: $buttonSize / 2;
-  //   }
-  // }
-
   .dt-btn {
     z-index: 1000;
     display: block;
@@ -49,7 +44,7 @@ $icons: 'Draw Tool Icons', Arial, sans-serif;
     height: $buttonSize;
     width: $buttonSize;
     color: #fff;
-    background: #3e8acc;
+    background: $buttonColor;
     vertical-align: middle;
     text-align:center;
     padding: 0;
@@ -73,64 +68,16 @@ $icons: 'Draw Tool Icons', Arial, sans-serif;
       cursor: default;
     }
 
-    &.dt-btn-color {
-      // border: 0;
-      height: 15px;
-      width: 75%;
-      margin: auto;
-      display: block;
-
-      // &.selected {
-      //   border: #3e8acc 4px;
-      // }
-    }
-
-    &.stroke-color:before {
-      content: 'S';
-    }
-
-    &.stroke-color {
-      .dt-btn-innerColor:before { /* inset/overlay white box with black border */
-        background: #fff;
-        border: solid 1px #1c68aa;
-        content: '';
-        height: 8px;
-        left: 4px;
-        position: absolute;
-        top: 4px;
-        width: 8px;
-      }
-
-      .dt-btn-innerColor:after { /* inset/overlay blue box with no border */
-        background: #3e8acc;
-        border: none;
-        content: '';
-        height: 6px;
-        left: 6px;
-        position: absolute;
-        top: 6px;
-        width: 6px;
-      }
-    }
-
-    &.fill-color:before {
-      content: 'S';
-    }
-
-    .dt-btn-innerColor { /* a class for the stroke and fill color boxes */
-      background: #fc0;
-      border: solid 1px #1c68aa;
-      height: 18px;
-      left: 12px;
+    .dt-btn-inner:after {
+      border: 5px solid;
+      background: #fff;
+      width: 12px;
+      height: 12px;
+      content: '';
       position: absolute;
-      top: 13px;
-      width: 18px;
+      left: 11px;
+      top: 11px;
     }
-  }
-
-  .selected {
-    width: 90%;
-    height: 25px;
   }
 
   .dt-expand {

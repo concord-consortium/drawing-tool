@@ -36,8 +36,8 @@ UIManager.prototype.getPalette = function (name) {
   return this._palettes[name];
 };
 
-UIManager.prototype.openPalette = function (name) {
-  this._palettes[name].show();
+UIManager.prototype.togglePalette = function (name) {
+  this._palettes[name].toggle();
 };
 
 UIManager.prototype.getPaletteActiveButton = function (name) {

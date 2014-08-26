@@ -55,14 +55,14 @@ var ui = {
       classes: 'dt-expand',
       reflectsTools: ['line', 'arrow', 'doubleArrow'],
       palette: 'main',
-      onInit: function (ui) {
-        this.setLabel(ui.getPaletteActiveButton('lines').getLabel());
+      onInit: function () {
+        this.setLabel(this.ui.getPaletteActiveButton('lines').getLabel());
       },
-      onClick: function (e, ui) {
-        ui.getPaletteActiveButton('lines').click();
+      onClick: function () {
+        this.ui.getPaletteActiveButton('lines').click();
       },
-      onLongPress: function (e, ui) {
-        ui.openPalette('lines');
+      onLongPress: function () {
+        this.ui.togglePalette('lines');
       }
     },
     {
@@ -70,14 +70,14 @@ var ui = {
       classes: 'dt-expand',
       reflectsTools: ['rect', 'ellipse', 'square', 'circle'],
       palette: 'main',
-      onInit: function (ui) {
-        this.setLabel(ui.getPaletteActiveButton('shapes').getLabel());
+      onInit: function () {
+        this.setLabel(this.ui.getPaletteActiveButton('shapes').getLabel());
       },
-      onClick: function (e, ui) {
-        ui.getPaletteActiveButton('shapes').click();
+      onClick: function () {
+        this.ui.getPaletteActiveButton('shapes').click();
       },
-      onLongPress: function (e, ui) {
-        ui.openPalette('shapes');
+      onLongPress: function () {
+        this.ui.togglePalette('shapes');
       }
     },
     {
@@ -97,14 +97,14 @@ var ui = {
       buttonClass: StrokeButton,
       classes: 'dt-expand',
       palette: 'main',
-      onInit: function (ui, drawingTool) {
-        this.setColor(drawingTool.state.stroke);
+      onInit: function () {
+        this.setColor(this.dt.state.stroke);
       },
       onStateChange: function (state) {
         this.setColor(state.stroke);
       },
-      onClick: function (e, ui) {
-        ui.openPalette('strokeColors');
+      onClick: function () {
+        this.ui.togglePalette('strokeColors');
       }
     },
     {
@@ -112,14 +112,14 @@ var ui = {
       buttonClass: FillButton,
       classes: 'dt-expand',
       palette: 'main',
-      onInit: function (ui, drawingTool) {
-        this.setColor(drawingTool.state.fill);
+      onInit: function () {
+        this.setColor(this.dt.state.fill);
       },
       onStateChange: function (state) {
         this.setColor(state.fill);
       },
-      onClick: function (e, ui) {
-        ui.openPalette('fillColors');
+      onClick: function () {
+        this.ui.togglePalette('fillColors');
       }
     },
     {
@@ -127,12 +127,12 @@ var ui = {
       label: 'd',
       activatesTool: 'trash',
       palette: 'main',
-      onInit: function (ui, drawingTool) {
+      onInit: function () {
         this.setLocked(true);
-        drawingTool.canvas.on("object:selected", function () {
+        this.dt.canvas.on("object:selected", function () {
           this.setLocked(false);
         }.bind(this));
-        drawingTool.canvas.on("selection:cleared", function () {
+        this.dt.canvas.on("selection:cleared", function () {
           this.setLocked(true);
         }.bind(this));
       }
@@ -186,7 +186,7 @@ var ui = {
       palette: 'shapes'
     }
     /***
-     * Stroke colors and fill colors are added in a loop below.
+     * Stroke colors and fill colors are added in a loop below
      ***/
   ]
 };

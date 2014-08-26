@@ -12,29 +12,40 @@ function Palette(options, ui) {
   }
 }
 
-Palette.prototype.show = function () {
-  this.position();
+Palette.prototype.toggle = function () {
+  if (this.$element.is(':visible')) {
+    this._hide();
+  } else {
+    this._show();
+  }
+};
+
+Palette.prototype._show = function () {
+  this._position();
   this.$element.show();
 
   if (this.permanent) {
     return;
   }
   // Hide palette on first click / touch (if it's not permanent).
+  // Timeout ensures that we won't catch the same event which actually
+  // opened the palette.
   var self = this;
   setTimeout(function () {
-    $(document).one('mousedown touchstart', function () {
-      setTimeout(function () {
-        self.hide();
-      }, 10);
+    $(window).one('mousedown touchstart', function () {
+      if (self.$element.is(':visible')) {
+        self._hide();
+      }
     });
-  }, 10);
+  }, 16);
 };
 
-Palette.prototype.hide = function (callback) {
+Palette.prototype._hide = function () {
+  console.log('hide');
   this.$element.hide();
 };
 
-Palette.prototype.position = function () {
+Palette.prototype._position = function () {
   var anchorButton = this.anchor && this.ui.getButton(this.anchor);
   if (!anchorButton) {
     return;

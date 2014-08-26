@@ -54,17 +54,16 @@ $icons: 'Draw Tool Icons', Arial, sans-serif;
     -ms-user-select: none;
 
     &:hover {
-      background: #2e7abc;
+      background: #3778AF;
       cursor: pointer;
     }
 
     &.dt-active {
-      background: #2e75b3;
+      background: #245d8e;
     }
 
     &.dt-locked {
-      background: #60819d;
-      border-color: dimgray;
+      background: #839CB1;
       cursor: default;
     }
 

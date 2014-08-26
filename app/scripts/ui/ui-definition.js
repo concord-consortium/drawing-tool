@@ -1,6 +1,7 @@
-var StrokeButton = require('scripts/ui/stroke-button');
-var FillButton   = require('scripts/ui/fill-button');
-var ColorButton  = require('scripts/ui/color-button');
+var StrokeButton    = require('scripts/ui/stroke-button');
+var FillButton      = require('scripts/ui/fill-button');
+var ColorButton     = require('scripts/ui/color-button');
+var LineWidthButton = require('scripts/ui/line-width-button');
 
 var COLORS = [
   '#efefef',
@@ -12,6 +13,17 @@ var COLORS = [
   '#ae70af',
   '#a9b2b1',
   '#333333'
+];
+
+var STROKE_WIDTHS = [
+  0,
+  1,
+  2,
+  4,
+  8,
+  12,
+  16,
+  20
 ];
 
 var ui = {
@@ -39,6 +51,10 @@ var ui = {
     {
       name: 'fillColors',
       anchor: 'fillColorPalette'
+    },
+    {
+      name: 'strokeWidths',
+      anchor: 'strokeWidthPalette'
     }
   ],
   buttons: [
@@ -56,10 +72,10 @@ var ui = {
       reflectsTools: ['line', 'arrow', 'doubleArrow'],
       palette: 'main',
       onInit: function () {
-        this.setLabel(this.ui.getPaletteActiveButton('lines').getLabel());
+        this.setLabel(this.ui.getFirstPaletteButton('lines').getLabel());
       },
       onClick: function () {
-        this.ui.getPaletteActiveButton('lines').click();
+        this.ui.getFirstPaletteButton('lines').click();
       },
       onLongPress: function () {
         this.ui.togglePalette('lines');
@@ -71,10 +87,10 @@ var ui = {
       reflectsTools: ['rect', 'ellipse', 'square', 'circle'],
       palette: 'main',
       onInit: function () {
-        this.setLabel(this.ui.getPaletteActiveButton('shapes').getLabel());
+        this.setLabel(this.ui.getFirstPaletteButton('shapes').getLabel());
       },
       onClick: function () {
-        this.ui.getPaletteActiveButton('shapes').click();
+        this.ui.getFirstPaletteButton('shapes').click();
       },
       onLongPress: function () {
         this.ui.togglePalette('shapes');
@@ -120,6 +136,15 @@ var ui = {
       },
       onClick: function () {
         this.ui.togglePalette('fillColors');
+      }
+    },
+    {
+      name: 'strokeWidthPalette',
+      label: 'w',
+      classes: 'dt-expand',
+      palette: 'main',
+      onClick: function () {
+        this.ui.togglePalette('strokeWidths');
       }
     },
     {
@@ -203,6 +228,14 @@ COLORS.forEach(function (color) {
     color: color,
     type: 'fill',
     palette: 'fillColors'
+  });
+});
+
+STROKE_WIDTHS.forEach(function (width) {
+  ui.buttons.push({
+    buttonClass: LineWidthButton,
+    width: width,
+    palette: 'strokeWidths'
   });
 });
 

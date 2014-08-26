@@ -15,7 +15,7 @@ var DEF_OPTIONS = {
 
 var DEF_STATE = {
   stroke: '#333',
-  strokeWidth: 10,
+  strokeWidth: 8,
   fill: ""
 };
 
@@ -62,6 +62,8 @@ function DrawingTool(selector, options, settings) {
   // Adds support for multitouch support (pinching resize, two finger rotate, etc)
   multitouchSupport(this.canvas);
 
+  // Note that at the beginning we will emmit two events - state:changed and tool:changed.
+  this._fireStateChange();
   this.chooseTool('select');
 }
 
@@ -185,14 +187,21 @@ DrawingTool.prototype.setFillColor = function (color) {
 
 DrawingTool.prototype.setSelectionStrokeColor = function (color) {
   this._forEverySelectedObject(function (obj) {
-    this._setObjectColor(obj, 'stroke', color);
+    this._setObjectProp(obj, 'stroke', color);
   }.bind(this));
   this.canvas.renderAll();
 };
 
 DrawingTool.prototype.setSelectionFillColor = function (color) {
   this._forEverySelectedObject(function (obj) {
-    this._setObjectColor(obj, 'fill', color);
+    this._setObjectProp(obj, 'fill', color);
+  }.bind(this));
+  this.canvas.renderAll();
+};
+
+DrawingTool.prototype.setSelectionStrokeWidth = function (width) {
+  this._forEverySelectedObject(function (obj) {
+    this._setObjectProp(obj, 'strokeWidth', width);
   }.bind(this));
   this.canvas.renderAll();
 };
@@ -205,15 +214,19 @@ DrawingTool.prototype._forEverySelectedObject = function (callback) {
   }
 };
 
-DrawingTool.prototype._setObjectColor = function (object, type, color) {
+DrawingTool.prototype._setObjectProp = function (object, type, value) {
   if (object.type === 'i-text') {
     // Special case for text. We assume that text color is defined by 'stroke', not fill.
     if (type === 'stroke') {
-      object.set('fill', color);
+      type = 'fill';
+    } else if (type === 'fill') {
+      return;
+    } else if (type === 'strokeWidth') {
+      type = 'fontSize';
+      value = value * 4;
     }
-    return;
   }
-  object.set(type, color);
+  object.set(type, value);
 };
 
 /**

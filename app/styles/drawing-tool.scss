@@ -5,6 +5,7 @@ $buttonLineHeight: 50px;
 $buttonColor: #3e8acc;
 
 $icons: 'Draw Tool Icons', Arial, sans-serif;
+$text: Arial, sans-serif;
 
 @font-face {
   font-family: 'Draw Tool Icons';
@@ -75,6 +76,23 @@ $icons: 'Draw Tool Icons', Arial, sans-serif;
       position: absolute;
       left: 11px;
       top: 11px;
+    }
+
+    .dt-line-width-icon {
+      height: 28px;
+      background: #fff;
+      margin: 8px auto;
+
+      &.dt-no-stroke {
+        width: 1px;
+        &:after {
+          content: 'L';
+          color: #e66665;
+          position: absolute;
+          left: 5px;
+          top: 2px;
+        }
+      }
     }
   }
 

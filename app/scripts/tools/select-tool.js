@@ -32,6 +32,7 @@ SelectionTool.BASIC_SELECTION_PROPERTIES = BASIC_SELECTION_PROPERTIES;
 SelectionTool.prototype.activate = function () {
   SelectionTool.super.activate.call(this);
   this.setSelectable(true);
+  this.selectLastObject();
 };
 
 SelectionTool.prototype.deactivate = function () {
@@ -45,6 +46,13 @@ SelectionTool.prototype.setSelectable = function (selectable) {
   var items = this.canvas.getObjects();
   for (var i = items.length - 1; i >= 0; i--) {
     items[i].selectable = selectable;
+  }
+};
+
+SelectionTool.prototype.selectLastObject = function () {
+  var objects = this.canvas.getObjects();
+  if (objects.length > 0) {
+    this.canvas.setActiveObject(objects[objects.length - 1]);
   }
 };
 

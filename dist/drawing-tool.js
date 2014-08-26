@@ -91,9 +91,15 @@
   globals.require.brunch = true;
 })();
 require.register("scripts/drawing-tool", function(exports, require, module) {
+var SelectionTool     = require('scripts/tools/select-tool');
+var LineTool          = require('scripts/tools/shape-tools/line-tool');
+var BasicShapeTool    = require('scripts/tools/shape-tools/basic-shape-tool');
+var FreeDrawTool      = require('scripts/tools/shape-tools/free-draw');
+var TextTool          = require('scripts/tools/shape-tools/text-tool');
+var DeleteTool        = require('scripts/tools/delete-tool');
+var UIManager         = require('scripts/ui/ui-manager');
 var rescale2resize    = require('scripts/fabric-extensions/rescale-2-resize');
 var multitouchSupport = require('scripts/fabric-extensions/multi-touch-support');
-var UI                = require('scripts/ui');
 
 var DEF_OPTIONS = {
   width: 700,
@@ -101,10 +107,14 @@ var DEF_OPTIONS = {
 };
 
 var DEF_STATE = {
-  // stroke: "rgba(100,200,200,.75)",
-  stroke: 'black',
-  strokeWidth: 10,
+  stroke: '#333',
+  strokeWidth: 8,
   fill: ""
+};
+
+var EVENTS = {
+  STATE_CHANGED: 'state:changed',
+  TOOL_CHANGED: 'tool:changed'
 };
 
 // Note that some object properties aren't serialized by default by FabricJS.
@@ -123,22 +133,31 @@ var ADDITIONAL_PROPS_TO_SERIALIZE = ['lockUniScaling'];
  */
 function DrawingTool(selector, options, settings) {
   this.selector = selector;
+
   this.options = $.extend(true, {}, DEF_OPTIONS, options);
-
   this.state = $.extend(true, {}, DEF_STATE, settings);
-  this._stateListeners = [];
 
-  this.tools = {};
+  this._dispatch = new EventEmitter2({
+    wildcard: true,
+    newListener: false,
+    maxListeners: 100,
+    delimiter: ':'
+  });
 
-  // TODO: decouple this part? Seems very intertwined
-  this.ui = new UI(this, selector, this.options); // initialize the UI and containers
-  this._initFabricJS(); // fill the container intialized above with the fabricjs canvas
-  this.ui.initTools(); // initialize tools after fabricjs has been constructed
+  this._initDOM();
+  this._initFabricJS();
+  this._initTools();
+
+  new UIManager(this);
 
   // Apply a fix that changes native FabricJS rescaling behavior into resizing.
   rescale2resize(this.canvas);
   // Adds support for multitouch support (pinching resize, two finger rotate, etc)
   multitouchSupport(this.canvas);
+
+  // Note that at the beginning we will emmit two events - state:changed and tool:changed.
+  this._fireStateChange();
+  this.chooseTool('select');
 }
 
 /**
@@ -231,8 +250,7 @@ DrawingTool.prototype.load = function (jsonString) {
  */
 DrawingTool.prototype.setStrokeColor = function (color) {
   this.state.stroke = color;
-  // TODO: utilize the `changedKey` and `changedVal` fields
-  this._fireStateEvent();
+  this._fireStateChange();
 };
 
 /**
@@ -244,7 +262,7 @@ DrawingTool.prototype.setStrokeColor = function (color) {
  */
 DrawingTool.prototype.setStrokeWidth = function (width) {
   this.state.strokeWidth = width;
-  this._fireStateEvent();
+  this._fireStateChange();
 };
 
 /**
@@ -255,9 +273,53 @@ DrawingTool.prototype.setStrokeWidth = function (width) {
  *  - color: can be in any web-friendly format
  *          ex: literal-'black', hex-'#444444', or rgba-'rgba(100,200,200,.75)'
  */
-DrawingTool.prototype.setFill = function (color) {
+DrawingTool.prototype.setFillColor = function (color) {
   this.state.fill = color;
-  this._fireStateEvent();
+  this._fireStateChange();
+};
+
+DrawingTool.prototype.setSelectionStrokeColor = function (color) {
+  this._forEverySelectedObject(function (obj) {
+    this._setObjectProp(obj, 'stroke', color);
+  }.bind(this));
+  this.canvas.renderAll();
+};
+
+DrawingTool.prototype.setSelectionFillColor = function (color) {
+  this._forEverySelectedObject(function (obj) {
+    this._setObjectProp(obj, 'fill', color);
+  }.bind(this));
+  this.canvas.renderAll();
+};
+
+DrawingTool.prototype.setSelectionStrokeWidth = function (width) {
+  this._forEverySelectedObject(function (obj) {
+    this._setObjectProp(obj, 'strokeWidth', width);
+  }.bind(this));
+  this.canvas.renderAll();
+};
+
+DrawingTool.prototype._forEverySelectedObject = function (callback) {
+  if (this.canvas.getActiveObject()) {
+    callback(this.canvas.getActiveObject());
+  } else if (this.canvas.getActiveGroup()) {
+    this.canvas.getActiveGroup().objects.forEach(callback);
+  }
+};
+
+DrawingTool.prototype._setObjectProp = function (object, type, value) {
+  if (object.type === 'i-text') {
+    // Special case for text. We assume that text color is defined by 'stroke', not fill.
+    if (type === 'stroke') {
+      type = 'fill';
+    } else if (type === 'fill') {
+      return;
+    } else if (type === 'strokeWidth') {
+      type = 'fontSize';
+      value = value * 4;
+    }
+  }
+  object.set(type, value);
 };
 
 /**
@@ -315,25 +377,63 @@ DrawingTool.prototype.calcOffset = function () {
 };
 
 /**
- * Changes the current tool by 'clicking' on the button for the tool.
+ * Changes the current tool.
  *
  * parameters:
  *  - toolSelector: selector for the tool as sepecified in the contruction of the tool
  */
-DrawingTool.prototype.chooseTool = function (toolSelector){
-  $(this.selector).find('.'+toolSelector).click();
+DrawingTool.prototype.chooseTool = function (toolSelector) {
+  var newTool = this.tools[toolSelector];
+  if (!newTool) {
+    return;
+  }
+
+  if (this.currentTool !== undefined &&
+      this.currentTool.selector === toolSelector) {
+    // Some tools may implement .activateAgain() method and
+    // enable some special behavior.
+    this.currentTool.activateAgain();
+    return;
+  }
+
+  if (newTool.singleUse === true) {
+    // special single use tools should not be set as the current tool
+    newTool.use();
+    return;
+  }
+
+  // activate and deactivate the new and old tools
+  if (this.currentTool !== undefined) {
+    this.currentTool.setActive(false);
+  }
+
+  this.currentTool = newTool;
+  this.currentTool.setActive(true);
+
+  this._dispatch.emit(EVENTS.TOOL_CHANGED, toolSelector);
+
+  this.canvas.renderAll();
 };
 
 /**
  * Changing the current tool out of this current tool to the default tool
  * aka 'select' tool
- *
- * parameters:
- *  - oldToolSelector: selector of the old tool (currently unused data)
  */
-//TODO: add default as drawingTool property
-DrawingTool.prototype.changeOutOfTool = function (oldToolSelector){
+DrawingTool.prototype.changeOutOfTool = function () {
   this.chooseTool('select');
+};
+
+
+DrawingTool.prototype.on = function () {
+  this._dispatch.on.apply(this._dispatch, arguments);
+};
+
+DrawingTool.prototype.off = function (name, handler) {
+  this._dispatch.off.apply(this._dispatch, arguments);
+};
+
+DrawingTool.prototype._fireStateChange = function () {
+  this._dispatch.emit(EVENTS.STATE_CHANGED, this.state);
 };
 
 DrawingTool.prototype._setBackgroundImage = function (imageSrc, options, backgroundLoadedCallback) {
@@ -374,46 +474,37 @@ DrawingTool.prototype._setBackgroundImage = function (imageSrc, options, backgro
   }
 };
 
-/**
- * Add a state listener to listen for changes in the `DrawingTool.state` object
- *
- * parameters:
- *  - stateHandler: listener function that is called when an event is fired
- */
-DrawingTool.prototype.addStateListener = function (stateHandler) {
-  this._stateListeners.push(stateHandler);
-}
+DrawingTool.prototype._initTools = function () {
+  // Initialize all the tools, they add themselves to the tools hash.
+  this.tools = {
+    select:      new SelectionTool("Selection Tool", this),
+    line:        new LineTool("Line Tool", this),
+    arrow:       new LineTool("Arrow Tool", this, "arrow"),
+    doubleArrow: new LineTool("Double Arrow Tool", this, "arrow", {doubleArrowhead: true}),
+    rect:        new BasicShapeTool("Rectangle Tool", this, "rect"),
+    ellipse:     new BasicShapeTool("Ellipse Tool", this, "ellipse"),
+    square:      new BasicShapeTool("Square Tool", this, "square"),
+    circle:      new BasicShapeTool("Circle Tool", this, "circle"),
+    free:        new FreeDrawTool("Free Draw Tool", this),
+    text:        new TextTool("Text Tool", this),
+    trash:       new DeleteTool("Delete Tool", this)
+  };
+};
 
-/**
- * Removes a state listener
- *
- * parameters:
- *  - stateHandler: listener to be removed
- */
-DrawingTool.prototype.removeStateListener = function (stateHandler) {
-  for (var i = 0; i < this._stateListeners.length; i++) {
-    if (this._stateListeners[i] === stateHandler) {
-      return this._stateListeners.splice(i, 1);
-    }
-  }
-  return false;
-}
-
-DrawingTool.prototype._fireStateEvent = function (changedKey, val) {
-  var e = {};
-  // TODO: implement this functionality in the actual setters in drawing-tool
-  if (arguments.length > 0) {
-    e['changedKey'] = changedKey;
-    e['changedValue'] = val;
-  }
-  for (var i = 0; i < this._stateListeners.length; i++) {
-    // console.log(this._stateListeners[i]);
-    this._stateListeners[i].call(this, e);
-  }
-}
+DrawingTool.prototype._initDOM = function () {
+  $(this.selector).empty();
+  this.$element = $('<div class="dt-container">').appendTo(this.selector);
+  var $canvasContainer = $('<div class="dt-canvas-container">')
+    .attr('tabindex', 0) // makes the canvas focusable for keyboard events
+    .appendTo(this.$element);
+  this.$canvas = $('<canvas>')
+    .attr('width', this.options.width + 'px')
+    .attr('height', this.options.height + 'px')
+    .appendTo($canvasContainer);
+};
 
 DrawingTool.prototype._initFabricJS = function () {
-  this.canvas = new fabric.Canvas(this.ui.$canvas[0]);
+  this.canvas = new fabric.Canvas(this.$canvas[0]);
   // Target find would be more tolerant on touch devices.
   if (fabric.isTouchSupported) {
     this.canvas.perPixelTargetFind = false;
@@ -1116,6 +1207,25 @@ module.exports = function inherit(Child, Parent) {
 
 });
 
+require.register("scripts/jquery-longpress", function(exports, require, module) {
+(function ($) {
+
+  $.fn.longPress = function(listener, timeout) {
+    return this.on('mousedown touchstart', function (e) {
+      var timer;
+      timer = setTimeout(function () {
+        listener.call(this, e);
+      }, timeout || 150);
+      $(window).one('mouseup touchend touchcancel touchleave', function() {
+        clearTimeout(timer);
+      });
+    });
+  };
+
+})(jQuery);
+
+});
+
 require.register("scripts/tool", function(exports, require, module) {
 /**
  * Tool "Class"
@@ -1125,15 +1235,12 @@ require.register("scripts/tool", function(exports, require, module) {
  *  - selector: shorter 'code' for the tool, used in the corresponding HTML element
  *  - drawTool: the master node that this tool belongs too
  */
-function Tool(name, selector, drawTool) {
+function Tool(name, drawTool) {
   this.name = name || "Tool";
-  this.selector = selector || "";
   this.master = drawTool;
   this.canvas = drawTool.canvas;
   this.active = false;
   this.singleUse = false;
-
-  this.master.tools[selector] = this;
 
   // fabric.js listeners of the tool
   this._listeners = [];
@@ -1164,9 +1271,6 @@ Tool.prototype.activate = function () {
     var action = this._listeners[i].action;
     this.canvas.on(trigger, action);
   }
-  this._fireStateEvent();
-  // TODO: add this to the UI class
-  // this.$element.addClass('dt-active');
 };
 
 // This function will be called when user tries to activate a tool that
@@ -1184,12 +1288,10 @@ Tool.prototype.deactivate = function () {
     var action = this._listeners[i].action;
     this.canvas.off(trigger);
   }
-  this._fireStateEvent();
 };
 
 // A tool's event listeners are attached to the `fabricjs` canvas
-// and allow the tool to interact with a user's clicks and drags etc
-
+// and allow the tool to interact with a user's clicks and drags etc.
 // Add the tool's event listeners to a list that will be added
 // to the canvas upon the tool's activation
 Tool.prototype.addEventListener = function (eventTrigger, eventHandler) {
@@ -1204,104 +1306,12 @@ Tool.prototype.addEventListener = function (eventTrigger, eventHandler) {
 Tool.prototype.removeEventListener = function (trigger) {
   for (var i = 0; i < this._listeners.length; i++) {
     if (trigger == this._listeners[i].trigger){
-      return this._listeners.splice(i,1);
+      return this._listeners.splice(i, 1);
     }
-  }
-};
-
-// State events(listeners) are to monitor the state of the tool itself (active, locked etc)
-// It allows the UI to keep track of the tool itself.
-
-// Adds a state listener to the tool
-Tool.prototype.addStateListener = function (stateHandler) {
-  this._stateListeners.push(stateHandler);
-};
-
-// Removes a state listener from the tool
-Tool.prototype.removeStateListener = function (stateHandler) {
-  for (var i = 0; i < this._stateListeners.length; i++) {
-    if (this._stateListeners[i] === stateHandler) {
-      return this._stateListeners.splice(i, 1);
-    }
-  }
-  return false;
-};
-
-Tool.prototype._fireStateEvent = function (extra, self) {
-  var e = {
-    source: self || this,
-    active: this.active
-  };
-  for (var item in extra) {
-    e[item] = extra[item];
-  }
-  for (var i = 0; i < this._stateListeners.length; i++) {
-    // console.log(this._stateListeners[i]);
-    this._stateListeners[i].call(this.master.ui, e);
   }
 };
 
 module.exports = Tool;
-
-});
-
-require.register("scripts/tools/color-tool", function(exports, require, module) {
-var inherit = require('scripts/inherit');
-var Tool    = require('scripts/tool');
-
-/*
- * `ColorTool` is a single use (see `tool.js`'s `singleUse` property')
- * tool that sets property (specified by `type`) of the selected object(s)
- * to a certain color (defined by `colorCode`).
- *
- * constructor parameters:
- *  - colorName: human-readable name for the color
- *  - type: name of the parameter to be changed
- *          (will either be 'stroke' or 'fill')
- *          default: 'stroke'
- *  - colorCode: the actual color (in hex or rgba etc)
- *          NOTE: this string is used to compare equivilancies
- *  - drawTool: the 'master'
- */
-function ColorTool(name, type, colorCode, drawTool) {
-  this.type = type || "stroke";
-  Tool.call(this, name, name, drawTool);
-
-  this.color = colorCode;
-  this.singleUse = true;
-}
-
-inherit(ColorTool, Tool);
-
-/**
- * `ColorTool`'s functionality.
- * If any objects are currently selected, their property (defined by `ColorTool.type`)
- * is set to the color of this ColorTool (`ColorTool.color`).
- * This function also sets corresponding poperty of `drawingTool.state`.
- */
-ColorTool.prototype.use = function () {
-  if (this.master.canvas.getActiveObject()) {
-    var obj = this.master.canvas.getActiveObject();
-    obj.set(this.type, this.color);
-  } else if (this.master.canvas.getActiveGroup()) {
-    var objs = this.master.canvas.getActiveGroup().objects;
-    var i = 0;
-    for (; i < objs.length; i++) {
-      objs[i].set(this.type, this.color);
-    }
-  }
-
-  this.canvas.renderAll(false);
-
-  // set color of property of state object
-  if (this.type === 'stroke') {
-    this.master.setStrokeColor(this.color);
-  } else if (this.type === 'fill') {
-    this.master.setFill(this.color);
-  } else {console.warn("Unrecognized color type!");}
-};
-
-module.exports = ColorTool;
 
 });
 
@@ -1313,18 +1323,18 @@ var Tool     = require('scripts/tool');
  * Single use tool that deletes the currently selected object(s).
  * This tool also captures the backspace/delete key and is triggered that way as well.
  */
-function DeleteTool(name, selector, drawTool) {
-  Tool.call(this, name, selector, drawTool);
+function DeleteTool(name, drawTool) {
+  Tool.call(this, name, drawTool);
 
   this.singleUse = true;
 
   // delete the selected object(s) with the backspace key
   // see: https://www.pivotaltracker.com/story/show/74415780
   var self = this;
-  $('.dt-canvas-container').keydown(function(e) {
+  drawTool.$element.keydown(function(e) {
     if (e.keyCode === 8) {
       e.preventDefault();
-      self._delete();
+      self.use();
     }
   });
 }
@@ -1339,16 +1349,11 @@ DeleteTool.prototype.use = function () {
   if (canvas.getActiveObject()) {
     canvas.remove(canvas.getActiveObject());
   } else if (canvas.getActiveGroup()) {
-    canvas.getActiveGroup().forEachObject(function(o){ canvas.remove(o); });
+    canvas.getActiveGroup().forEachObject(function (o) {
+      canvas.remove(o);
+    });
     canvas.discardActiveGroup().renderAll();
   }
-  // Alternate UI pattern for 'inactive delete tool'
-  // else if (canvas.getObjects().length > 0) {
-  //   // OPTION 1: REMOVES the most recently created object
-  //   // canvas.remove(canvas.item(canvas.getObjects().length - 1));
-  //   // OPTION 2: SELECTS the most recently created object
-  //   // canvas.setActiveObject(canvas.item(canvas.getObjects().length - 1));
-  // }
 };
 
 module.exports = DeleteTool;
@@ -1370,8 +1375,8 @@ var BASIC_SELECTION_PROPERTIES = {
  * When activated it puts the canvas into a selectable state so objects
  * can be moved and manipulated.
  */
-function SelectionTool(name, selector, drawTool) {
-  Tool.call(this, name, selector, drawTool);
+function SelectionTool(name, drawTool) {
+  Tool.call(this, name, drawTool);
 
   this.canvas.on("object:selected", function (opt) {
     opt.target.set(BASIC_SELECTION_PROPERTIES);
@@ -1390,6 +1395,7 @@ SelectionTool.BASIC_SELECTION_PROPERTIES = BASIC_SELECTION_PROPERTIES;
 SelectionTool.prototype.activate = function () {
   SelectionTool.super.activate.call(this);
   this.setSelectable(true);
+  this.selectLastObject();
 };
 
 SelectionTool.prototype.deactivate = function () {
@@ -1406,6 +1412,13 @@ SelectionTool.prototype.setSelectable = function (selectable) {
   }
 };
 
+SelectionTool.prototype.selectLastObject = function () {
+  var objects = this.canvas.getObjects();
+  if (objects.length > 0) {
+    this.canvas.setActiveObject(objects[objects.length - 1]);
+  }
+};
+
 module.exports = SelectionTool;
 
 });
@@ -1415,8 +1428,8 @@ var inherit = require('scripts/inherit');
 var Tool    = require('scripts/tool');
 var Util    = require('scripts/util');
 
-function ShapeTool(name, selector, drawTool) {
-  Tool.call(this, name, selector, drawTool);
+function ShapeTool(name, drawTool) {
+  Tool.call(this, name, drawTool);
 
   var self = this;
   this.addEventListener("mouse:down", function (e) { self.mouseDown(e); });
@@ -1456,7 +1469,7 @@ ShapeTool.prototype.activateAgain = function () {
 
 ShapeTool.prototype.exit = function () {
   this.down = false;
-  this.master.changeOutOfTool(this.selector);
+  this.master.changeOutOfTool();
   // Changes cursor back to default
   // see https://www.pivotaltracker.com/n/projects/1103712/stories/73647372
   this.canvas.defaultCursor = "default";
@@ -1549,8 +1562,8 @@ var SUPPORTED_SHAPES = {
   }
 };
 
-function BasicShapeTool(name, selector, drawTool, type) {
-  ShapeTool.call(this, name, selector, drawTool);
+function BasicShapeTool(name, drawTool, type) {
+  ShapeTool.call(this, name, drawTool);
 
   this._type = SUPPORTED_SHAPES[type];
   this._shapeKlass = fabric.util.getKlass(this._type.fabricType);
@@ -1656,21 +1669,21 @@ require.register("scripts/tools/shape-tools/free-draw", function(exports, requir
 var inherit   = require('scripts/inherit');
 var ShapeTool = require('scripts/tools/shape-tool');
 
-function FreeDrawTool(name, selector, drawTool) {
-  ShapeTool.call(this, name, selector, drawTool);
+function FreeDrawTool(name, drawTool) {
+  ShapeTool.call(this, name, drawTool);
 
   var self = this;
 
   self.canvas.freeDrawingBrush.color = this.master.state.stroke;
   self.canvas.freeDrawingBrush.width = this.master.state.strokeWidth;
 
-  this.master.addStateListener(function(e) {
+  this.master.on('state:changed', function(e) {
     self.canvas.freeDrawingBrush.color = self.master.state.stroke;
     self.canvas.freeDrawingBrush.width = self.master.state.strokeWidth;
   });
 
-  this.addEventListener("mouse:down", function (e) { self.mouseDown(e); });
-  this.addEventListener("mouse:up", function (e) { self.mouseUp(e); });
+  this.addEventListener('mouse:down', function (e) { self.mouseDown(e); });
+  this.addEventListener('mouse:up', function (e) { self.mouseUp(e); });
 }
 
 inherit(FreeDrawTool, ShapeTool);
@@ -1730,8 +1743,8 @@ require('scripts/fabric-extensions/arrow');
 // as part of this code base, not FabricJS itself). Pass 'lineType' argument
 // (e.g. "line" or "arrow").
 
-function LineTool(name, selector, drawTool, lineType, lineOptions) {
-  ShapeTool.call(this, name, selector, drawTool);
+function LineTool(name, drawTool, lineType, lineOptions) {
+  ShapeTool.call(this, name, drawTool);
 
   lineType = lineType || 'line';
   this._lineKlass = fabric.util.getKlass(lineType);
@@ -1801,11 +1814,11 @@ module.exports = LineTool;
 });
 
 require.register("scripts/tools/shape-tools/text-tool", function(exports, require, module) {
-var inherit                 = require('scripts/inherit');
-var ShapeTool               = require('scripts/tools/shape-tool');
+var inherit   = require('scripts/inherit');
+var ShapeTool = require('scripts/tools/shape-tool');
 
-function TextTool(name, selector, drawTool) {
-  ShapeTool.call(this, name, selector, drawTool);
+function TextTool(name, drawTool) {
+  ShapeTool.call(this, name, drawTool);
 
   this.exitTextEditingOnFirstClick();
 }
@@ -1819,6 +1832,12 @@ TextTool.prototype.mouseDown = function (opt) {
 
   TextTool.super.mouseDown.call(this, opt);
 
+  // Special behaviour of text tool - single click lets you edit existing text.
+  var target = this.canvas.findTarget(opt.e);
+  if (target && target.type === 'i-text') {
+    this.editText(target, opt.e);
+    return;
+  }
   // See #exitTextEditingOnFirstClick method.
   if (!this.active || opt.e._dt_doNotCreateNewTextObj) return;
 
@@ -1837,9 +1856,7 @@ TextTool.prototype.mouseDown = function (opt) {
   });
   this.actionComplete(text);
   this.canvas.add(text);
-  this.canvas.setActiveObject(text);
-  text.enterEditing();
-  this.exitTextEditingOnFirstClick();
+  this.editText(text, opt.e);
 };
 
 TextTool.prototype.deactivate = function () {
@@ -1854,6 +1871,13 @@ TextTool.prototype.exitTextEditing = function () {
   if (activeObj && activeObj.isEditing) {
     this.canvas.deactivateAllWithDispatch();
   }
+};
+
+TextTool.prototype.editText = function (text, e) {
+  this.canvas.setActiveObject(text);
+  text.enterEditing();
+  text.setCursorByClick(e);
+  this.exitTextEditingOnFirstClick();
 };
 
 TextTool.prototype.exitTextEditingOnFirstClick = function () {
@@ -1887,470 +1911,630 @@ module.exports = TextTool;
 
 });
 
-require.register("scripts/ui", function(exports, require, module) {
-var Tool                 = require('scripts/tool');
-var SelectionTool        = require('scripts/tools/select-tool');
-var LineTool             = require('scripts/tools/shape-tools/line-tool');
-var BasicShapeTool       = require('scripts/tools/shape-tools/basic-shape-tool');
-var FreeDrawTool         = require('scripts/tools/shape-tools/free-draw');
-var TextTool             = require('scripts/tools/shape-tools/text-tool');
-var DeleteTool           = require('scripts/tools/delete-tool');
-var ColorTool            = require('scripts/tools/color-tool');
-var BtnGroup             = require('scripts/ui/btn-group');
-var generateColorPalette = require('scripts/ui/color-palette');
+require.register("scripts/ui/basic-button", function(exports, require, module) {
+require('scripts/jquery-longpress');
 
-var UI_STRUCT = {
-  // Main palette (vertical).
-  main:   ['select', '-lines', '-shapes', 'free', 'text', 'trash'],
-  // Sub-palettes (horizontal).
-  shapes: ['rect', 'ellipse', 'square', 'circle'],
-  lines:  ['line', 'arrow', 'doubleArrow']
-};
+function BasicButton(options, ui, drawingTool) {
+  this.ui = ui;
+  this.dt = drawingTool;
 
-var LABELS = {
-  select: 's',
-  line:   'l',
-  arrow:  'A',
-  doubleArrow: 'D',
-  rect: 'R',
-  ellipse: 'E',
-  square: 'S',
-  circle: 'C',
-  free: 'F',
-  text: 'T',
-  trash: 'd'
-};
+  this.name = options.name;
+  this.palette = options.palette;
+  // Note that this will be called later by UI manager.
+  this.onInit = options.onInit;
 
-function UI (master, selector, options) {
-  this.master = master;
-  this.options = options;
+  this.$element = $('<div>')
+    .addClass('dt-btn')
+    .addClass(options.classes)
+    .appendTo(ui.getPalette(options.palette).$element);
 
-  this._initUI(selector);
+  this.$label = $('<span>')
+    .text(options.label)
+    .appendTo(this.$element);
+
+  if (options.onClick) {
+    this.$element.on('mousedown touchstart', function (e) {
+      options.onClick.call(this, e, ui, drawingTool);
+    }.bind(this));
+  }
+
+  if (options.onLongPress) {
+    this.$element.longPress(function (e) {
+      options.onLongPress.call(this, e, ui, drawingTool);
+    }.bind(this));
+  }
+
+  if (options.onStateChange) {
+    drawingTool.on('state:changed', function (state) {
+      options.onStateChange.call(this, state);
+    }.bind(this));
+  }
+
+  if (options.onToolChange) {
+    drawingTool.on('tool:changed', function (state) {
+      options.onToolChange.call(this, state);
+    }.bind(this));
+  }
+
+  if (options.activatesTool) {
+    this.$element.on('mousedown touchstart', function (e) {
+      drawingTool.chooseTool(options.activatesTool);
+    }.bind(this));
+
+    drawingTool.on('tool:changed', function (toolName) {
+      if (toolName === options.activatesTool) {
+        this.$element.addClass('dt-active');
+      } else {
+        this.$element.removeClass('dt-active');
+      }
+    }.bind(this));
+  }
+
+  if (options.reflectsTools) {
+    drawingTool.on('tool:changed', function (toolName) {
+      if (options.reflectsTools.indexOf(toolName) !== -1) {
+        this.setActive(true);
+        this.setLabel(ui.getButton(toolName).getLabel());
+      } else {
+        this.setActive(false);
+        this.$element.removeClass('dt-active');
+      }
+    }.bind(this));
+  }
 }
 
-// initialize tools, config palettes, set labels, and setup trash behavior
-UI.prototype.initTools = function () {
-
-  // Initialize all the tools, they add themselves to the master.tools list
-  var selectionTool = new SelectionTool("Selection Tool", "select", this.master);
-  var lineTool = new LineTool("Line Tool", "line", this.master);
-  var arrowTool = new LineTool("Arrow Tool", "arrow", this.master, "arrow");
-  var doubleArrowTool = new LineTool("Double Arrow Tool", "doubleArrow", this.master, "arrow", {doubleArrowhead: true});
-  var rectangleTool = new BasicShapeTool("Rectangle Tool", "rect", this.master, "rect");
-  var ellipseTool = new BasicShapeTool("Ellipse Tool", "ellipse", this.master, "ellipse");
-  var squareTool = new BasicShapeTool("Square Tool", "square", this.master, "square");
-  var circleTool = new BasicShapeTool("Circle Tool", "circle", this.master, "circle");
-  var freeDrawTool = new FreeDrawTool("Free Draw Tool", "free", this.master);
-  var textTool = new TextTool("Text Tool", "text", this.master);
-  var deleteTool = new DeleteTool("Delete Tool", "trash", this.master);
-
-  // tool palettes
-  this._initToolUI(UI_STRUCT);
-  this._initColorTools();
-  this._initButtonUpdates(); // set up the listeners
-
-  // TODO: rewrite/refactor this with classes and css like in the
-  // [font-icons branch](https://github.com/concord-consortium/drawing-tool/tree/font-icons)
-
-  // set the labels
-  this.setLabel(selectionTool.selector,   "s");
-  this.setLabel(lineTool.selector,        "L");
-  this.setLabel(arrowTool.selector,       "A");
-  this.setLabel(doubleArrowTool.selector, "D");
-  this.setLabel(rectangleTool.selector,   "R");
-  this.setLabel(ellipseTool.selector,     "E");
-  this.setLabel(squareTool.selector,      "S");
-  this.setLabel(circleTool.selector,      "C");
-  this.setLabel(freeDrawTool.selector,    "F");
-  this.setLabel(textTool.selector,        "T");
-  this.setLabel(deleteTool.selector,      "d");
-
-  // show/hide trash button when objects are selected/deselected
-  var trash = this.$buttons.trash;
-  trash.addClass('dt-locked');
-  this.master.canvas.on("object:selected", function () {
-    trash.removeClass('dt-locked');
-  });
-  this.master.canvas.on("selection:cleared", function () {
-    trash.addClass('dt-locked');
-  });
-
-  this.master.chooseTool('select');
-  this._updateMainPalette();
-  this.palettes.main.$palette.show();
+BasicButton.prototype.setLabel = function (label) {
+  this.$label.text(label);
 };
 
-// Note: this function is bypassed in the _paletteButtonClicked function
-UI.prototype.setLabel = function (toolId, label) {
-  if (toolId.charAt(0) === '-') {
-    var id = toolId.substring(1);
-    this.$tools.find('.dt-target-'+id).find('span').text(label);
+BasicButton.prototype.getLabel = function () {
+  return this.$label.text();
+};
+
+BasicButton.prototype.click = function () {
+  this.$element.mousedown();
+};
+
+BasicButton.prototype.setActive = function (v) {
+  if (v) {
+    this.$element.addClass('dt-active');
   } else {
-    this.$tools.find("."+toolId).find('span').text(label);
+    this.$element.removeClass('dt-active');
   }
 };
 
-UI.prototype._initButtonUpdates = function () {
-  // handler that updates UI when the internal tool state changes
-  for (var toolId in this.master.tools) {
-    this.master.tools[toolId].addStateListener(this.updateUI);
-  }
-
-  // handler that updates internal state when the UI changes
-  var self = this;
-  this.$tools.find('.dt-btn').on('click touchstart', function (e) {
-    self._uiClicked(this);
-    e.preventDefault();
-  });
-};
-
-// listens for a click in the tools area and delivers the action to
-// the proper recipient (either `_paletteButtonClicked` or `_toolButtonClicked`)
-UI.prototype._uiClicked = function (target) {
-  if ($(target).data('dt-btn-type') === 'palette') {
-    this._paletteButtonClicked($(target).data('dt-target-id'));
+BasicButton.prototype.setLocked = function (v) {
+  if (v) {
+    this.$element.addClass('dt-locked');
   } else {
-    this._toolButtonClicked($(target).data('dt-target-id'));
+    this.$element.removeClass('dt-locked');
   }
 };
 
-// switches active palette
-UI.prototype._paletteButtonClicked = function (selector) {
-  var oldPalette;
-  var newPalette;
-
-  newPalette = this.palettes[selector];
-  // if the palette's current tool is already selected, don't select again!
-  if (this.master.currentTool.selector !== this.palettes[selector].currentTool) {
-    this.master.chooseTool(this.palettes[selector].currentTool);
-  }
-
-  for (var p in this.palettes) {
-    this._hidePalette(p);
-  }
-
-  newPalette.show();
-};
-
-UI.prototype._updateMainPalette = function (selector) {
-  var self = this;
-  this.palettes.main.$palette.find('.dt-link').each(function () {
-    var $btn = $(this);
-    var paletteName = $btn.data('dt-target-id');
-    var currToolId = self.palettes[paletteName].currentTool;
-    $btn.find('span').text(self.$tools.find('.'+currToolId).find('span').text());
-  });
-};
-
-// Handles all the tool palette clicks and tool changes
-UI.prototype._toolButtonClicked = function (toolSelector) {
-  var newTool = this.master.tools[toolSelector];
-  if (!newTool) {
-    console.warn('Unable to find tool with selector: '+toolSelector);
-    return;
-  }
-
-  if (this.master.currentTool !== undefined &&
-      this.master.currentTool.selector === toolSelector) {
-    // Some tools may implement .activateAgain() method and
-    // enable some special behavior.
-    this.master.currentTool.activateAgain();
-    return;
-  }
-
-  if (newTool.singleUse === true) {
-    // special single use tools should not be set as the current tool
-    newTool.use();
-    return;
-  }
-
-  // activate and deactivate the new and old tools
-  if (this.master.currentTool !== undefined) {
-    this.master.currentTool.setActive(false);
-  }
-
-  this.master.currentTool = newTool;
-  newTool.setActive(true);
-
-  var paletteName = this.$buttons[newTool.selector].parent().data('dt-palette-id');
-  var palette = this.palettes[paletteName];
-  palette.currentTool = newTool.selector;
-  this._updateMainPalette();
-
-  // ??
-  this.master.canvas.renderAll();
-};
-
-UI.prototype._hidePalette = function (name) {
-  // Never hide main palette.
-  if (name === 'main') return;
-  var palette = this.palettes[name];
-  if (!palette.$palette.is(':visible')) return;
-  palette.hide();
-};
-
-// Updates the UI when the internal state changes
-// object e = {source, active: true/false, locked: true/false}
-UI.prototype.updateUI = function (e) {
-  var $element = this.$buttons[e.source.selector];
-  var $paletteAnchor = this.palettes[$element.parent().data('dt-palette-id')].$anchor || $('fake-element');
-
-  if (e.active) {
-    $element.addClass('dt-active');
-    $paletteAnchor.addClass('dt-active');
-  } else {
-    $element.removeClass('dt-active');
-    $paletteAnchor.removeClass('dt-active');
-  }
-
-  if (e.locked) {
-    $element.addClass('dt-locked');
-    $paletteAnchor.addClass('dt-locked');
-  } else {
-    $element.removeClass('dt-locked');
-    $paletteAnchor.removeClass('dt-locked');
-  }
-};
-
-// initializes the UI (divs and canvas size)
-UI.prototype._initUI = function (selector) {
-  $(selector).empty();
-  this.$element = $('<div class="dt-container">').appendTo(selector);
-  this.$tools = $('<div class="dt-tools">')
-    .appendTo(this.$element);
-  var $canvasContainer = $('<div class="dt-canvas-container">')
-    .attr('tabindex', 0) // makes the canvas focusable for keyboard events
-    .appendTo(this.$element);
-  this.$canvas = $('<canvas>')
-    .attr('width', this.options.width + 'px')
-    .attr('height', this.options.height + 'px')
-    .appendTo($canvasContainer);
-};
-
-// initializes all the tools
-UI.prototype._initToolUI = function (palettes) {
-  this.$buttons = {};
-  this.palettes = {};
-
-  for (var palette in palettes) {
-    var buttons = []; // array to be sent to the `BtnGroup` constructor
-    var btnNames = palettes[palette];
-
-    for (var i = 0; i < btnNames.length; i++) {
-      var $btn;
-
-      if (btnNames[i].charAt(0) === '-') {
-        $btn = this._initBtn(btnNames[i], 'palette');
-      } else if (btnNames[i].substring(0, 5) === 'color') {
-        $btn = this._initBtn(btnNames[i], 'color');
-      } else { $btn = this._initBtn(btnNames[i]); }
-
-      buttons[i] = $btn;
-      this.$buttons[btnNames[i]] = $btn;
-    }
-    this.palettes[palette] = new BtnGroup(palette, buttons, this.$buttons['-' + palette]);
-    this.palettes[palette].$palette.appendTo(this.$tools);
-  }
-};
-
-UI.prototype._initColorTools = function () {
-
-  var $strokeBtn = this._initBtn('stroke-color');
-  // $strokeBtn.find('span').text('Q');
-  var $fillBtn = this._initBtn('fill-color');
-  // $fillBtn.find('span').text('X');
-
-  var strokeColorTools = [
-    new ColorTool('color1s', 'stroke', 'black', this.master),
-    new ColorTool('color2s', 'stroke', 'white', this.master),
-    new ColorTool('color3s', 'stroke', 'red', this.master),
-    new ColorTool('color4s', 'stroke', 'blue', this.master),
-    new ColorTool('color5s', 'stroke', 'purple', this.master),
-    new ColorTool('color6s', 'stroke', 'green', this.master),
-    new ColorTool('color7s', 'stroke', 'yellow', this.master),
-    new ColorTool('color8s', 'stroke', 'orange', this.master)
-  ];
-
-  // TODO: implement a "no fill" button
-  var fillColorTools = [
-    new ColorTool('color1f', 'fill', 'black', this.master),
-    new ColorTool('color2f', 'fill', 'white', this.master),
-    new ColorTool('color3f', 'fill', 'red', this.master),
-    new ColorTool('color4f', 'fill', 'blue', this.master),
-    new ColorTool('color5f', 'fill', 'purple', this.master),
-    new ColorTool('color6f', 'fill', 'green', this.master),
-    new ColorTool('color7f', 'fill', 'yellow', this.master),
-    new ColorTool('color8f', 'fill', 'orange', this.master)
-  ];
-
-  var i = 0;
-  var $strokeColorBtns = [];
-  var $fillColorBtns = [];
-  for (i = 0; i < strokeColorTools.length; i++) {
-    $strokeColorBtns.push(this._initBtn(strokeColorTools[i].selector, 'color'));
-  }
-  for (i = 0; i < strokeColorTools.length; i++) {
-    $fillColorBtns.push(this._initBtn(fillColorTools[i].selector, 'color'));
-  }
-  generateColorPalette(this.master, $strokeBtn, $strokeColorBtns, $fillBtn, $fillColorBtns).appendTo(this.$tools);
-};
-
-// initializes each button
-UI.prototype._initBtn = function (toolId, type) {
-  var $element = $('<div class="dt-btn">');
-
-  if (!type) { // normal button
-    $element.addClass(toolId)
-      .data('dt-btn-type', 'tool')
-      .data('dt-target-id', toolId);
-  } else if (type === 'palette') { // button that links to a subpalette
-    $element.data('dt-btn-type', 'palette')
-      .data('dt-target-id', toolId.substring(1))
-      .addClass('dt-expand')
-      .addClass('dt-link');
-  } else if (type === 'color') {
-    $element.data('dt-btn-type', "tool")
-      .data('dt-target-id', toolId)
-      .addClass(toolId)
-      .addClass('dt-target-'+toolId)
-      .addClass('dt-btn-color')
-      .css('background-color', this.master.tools[toolId].color);
-  }
-  $('<span>') // for the label
-    .appendTo($element);
-  return $element;
-};
-
-module.exports = UI;
+module.exports = BasicButton;
 
 });
 
-require.register("scripts/ui/btn-group", function(exports, require, module) {
-// Object contains the jQuery div with the subpalette
-// in addition to other information (name and currently used tool).
-function BtnGroup (groupName, $buttons, $anchor) {
-  this.name = groupName;
-  this.$buttons = $buttons;
-  this.$anchor = $anchor;
+require.register("scripts/ui/color-button", function(exports, require, module) {
+var inherit     = require('scripts/inherit');
+var BasicButton = require('scripts/ui/basic-button');
 
-  this.$palette = $('<div class="dt-toolpalette ' + groupName + '">').data('dt-palette-id', this.name);
-  // Append the tools to the palette div
-  for (var i = 0; i < this.$buttons.length; i++) {
-    this.$buttons[i].appendTo(this.$palette);
+function ColorButton(options, ui, drawingTool) {
+  var callback;
+  if (options.type === 'stroke') {
+    callback = function () {
+      this.dt.setStrokeColor(options.color);
+      this.dt.setSelectionStrokeColor(options.color);
+    };
+  } else {
+    callback = function () {
+      this.dt.setFillColor(options.color);
+      this.dt.setSelectionFillColor(options.color);
+    };
   }
-  // Set the default current tool of each palette to the first tool.
-  this.currentTool = $buttons[0].data('dt-target-id');
+  options.onClick = callback;
+  BasicButton.call(this, options, ui, drawingTool);
 
-  this.$palette.hide();
+  this.setBackground(options.color);
 }
 
-BtnGroup.prototype.show = function (callback) {
-  this.position();
-  this.$palette.show(0, callback);
+inherit(ColorButton, BasicButton);
 
+ColorButton.prototype.setBackground = function(color) {
+  if (!color) {
+    this.$element.addClass('dt-transparent');
+    return;
+  }
+  this.$element.css('background', color);
+};
+
+module.exports = ColorButton;
+
+});
+
+require.register("scripts/ui/fill-button", function(exports, require, module) {
+var inherit     = require('scripts/inherit');
+var BasicButton = require('scripts/ui/basic-button');
+
+function FillButton(options, ui, drawingTool) {
+  options.label = 'S';
+  BasicButton.call(this, options, ui, drawingTool);
+
+  $('<div>')
+    .addClass('dt-color')
+    .appendTo(this.$element);
+}
+
+inherit(FillButton, BasicButton);
+
+FillButton.prototype.setColor = function(color) {
+  if (!color) {
+    this.$element.find('.dt-color').addClass('dt-no-color');
+  } else {
+    this.$element.find('.dt-color').removeClass('dt-no-color');
+  }
+  this.$element.find('.dt-color').css('background', color);
+};
+
+module.exports = FillButton;
+
+});
+
+require.register("scripts/ui/line-width-button", function(exports, require, module) {
+var inherit     = require('scripts/inherit');
+var BasicButton = require('scripts/ui/basic-button');
+
+function LineWidthButton(options, ui, drawingTool) {
+  options.onClick = function () {
+    this.dt.setStrokeWidth(options.width);
+    this.dt.setSelectionStrokeWidth(options.width);
+  };
+  options.onStateChange = function (state) {
+    if (state.strokeWidth === options.width) {
+      this.$element.addClass('dt-active');
+    } else {
+      this.$element.removeClass('dt-active');
+    }
+  };
+  BasicButton.call(this, options, ui, drawingTool);
+
+  $('<div>')
+    .addClass('dt-line-width-icon')
+    .appendTo(this.$element);
+  this.setLineWidth(options.width);
+}
+
+inherit(LineWidthButton, BasicButton);
+
+LineWidthButton.prototype.setLineWidth = function(width) {
+  if (width === 0) {
+    this.$element.find('.dt-line-width-icon').addClass('dt-no-stroke');
+    return;
+  }
+  this.$element.find('.dt-line-width-icon').css('width', width);
+};
+
+module.exports = LineWidthButton;
+
+});
+
+require.register("scripts/ui/palette", function(exports, require, module) {
+function Palette(options, ui) {
+  this.ui        = ui;
+  this.name      = options.name;
+  this.permanent = !!options.permanent;
+  this.anchor    = options.anchor;
+  this.$element  = $('<div>')
+    .addClass('dt-palette')
+    .addClass(options.vertical ? 'dt-vertical' : 'dt-horizontal');
+
+  if (!this.permanent) {
+    this.$element.hide();
+  }
+}
+
+Palette.prototype.toggle = function () {
+  if (this.$element.is(':visible')) {
+    this._hide();
+  } else {
+    this._show();
+  }
+};
+
+Palette.prototype._show = function () {
+  this._position();
+  this.$element.show();
+
+  if (this.permanent) {
+    return;
+  }
+  // Hide palette on first click / touch (if it's not permanent).
+  // Timeout ensures that we won't catch the same event which actually
+  // opened the palette.
   var self = this;
-  $(document).one('mousedown touchstart', function () {
-    setTimeout(function () { self.hide(); }, 10);
-  });
+  setTimeout(function () {
+    $(window).one('mousedown touchstart', function () {
+      if (self.$element.is(':visible')) {
+        self._hide();
+      }
+    });
+  }, 16);
 };
 
-BtnGroup.prototype.hide = function (callback) {
-  this.$palette.hide(0, callback);
+Palette.prototype._hide = function () {
+  this.$element.hide();
 };
 
-BtnGroup.prototype.position = function () {
-  var p = this.$anchor.position();
-  this.$palette.css({
+Palette.prototype._position = function () {
+  var anchorButton = this.anchor && this.ui.getButton(this.anchor);
+  if (!anchorButton) {
+    return;
+  }
+  var p = anchorButton.$element.position();
+  this.$element.css({
     position: 'absolute',
-    top: p.top,
-    left: p.left + this.$anchor.outerWidth()
+    top:      p.top,
+    left:     p.left + anchorButton.$element.outerWidth()
   });
 };
 
-module.exports = BtnGroup;
+module.exports = Palette;
 
 });
 
-require.register("scripts/ui/color-palette", function(exports, require, module) {
-// This file is kind of a mess but mainly to be a proof of concept before
-// any final UI/UX/layout decisions are made.
+require.register("scripts/ui/stroke-button", function(exports, require, module) {
+var inherit     = require('scripts/inherit');
+var BasicButton = require('scripts/ui/basic-button');
 
-// Future implementations might want to utilize the `BtnGroup` class
+function StrokeButton(options, ui, drawingTool) {
+  options.label = 'S';
+  BasicButton.call(this, options, ui, drawingTool);
 
-/**
- * parameters:
- *  - drawTool
- *  - $strokeBtn: jQuery "button" for the stroke color palette
- *  - $strokeColorBtns: array of jQuery "buttons", put into a div and hidden when inactive
- *  - rinse and repeat for $fillBtn and $fillColorBtns
- */
-module.exports = function generateColorPalette (drawTool, $strokeBtn, $strokeColorBtns, $fillBtn, $fillColorBtns) {
-  var $el = $('<div class="dt-colorPalette">');
-    // .css('margin-top', '15px');
-
-  $('<div class="dt-btn-innerColor">').appendTo($strokeBtn);
-  $('<div class="dt-btn-innerColor">').appendTo($fillBtn);
-
-  $strokeBtn.appendTo($el);
-  var $strokePalette = $('<div class="dt-toolpalette">').appendTo($el);
-  $fillBtn.appendTo($el);
-  var $fillPalette = $('<div class="dt-toolpalette">').appendTo($el);
-
-  var i = 0;
-  for(i = 0; i < $strokeColorBtns.length; i++) {
-    $strokeColorBtns[i].appendTo($strokePalette);
-  }
-  for(i = 0; i < $fillColorBtns.length; i++) {
-    $fillColorBtns[i].appendTo($fillPalette);
-  }
-
-  $strokePalette.css('display', 'block')
-    .hide();
-  $fillPalette.css('display', 'block')
-    .hide();
-
-  $strokeBtn.on('click touchstart', function () {
-    // $strokeBtn.hide(100);
-    $fillPalette.hide(100);
-    $strokePalette.toggle(100);
-    // $fillBtn.show(100);
-  });
-  $fillBtn.on('click touchstart', function () {
-    // $fillBtn.hide(100);
-    $strokePalette.hide(100);
-    $fillPalette.toggle(100);
-    // $strokeBtn.show(100);
-  });
-
-  // TODO: some representation of ""/undefined/transparent color (ie: white with red 'x')
-  var syncUI = function(e) {
-    var i = 0;
-    for (i = 0; i < $strokeColorBtns.length; i++) {
-      if (drawTool.state.color === drawTool.tools[$strokeColorBtns[i].data('dt-target-id')].color) {
-        $strokeColorBtns[i].addClass('selected');
-      } else { $strokeColorBtns[i].removeClass('selected'); }
-    }
-    for (i = 0; i < $fillColorBtns.length; i++) {
-      if (drawTool.state.fill === drawTool.tools[$fillColorBtns[i].data('dt-target-id')].color) {
-        $fillColorBtns[i].addClass('selected');
-      } else { $fillColorBtns[i].removeClass('selected'); }
-    }
-    // console.log(drawTool.state.color);
-    $strokeBtn.find('.dt-btn-innerColor').css('background-color', drawTool.state.stroke);
-    $fillBtn.find('.dt-btn-innerColor').css('background-color', drawTool.state.fill);
-  }
-
-  // Initially synchronize stroke color and fill color icons
-  syncUI();
-
-  drawTool.addStateListener(function (e) { syncUI(e); });
-
-  return $el;
+  this.$element
+    .addClass('dt-stroke-color');
+  var $color = $('<div>')
+    .addClass('dt-color')
+    .appendTo(this.$element);
+  $('<div>')
+    .addClass('dt-inner1')
+    .appendTo($color);
+  $('<div>')
+    .addClass('dt-inner2')
+    .appendTo($color);
 }
 
+inherit(StrokeButton, BasicButton);
+
+StrokeButton.prototype.setColor = function(color) {
+  if (!color) {
+    this.$element.find('.dt-color').addClass('dt-no-color');
+  } else {
+    this.$element.find('.dt-color').removeClass('dt-no-color');
+  }
+  this.$element.find('.dt-color').css('background', color);
+};
+
+module.exports = StrokeButton;
+
 });
 
-;require.register("scripts/util", function(exports, require, module) {
+require.register("scripts/ui/ui-definition", function(exports, require, module) {
+var StrokeButton    = require('scripts/ui/stroke-button');
+var FillButton      = require('scripts/ui/fill-button');
+var ColorButton     = require('scripts/ui/color-button');
+var LineWidthButton = require('scripts/ui/line-width-button');
+
+var COLORS = [
+  '',
+  '#efefef',
+  '#e66665',
+  '#75b792',
+  '#076bb6',
+  '#ffd605',
+  '#f47d43',
+  '#ae70af',
+  '#a9b2b1',
+  '#333333'
+];
+
+var STROKE_WIDTHS = [
+  0,
+  1,
+  2,
+  4,
+  8,
+  12,
+  16,
+  20
+];
+
+var ui = {
+  /***
+   * Palettes
+   ***/
+  palettes: [
+    {
+      name: 'main',
+      permanent: true,
+      vertical: true
+    },
+    {
+      name: 'lines',
+      anchor: 'linesPalette'
+    },
+    {
+      name: 'shapes',
+      anchor: 'shapesPalette'
+    },
+    {
+      name: 'strokeColors',
+      anchor: 'strokeColorPalette'
+    },
+    {
+      name: 'fillColors',
+      anchor: 'fillColorPalette'
+    },
+    {
+      name: 'strokeWidths',
+      anchor: 'strokeWidthPalette'
+    }
+  ],
+  buttons: [
+    /***
+     * Main tools
+     ***/
+    {
+      label: 's',
+      activatesTool: 'select',
+      palette: 'main'
+    },
+    {
+      name: 'linesPalette',
+      classes: 'dt-expand',
+      reflectsTools: ['line', 'arrow', 'doubleArrow'],
+      palette: 'main',
+      onInit: function () {
+        this.setLabel(this.ui.getFirstPaletteButton('lines').getLabel());
+      },
+      onClick: function () {
+        this.ui.getFirstPaletteButton('lines').click();
+      },
+      onLongPress: function () {
+        this.ui.togglePalette('lines');
+      }
+    },
+    {
+      name: 'shapesPalette',
+      classes: 'dt-expand',
+      reflectsTools: ['rect', 'ellipse', 'square', 'circle'],
+      palette: 'main',
+      onInit: function () {
+        this.setLabel(this.ui.getFirstPaletteButton('shapes').getLabel());
+      },
+      onClick: function () {
+        this.ui.getFirstPaletteButton('shapes').click();
+      },
+      onLongPress: function () {
+        this.ui.togglePalette('shapes');
+      }
+    },
+    {
+      name: 'free',
+      label: 'F',
+      activatesTool: 'free',
+      palette: 'main'
+    },
+    {
+      name: 'text',
+      label: 'T',
+      activatesTool: 'text',
+      palette: 'main'
+    },
+    {
+      name: 'strokeColorPalette',
+      buttonClass: StrokeButton,
+      classes: 'dt-expand',
+      palette: 'main',
+      onInit: function () {
+        this.setColor(this.dt.state.stroke);
+      },
+      onStateChange: function (state) {
+        this.setColor(state.stroke);
+      },
+      onClick: function () {
+        this.ui.togglePalette('strokeColors');
+      }
+    },
+    {
+      name: 'fillColorPalette',
+      buttonClass: FillButton,
+      classes: 'dt-expand',
+      palette: 'main',
+      onInit: function () {
+        this.setColor(this.dt.state.fill);
+      },
+      onStateChange: function (state) {
+        this.setColor(state.fill);
+      },
+      onClick: function () {
+        this.ui.togglePalette('fillColors');
+      }
+    },
+    {
+      name: 'strokeWidthPalette',
+      label: 'w',
+      classes: 'dt-expand',
+      palette: 'main',
+      onClick: function () {
+        this.ui.togglePalette('strokeWidths');
+      }
+    },
+    {
+      name: 'trash',
+      label: 'd',
+      activatesTool: 'trash',
+      palette: 'main',
+      onInit: function () {
+        this.setLocked(true);
+        this.dt.canvas.on("object:selected", function () {
+          this.setLocked(false);
+        }.bind(this));
+        this.dt.canvas.on("selection:cleared", function () {
+          this.setLocked(true);
+        }.bind(this));
+      }
+    },
+    /***
+     * Line tools
+     ***/
+    {
+      name: 'line',
+      label: 'L',
+      activatesTool: 'line',
+      palette: 'lines'
+    },
+    {
+      name: 'arrow',
+      label: 'A',
+      activatesTool: 'arrow',
+      palette: 'lines'
+    },
+    {
+      name: 'doubleArrow',
+      label: 'D',
+      activatesTool: 'doubleArrow',
+      palette: 'lines'
+    },
+    /***
+     * Shape tools
+     ***/
+    {
+      name: 'rect',
+      label: 'R',
+      activatesTool: 'rect',
+      palette: 'shapes'
+    },
+    {
+      name: 'ellipse',
+      label: 'E',
+      activatesTool: 'ellipse',
+      palette: 'shapes'
+    },
+    {
+      name: 'square',
+      label: 'S',
+      activatesTool: 'square',
+      palette: 'shapes'
+    },
+    {
+      name: 'circle',
+      label: 'C',
+      activatesTool: 'circle',
+      palette: 'shapes'
+    }
+    /***
+     * Stroke colors and fill colors are added in a loop below
+     ***/
+  ]
+};
+
+COLORS.forEach(function (color) {
+  ui.buttons.push({
+    buttonClass: ColorButton,
+    color: color,
+    type: 'stroke',
+    palette: 'strokeColors'
+  });
+  ui.buttons.push({
+    buttonClass: ColorButton,
+    color: color,
+    type: 'fill',
+    palette: 'fillColors'
+  });
+});
+
+STROKE_WIDTHS.forEach(function (width) {
+  ui.buttons.push({
+    buttonClass: LineWidthButton,
+    width: width,
+    palette: 'strokeWidths'
+  });
+});
+
+module.exports = ui;
+
+});
+
+require.register("scripts/ui/ui-manager", function(exports, require, module) {
+var BasicButton  = require('scripts/ui/basic-button');
+var Palette      = require('scripts/ui/palette');
+var uiDefinition = require('scripts/ui/ui-definition');
+
+function UIManager(drawingTool) {
+  this.drawingTool = drawingTool;
+
+  this.$tools = $('<div>')
+    .addClass('dt-tools')
+    .prependTo(drawingTool.$element);
+
+  this._palettes = {};
+  this._buttons = {};
+  this._firstPaletteButton = {};
+  this._processUIDefinition(uiDefinition);
+
+  for (var name in this._buttons) {
+    var btn = this._buttons[name];
+    if (btn.onInit) {
+      btn.onInit.call(btn, this, drawingTool);
+    }
+  }
+}
+
+UIManager.prototype._processUIDefinition = function (uiDef) {
+  this.$tools.empty();
+  uiDef.palettes.forEach(this._createPalette.bind(this));
+  uiDef.buttons.forEach(this._createButton.bind(this));
+};
+
+UIManager.prototype.getButton = function (name) {
+  return this._buttons[name];
+};
+
+UIManager.prototype.getPalette = function (name) {
+  return this._palettes[name];
+};
+
+UIManager.prototype.togglePalette = function (name) {
+  this._palettes[name].toggle();
+};
+
+UIManager.prototype.getFirstPaletteButton = function (name) {
+  return this._firstPaletteButton[name];
+};
+
+UIManager.prototype._createPalette = function (paletteOptions) {
+  var palette = new Palette(paletteOptions, this);
+  palette.$element.appendTo(this.$tools);
+  this._palettes[palette.name] = palette;
+};
+
+UIManager.prototype._createButton = function (buttonOptions) {
+  var BtnClass = buttonOptions.buttonClass || BasicButton;
+  var button = new BtnClass(buttonOptions, this, this.drawingTool);
+  this._buttons[button.name] = button;
+
+  if (!this._firstPaletteButton[button.palette]) {
+    // This is the first button that is added to given palette.
+    // Used by #getFirstPaletteButton.
+    this._firstPaletteButton[button.palette] = button;
+  }
+};
+
+module.exports = UIManager;
+
+});
+
+require.register("scripts/util", function(exports, require, module) {
 module.exports = {
   dist: function dist(dx, dy){
     var dx2 = Math.pow(dx, 2);

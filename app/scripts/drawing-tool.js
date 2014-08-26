@@ -178,7 +178,7 @@ DrawingTool.prototype.setStrokeWidth = function (width) {
  *  - color: can be in any web-friendly format
  *          ex: literal-'black', hex-'#444444', or rgba-'rgba(100,200,200,.75)'
  */
-DrawingTool.prototype.setFill = function (color) {
+DrawingTool.prototype.setFillColor = function (color) {
   this.state.fill = color;
   this._fireStateChange();
 };

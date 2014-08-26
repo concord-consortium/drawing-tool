@@ -68,12 +68,11 @@ $icons: 'Draw Tool Icons', Arial, sans-serif;
       cursor: default;
     }
 
-    .dt-btn-inner:after {
+    .dt-btn-inner {
       border: 5px solid;
       background: #fff;
       width: 12px;
       height: 12px;
-      content: '';
       position: absolute;
       left: 11px;
       top: 11px;

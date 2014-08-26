@@ -1,4 +1,5 @@
 var StrokeButton = require('scripts/ui/stroke-button');
+var FillButton   = require('scripts/ui/fill-button');
 var ColorButton  = require('scripts/ui/color-button');
 
 var COLORS = [
@@ -13,7 +14,7 @@ var COLORS = [
   '#333333'
 ];
 
-module.exports = {
+var ui = {
   /***
    * Palettes
    ***/
@@ -107,6 +108,21 @@ module.exports = {
       }
     },
     {
+      name: 'fillColorPalette',
+      buttonClass: FillButton,
+      classes: 'dt-expand',
+      palette: 'main',
+      onInit: function (ui, drawingTool) {
+        this.setColor(drawingTool.state.fill);
+      },
+      onStateChange: function (state) {
+        this.setColor(state.fill);
+      },
+      onClick: function (e, ui) {
+        ui.openPalette('fillColors');
+      }
+    },
+    {
       name: 'trash',
       label: 'd',
       activatesTool: 'trash',
@@ -168,63 +184,26 @@ module.exports = {
       label: 'C',
       activatesTool: 'circle',
       palette: 'shapes'
-    },
-    /***
-     * Stroke colors
-     ***/
-    {
-      buttonClass: ColorButton,
-      color: COLORS[0],
-      type: 'stroke',
-      palette: 'strokeColors'
-    },
-    {
-      buttonClass: ColorButton,
-      color: COLORS[1],
-      type: 'stroke',
-      palette: 'strokeColors'
-    },
-    {
-      buttonClass: ColorButton,
-      color: COLORS[2],
-      type: 'stroke',
-      palette: 'strokeColors'
-    },
-    {
-      buttonClass: ColorButton,
-      color: COLORS[3],
-      type: 'stroke',
-      palette: 'strokeColors'
-    },
-    {
-      buttonClass: ColorButton,
-      color: COLORS[4],
-      type: 'stroke',
-      palette: 'strokeColors'
-    },
-    {
-      buttonClass: ColorButton,
-      color: COLORS[5],
-      type: 'stroke',
-      palette: 'strokeColors'
-    },
-    {
-      buttonClass: ColorButton,
-      color: COLORS[6],
-      type: 'stroke',
-      palette: 'strokeColors'
-    },
-    {
-      buttonClass: ColorButton,
-      color: COLORS[7],
-      type: 'stroke',
-      palette: 'strokeColors'
-    },
-    {
-      buttonClass: ColorButton,
-      color: COLORS[8],
-      type: 'stroke',
-      palette: 'strokeColors'
     }
+    /***
+     * Stroke colors and fill colors are added in a loop below.
+     ***/
   ]
 };
+
+COLORS.forEach(function (color) {
+  ui.buttons.push({
+    buttonClass: ColorButton,
+    color: color,
+    type: 'stroke',
+    palette: 'strokeColors'
+  });
+  ui.buttons.push({
+    buttonClass: ColorButton,
+    color: color,
+    type: 'fill',
+    palette: 'fillColors'
+  });
+});
+
+module.exports = ui;

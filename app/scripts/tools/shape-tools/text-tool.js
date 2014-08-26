@@ -16,6 +16,12 @@ TextTool.prototype.mouseDown = function (opt) {
 
   TextTool.super.mouseDown.call(this, opt);
 
+  // Special behaviour of text tool - single click lets you edit existing text.
+  var target = this.canvas.findTarget(opt.e);
+  if (target && target.type === 'i-text') {
+    this.editText(target, opt.e);
+    return;
+  }
   // See #exitTextEditingOnFirstClick method.
   if (!this.active || opt.e._dt_doNotCreateNewTextObj) return;
 
@@ -34,9 +40,7 @@ TextTool.prototype.mouseDown = function (opt) {
   });
   this.actionComplete(text);
   this.canvas.add(text);
-  this.canvas.setActiveObject(text);
-  text.enterEditing();
-  this.exitTextEditingOnFirstClick();
+  this.editText(text, opt.e);
 };
 
 TextTool.prototype.deactivate = function () {
@@ -51,6 +55,13 @@ TextTool.prototype.exitTextEditing = function () {
   if (activeObj && activeObj.isEditing) {
     this.canvas.deactivateAllWithDispatch();
   }
+};
+
+TextTool.prototype.editText = function (text, e) {
+  this.canvas.setActiveObject(text);
+  text.enterEditing();
+  text.setCursorByClick(e);
+  this.exitTextEditingOnFirstClick();
 };
 
 TextTool.prototype.exitTextEditingOnFirstClick = function () {

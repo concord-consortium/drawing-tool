@@ -23,6 +23,10 @@ function ColorButton(options, ui, drawingTool) {
 inherit(ColorButton, BasicButton);
 
 ColorButton.prototype.setBackground = function(color) {
+  if (!color) {
+    this.$element.addClass('dt-transparent');
+    return;
+  }
   this.$element.css('background', color);
 };
 

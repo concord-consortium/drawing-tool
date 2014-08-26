@@ -41,7 +41,6 @@ Palette.prototype._show = function () {
 };
 
 Palette.prototype._hide = function () {
-  console.log('hide');
   this.$element.hide();
 };
 

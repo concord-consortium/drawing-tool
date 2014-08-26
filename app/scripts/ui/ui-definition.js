@@ -4,6 +4,7 @@ var ColorButton     = require('scripts/ui/color-button');
 var LineWidthButton = require('scripts/ui/line-width-button');
 
 var COLORS = [
+  '',
   '#efefef',
   '#e66665',
   '#75b792',

@@ -68,16 +68,61 @@ $text: Arial, sans-serif;
       cursor: default;
     }
 
-    .dt-btn-inner {
-      border: 5px solid;
+    .dt-color {
       background: #fff;
-      width: 12px;
-      height: 12px;
+      border: solid 1px #1c68aa;
+      overflow: hidden;
       position: absolute;
-      left: 11px;
       top: 11px;
+      left: 11px;
+      width: 20px;
+      height: 20px;
+
+      &.dt-no-color:after {
+        content: 'L';
+        color: #e66665;
+        position: absolute;
+        left: -9px;
+        bottom: -14px;
+        font-size: 50px;
+      }
     }
 
+    &.dt-stroke-color {
+      .dt-inner1 { /* inset/overlay white box with black border */
+        background: #fff;
+        border: solid 1px #1c68aa;
+        position: absolute;
+        height: 10px;
+        width: 10px;
+        left: 4px;
+        top: 4px;
+      }
+      .dt-inner2 { /* inset/overlay blue box with no border */
+        background: #3e8acc;
+        border: none;
+        position: absolute;
+        height: 8px;
+        width: 8px;
+        left: 6px;
+        top: 6px;
+      }
+    }
+
+    // Color button
+    &.dt-transparent {
+      background: #f4f4f4;
+      &:after {
+        content: 'L';
+        color: #e66665;
+        position: absolute;
+        left: -30px;
+        bottom: -16px;
+        font-size: 100px;
+      }
+    }
+
+    // Stroke width button
     .dt-line-width-icon {
       height: 28px;
       background: #fff;

@@ -6,17 +6,19 @@ function FillButton(options, ui, drawingTool) {
   BasicButton.call(this, options, ui, drawingTool);
 
   $('<div>')
-    .addClass('dt-btn-inner')
+    .addClass('dt-color')
     .appendTo(this.$element);
 }
 
 inherit(FillButton, BasicButton);
 
 FillButton.prototype.setColor = function(color) {
-  this.$element.find('.dt-btn-inner').css({
-    color: color,
-    background: color
-  });
+  if (!color) {
+    this.$element.find('.dt-color').addClass('dt-no-color');
+  } else {
+    this.$element.find('.dt-color').removeClass('dt-no-color');
+  }
+  this.$element.find('.dt-color').css('background', color);
 };
 
 module.exports = FillButton;

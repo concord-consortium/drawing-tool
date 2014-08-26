@@ -5,15 +5,28 @@ function StrokeButton(options, ui, drawingTool) {
   options.label = 'S';
   BasicButton.call(this, options, ui, drawingTool);
 
-  $('<div>')
-    .addClass('dt-btn-inner')
+  this.$element
+    .addClass('dt-stroke-color');
+  var $color = $('<div>')
+    .addClass('dt-color')
     .appendTo(this.$element);
+  $('<div>')
+    .addClass('dt-inner1')
+    .appendTo($color);
+  $('<div>')
+    .addClass('dt-inner2')
+    .appendTo($color);
 }
 
 inherit(StrokeButton, BasicButton);
 
 StrokeButton.prototype.setColor = function(color) {
-  this.$element.find('.dt-btn-inner').css('color', color);
+  if (!color) {
+    this.$element.find('.dt-color').addClass('dt-no-color');
+  } else {
+    this.$element.find('.dt-color').removeClass('dt-no-color');
+  }
+  this.$element.find('.dt-color').css('background', color);
 };
 
 module.exports = StrokeButton;

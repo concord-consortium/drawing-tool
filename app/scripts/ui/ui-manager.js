@@ -63,7 +63,7 @@ UIManager.prototype._setupPaletteActiveButton = function (button) {
     // This will first button added to palette as "active" palette button.
     this._paletteActiveButton[button.palette] = button;
   }
-  button.$element.on('click touchstart', function () {
+  button.$element.on('mousedown touchstart', function () {
     // This will update "active" palette button during every click / touch.
     this._paletteActiveButton[button.palette] = button;
   }.bind(this));

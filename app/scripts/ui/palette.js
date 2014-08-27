@@ -13,7 +13,6 @@ function Palette(options, ui) {
 }
 
 Palette.prototype.toggle = function () {
-  console.log('toggle');
   if (this.$element.is(':visible')) {
     this._hide();
   } else {
@@ -35,7 +34,6 @@ Palette.prototype._show = function () {
   setTimeout(function () {
     $(window).one('mousedown touchstart', function () {
       if (self.$element.is(':visible')) {
-        console.log('hide');
         self._hide();
       }
     });

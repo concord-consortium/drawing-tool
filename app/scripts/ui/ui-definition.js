@@ -144,6 +144,24 @@ var ui = {
       }
     },
     {
+      name: 'sendToFront',
+      label: 'l',
+      palette: 'main',
+      onInit: lockWhenNothingIsSelected,
+      onClick: function () {
+        this.dt.sendSelectionToFront();
+      }
+    },
+    {
+      name: 'sendToBack',
+      label: 'm',
+      palette: 'main',
+      onInit: lockWhenNothingIsSelected,
+      onClick: function () {
+        this.dt.sendSelectionToBack();
+      }
+    },
+    {
       name: 'clone',
       label: 'c',
       activatesTool: 'clone',

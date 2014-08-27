@@ -189,27 +189,35 @@ DrawingTool.prototype.setFillColor = function (color) {
 };
 
 DrawingTool.prototype.setSelectionStrokeColor = function (color) {
-  this._forEverySelectedObject(function (obj) {
+  this.forEachSelectedObject(function (obj) {
     this._setObjectProp(obj, 'stroke', color);
   }.bind(this));
   this.canvas.renderAll();
 };
 
 DrawingTool.prototype.setSelectionFillColor = function (color) {
-  this._forEverySelectedObject(function (obj) {
+  this.forEachSelectedObject(function (obj) {
     this._setObjectProp(obj, 'fill', color);
   }.bind(this));
   this.canvas.renderAll();
 };
 
 DrawingTool.prototype.setSelectionStrokeWidth = function (width) {
-  this._forEverySelectedObject(function (obj) {
+  this.forEachSelectedObject(function (obj) {
     this._setObjectProp(obj, 'strokeWidth', width);
   }.bind(this));
   this.canvas.renderAll();
 };
 
-DrawingTool.prototype._forEverySelectedObject = function (callback) {
+DrawingTool.prototype.sendSelectionToFront = function () {
+  this._sendSelectionTo('front');
+};
+
+DrawingTool.prototype.sendSelectionToBack = function () {
+  this._sendSelectionTo('back');
+};
+
+DrawingTool.prototype.forEachSelectedObject = function (callback) {
   if (this.canvas.getActiveObject()) {
     callback(this.canvas.getActiveObject());
   } else if (this.canvas.getActiveGroup()) {
@@ -230,6 +238,33 @@ DrawingTool.prototype._setObjectProp = function (object, type, value) {
     }
   }
   object.set(type, value);
+};
+
+DrawingTool.prototype._sendSelectionTo = function (where) {
+  if (this.canvas.getActiveObject()) {
+    // Simple case, only a single object is selected.
+    send(this.canvas.getActiveObject());
+    return;
+  }
+  if (this.canvas.getActiveGroup()) {
+    // Yes, this is overcomplicated, however FabricJS cannot handle
+    // sending a group to front or back. We need to remove selection,
+    // send particular objects and recreate selection...
+    var objects = this.canvas.getActiveGroup().getObjects();
+    this.clearSelection();
+    objects.forEach(send);
+    this.canvas.setActiveGroup(new fabric.Group(objects, {
+      originX: 'center',
+      originY: 'center',
+      canvas: this.canvas
+    }));
+  }
+  function send(obj) {
+    if (where === 'front')
+      obj.bringToFront();
+    else
+      obj.sendToBack();
+  }
 };
 
 /**

@@ -400,7 +400,8 @@ DrawingTool.prototype._initTools = function () {
 
 DrawingTool.prototype._initDOM = function () {
   $(this.selector).empty();
-  this.$element = $('<div class="dt-container">').appendTo(this.selector);
+  this.$element = $('<div class="dt-container">')
+    .appendTo(this.selector);
   var $canvasContainer = $('<div class="dt-canvas-container">')
     .attr('tabindex', 0) // makes the canvas focusable for keyboard events
     .appendTo(this.$element);

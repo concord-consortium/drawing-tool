@@ -21,12 +21,14 @@ function BasicButton(options, ui, drawingTool) {
   if (options.onClick) {
     this.$element.on('mousedown touchstart', function (e) {
       options.onClick.call(this, e, ui, drawingTool);
+      e.preventDefault();
     }.bind(this));
   }
 
   if (options.onLongPress) {
     this.$element.longPress(function (e) {
       options.onLongPress.call(this, e, ui, drawingTool);
+      e.preventDefault();
     }.bind(this));
   }
 
@@ -45,6 +47,7 @@ function BasicButton(options, ui, drawingTool) {
   if (options.activatesTool) {
     this.$element.on('mousedown touchstart', function (e) {
       drawingTool.chooseTool(options.activatesTool);
+      e.preventDefault();
     }.bind(this));
 
     drawingTool.on('tool:changed', function (toolName) {

@@ -13,6 +13,7 @@ function Palette(options, ui) {
 }
 
 Palette.prototype.toggle = function () {
+  console.log('toggle');
   if (this.$element.is(':visible')) {
     this._hide();
   } else {
@@ -27,13 +28,14 @@ Palette.prototype._show = function () {
   if (this.permanent) {
     return;
   }
-  // Hide palette on first click / touch (if it's not permanent).
+  // Hide palette on first mousedown / touch (if it's not permanent).
   // Timeout ensures that we won't catch the same event which actually
   // opened the palette.
   var self = this;
   setTimeout(function () {
     $(window).one('mousedown touchstart', function () {
       if (self.$element.is(':visible')) {
+        console.log('hide');
         self._hide();
       }
     });

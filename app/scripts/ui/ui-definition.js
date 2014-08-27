@@ -72,13 +72,11 @@ var ui = {
       reflectsTools: ['line', 'arrow', 'doubleArrow'],
       palette: 'main',
       onInit: function () {
-        this.setLabel(this.ui.getFirstPaletteButton('lines').getLabel());
+        this.setLabel(this.ui.getPaletteActiveButton('lines').getLabel());
       },
       onClick: function () {
-        this.ui.getFirstPaletteButton('lines').click();
-      },
-      onLongPress: function () {
         this.ui.togglePalette('lines');
+        this.ui.getPaletteActiveButton('lines').click();
       }
     },
     {
@@ -87,12 +85,10 @@ var ui = {
       reflectsTools: ['rect', 'ellipse', 'square', 'circle'],
       palette: 'main',
       onInit: function () {
-        this.setLabel(this.ui.getFirstPaletteButton('shapes').getLabel());
+        this.setLabel(this.ui.getPaletteActiveButton('shapes').getLabel());
       },
       onClick: function () {
-        this.ui.getFirstPaletteButton('shapes').click();
-      },
-      onLongPress: function () {
+        this.ui.getPaletteActiveButton('shapes').click();
         this.ui.togglePalette('shapes');
       }
     },

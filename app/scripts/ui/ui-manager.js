@@ -11,7 +11,7 @@ function UIManager(drawingTool) {
 
   this._palettes = {};
   this._buttons = {};
-  this._firstPaletteButton = {};
+  this._paletteActiveButton = {};
   this._processUIDefinition(uiDefinition);
 
   for (var name in this._buttons) {
@@ -40,8 +40,8 @@ UIManager.prototype.togglePalette = function (name) {
   this._palettes[name].toggle();
 };
 
-UIManager.prototype.getFirstPaletteButton = function (name) {
-  return this._firstPaletteButton[name];
+UIManager.prototype.getPaletteActiveButton = function (name) {
+  return this._paletteActiveButton[name];
 };
 
 UIManager.prototype._createPalette = function (paletteOptions) {
@@ -55,11 +55,18 @@ UIManager.prototype._createButton = function (buttonOptions) {
   var button = new BtnClass(buttonOptions, this, this.drawingTool);
   this._buttons[button.name] = button;
 
-  if (!this._firstPaletteButton[button.palette]) {
-    // This is the first button that is added to given palette.
-    // Used by #getFirstPaletteButton.
-    this._firstPaletteButton[button.palette] = button;
+  this._setupPaletteActiveButton(button);
+};
+
+UIManager.prototype._setupPaletteActiveButton = function (button) {
+  if (!this._paletteActiveButton[button.palette]) {
+    // This will first button added to palette as "active" palette button.
+    this._paletteActiveButton[button.palette] = button;
   }
+  button.$element.on('click touchstart', function () {
+    // This will update "active" palette button during every click / touch.
+    this._paletteActiveButton[button.palette] = button;
+  }.bind(this));
 };
 
 module.exports = UIManager;

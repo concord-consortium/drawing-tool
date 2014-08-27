@@ -1,5 +1,10 @@
 require('scripts/jquery-longpress');
 
+// Note that we use 'mousedown touchstart' everywhere. It's pretty important,
+// as 'click' could interfere with palette auto-hide feature (as it hides on
+// 'mousedown'). Also, it simplifies scenarios for touch devices,
+// as 'mousedown' occurs in the same moment as 'touchstart'.
+
 function BasicButton(options, ui, drawingTool) {
   this.ui = ui;
   this.dt = drawingTool;
@@ -81,7 +86,10 @@ BasicButton.prototype.getLabel = function () {
 };
 
 BasicButton.prototype.click = function () {
-  this.$element.mousedown();
+  // #triggerHandler won't create a native event that bubbles (in contrast
+  // to #trigger). Use it as otherwise it could interfere with some other
+  // handlers listening to 'mousedown' on window (palette auto-hide feature).
+  this.$element.triggerHandler('mousedown');
 };
 
 BasicButton.prototype.setActive = function (v) {

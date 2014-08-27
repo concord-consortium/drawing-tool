@@ -25,15 +25,10 @@ ShapeTool.prototype.minSize = 7;
 ShapeTool.prototype.defSize = 30;
 
 ShapeTool.prototype.activate = function () {
-  // console.warn(this.name + " at shape tool activation");
   ShapeTool.super.activate.call(this);
   this.down = false;
-
-  // Changes cursor to crosshair when drawing a shape
-  // see https://www.pivotaltracker.com/n/projects/1103712/stories/73647372
   this.canvas.defaultCursor = "crosshair";
 };
-
 
 ShapeTool.prototype.activateAgain = function () {
   // This used to activate 'locked' mode. However now it's activated by default.
@@ -41,12 +36,14 @@ ShapeTool.prototype.activateAgain = function () {
   // during a "second activation" (usually second click).
 };
 
+ShapeTool.prototype.deactivate = function () {
+  ShapeTool.super.deactivate.call(this);
+  this.canvas.defaultCursor = "default";
+};
+
 ShapeTool.prototype.exit = function () {
   this.down = false;
   this.master.changeOutOfTool();
-  // Changes cursor back to default
-  // see https://www.pivotaltracker.com/n/projects/1103712/stories/73647372
-  this.canvas.defaultCursor = "default";
 };
 
 ShapeTool.prototype.mouseDown = function (e) {

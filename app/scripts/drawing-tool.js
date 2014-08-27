@@ -253,17 +253,21 @@ DrawingTool.prototype._sendSelectionTo = function (where) {
     var objects = this.canvas.getActiveGroup().getObjects();
     this.clearSelection();
     objects.forEach(send);
-    this.canvas.setActiveGroup(new fabric.Group(objects, {
+    var group = new fabric.Group(objects, {
       originX: 'center',
       originY: 'center',
       canvas: this.canvas
-    }));
+    });
+    // Important! E.g. ensures that outlines around objects are visible.
+    group.addWithUpdate();
+    this.canvas.setActiveGroup(group);
   }
   function send(obj) {
-    if (where === 'front')
+    if (where === 'front') {
       obj.bringToFront();
-    else
+    } else {
       obj.sendToBack();
+    }
   }
 };
 

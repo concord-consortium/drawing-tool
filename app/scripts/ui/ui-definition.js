@@ -144,19 +144,18 @@ var ui = {
       }
     },
     {
+      name: 'clone',
+      label: 'c',
+      activatesTool: 'clone',
+      palette: 'main',
+      onInit: lockWhenNothingIsSelected
+    },
+    {
       name: 'trash',
       label: 'd',
       activatesTool: 'trash',
       palette: 'main',
-      onInit: function () {
-        this.setLocked(true);
-        this.dt.canvas.on("object:selected", function () {
-          this.setLocked(false);
-        }.bind(this));
-        this.dt.canvas.on("selection:cleared", function () {
-          this.setLocked(true);
-        }.bind(this));
-      }
+      onInit: lockWhenNothingIsSelected
     },
     /***
      * Line tools
@@ -234,5 +233,18 @@ STROKE_WIDTHS.forEach(function (width) {
     palette: 'strokeWidths'
   });
 });
+
+// Helper functions that may be used by buttons.
+// Note that all listeners are called in the context
+// of the button isntance (`this` value).
+function lockWhenNothingIsSelected() {
+  this.setLocked(true);
+  this.dt.canvas.on("object:selected", function () {
+    this.setLocked(false);
+  }.bind(this));
+  this.dt.canvas.on("selection:cleared", function () {
+    this.setLocked(true);
+  }.bind(this));
+}
 
 module.exports = ui;

@@ -63,10 +63,10 @@ function lineSelected() {
 }
 
 function lineDeselected() {
-  // Very important - set line property to null / undefined,
+  // Very important - set _dt_sourceObj property to null / undefined,
   // as otherwise control point will remove line as well!
-  this.ctp[0].line = null;
-  this.ctp[1].line = null;
+  this.ctp[0]._dt_sourceObj = null;
+  this.ctp[1]._dt_sourceObj = null;
   this.ctp[0].remove();
   this.ctp[1].remove();
   this.ctp = undefined;
@@ -87,7 +87,7 @@ function lineDeleted() {
 }
 
 function controlPointMoved() {
-  var line = this.line;
+  var line = this._dt_sourceObj;
   line.set('x' + (this.id + 1), this.left);
   line.set('y' + (this.id + 1), this.top);
   line.setCoords();
@@ -95,7 +95,7 @@ function controlPointMoved() {
 }
 
 function controlPointDeleted() {
-  var line = this.line;
+  var line = this._dt_sourceObj;
   // Do nothing if there is no reference to source object (line).
   if (!line) return;
   // Otherwise try to remove second point and finally canvas.
@@ -177,7 +177,7 @@ function makeControlPoint(s, source, i) {
     originX: 'center',
     originY: 'center',
     // Custom properties:
-    line: source,
+    _dt_sourceObj: source,
     id: i
   });
   source.canvas.add(point);

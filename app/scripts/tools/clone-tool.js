@@ -21,6 +21,11 @@ CloneTool.prototype.use = function () {
   if (!activeObject) {
     return;
   }
+  // We don't want to copy control point, but the source object instead.
+  // See: line-custom-control-points.js
+  if (activeObject._dt_sourceObj) {
+    activeObject = activeObject._dt_sourceObj;
+  }
   var klass = fabric.util.getKlass(activeObject.type);
   if (klass.async) {
     activeObject.clone(this._processClonedObject.bind(this));

@@ -68,6 +68,8 @@ function DrawingTool(selector, options, settings) {
   this.chooseTool('select');
 }
 
+DrawingTool.prototype.ADDITIONAL_PROPS_TO_SERIALIZE = ADDITIONAL_PROPS_TO_SERIALIZE;
+
 /**
  * Clears all objects from the fabric canvas and can also clear the background image
  *

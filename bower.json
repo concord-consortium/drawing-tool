@@ -13,7 +13,7 @@
     "package.json"
   ],
   "dependencies": {
-    "fabric": "1.4.10",
+    "fabric": "1.4.11",
     "hammerjs": "2.0.0",
     "jquery": "2.1.1",
     "eventemitter2": "0.4.14"

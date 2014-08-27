@@ -17,7 +17,6 @@ var COLORS = [
 ];
 
 var STROKE_WIDTHS = [
-  0,
   1,
   2,
   4,

@@ -81,9 +81,10 @@ ShapeTool.prototype.actionComplete = function (newObject) {
 };
 
 ShapeTool.prototype.setCentralOrigin = function (object) {
+  var strokeWidth = object.stroke ? object.strokeWidth : 0;
   object.set({
-    left: object.left + (object.width + object.strokeWidth) / 2,
-    top: object.top + (object.height + object.strokeWidth) / 2,
+    left: object.left + (object.width + strokeWidth) / 2,
+    top: object.top + (object.height + strokeWidth) / 2,
     originX: 'center',
     originY: 'center'
   });

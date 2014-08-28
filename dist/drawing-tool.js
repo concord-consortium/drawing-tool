@@ -97,6 +97,7 @@ var BasicShapeTool    = require('scripts/tools/shape-tools/basic-shape-tool');
 var FreeDrawTool      = require('scripts/tools/shape-tools/free-draw');
 var TextTool          = require('scripts/tools/shape-tools/text-tool');
 var DeleteTool        = require('scripts/tools/delete-tool');
+var CloneTool         = require('scripts/tools/clone-tool');
 var UIManager         = require('scripts/ui/ui-manager');
 var rescale2resize    = require('scripts/fabric-extensions/rescale-2-resize');
 var multitouchSupport = require('scripts/fabric-extensions/multi-touch-support');
@@ -159,6 +160,8 @@ function DrawingTool(selector, options, settings) {
   this._fireStateChange();
   this.chooseTool('select');
 }
+
+DrawingTool.prototype.ADDITIONAL_PROPS_TO_SERIALIZE = ADDITIONAL_PROPS_TO_SERIALIZE;
 
 /**
  * Clears all objects from the fabric canvas and can also clear the background image
@@ -279,27 +282,35 @@ DrawingTool.prototype.setFillColor = function (color) {
 };
 
 DrawingTool.prototype.setSelectionStrokeColor = function (color) {
-  this._forEverySelectedObject(function (obj) {
+  this.forEachSelectedObject(function (obj) {
     this._setObjectProp(obj, 'stroke', color);
   }.bind(this));
   this.canvas.renderAll();
 };
 
 DrawingTool.prototype.setSelectionFillColor = function (color) {
-  this._forEverySelectedObject(function (obj) {
+  this.forEachSelectedObject(function (obj) {
     this._setObjectProp(obj, 'fill', color);
   }.bind(this));
   this.canvas.renderAll();
 };
 
 DrawingTool.prototype.setSelectionStrokeWidth = function (width) {
-  this._forEverySelectedObject(function (obj) {
+  this.forEachSelectedObject(function (obj) {
     this._setObjectProp(obj, 'strokeWidth', width);
   }.bind(this));
   this.canvas.renderAll();
 };
 
-DrawingTool.prototype._forEverySelectedObject = function (callback) {
+DrawingTool.prototype.sendSelectionToFront = function () {
+  this._sendSelectionTo('front');
+};
+
+DrawingTool.prototype.sendSelectionToBack = function () {
+  this._sendSelectionTo('back');
+};
+
+DrawingTool.prototype.forEachSelectedObject = function (callback) {
   if (this.canvas.getActiveObject()) {
     callback(this.canvas.getActiveObject());
   } else if (this.canvas.getActiveGroup()) {
@@ -322,6 +333,55 @@ DrawingTool.prototype._setObjectProp = function (object, type, value) {
   object.set(type, value);
 };
 
+DrawingTool.prototype._sendSelectionTo = function (where) {
+  if (this.canvas.getActiveObject()) {
+    // Simple case, only a single object is selected.
+    send(this.canvas.getActiveObject());
+    return;
+  }
+  if (this.canvas.getActiveGroup()) {
+    // Yes, this is overcomplicated, however FabricJS cannot handle
+    // sending a group to front or back. We need to remove selection,
+    // send particular objects and recreate selection...
+    var objects = this.canvas.getActiveGroup().getObjects();
+    this.clearSelection();
+    objects.forEach(send);
+    var group = new fabric.Group(objects, {
+      originX: 'center',
+      originY: 'center',
+      canvas: this.canvas
+    });
+    // Important! E.g. ensures that outlines around objects are visible.
+    group.addWithUpdate();
+    this.canvas.setActiveGroup(group);
+  }
+  function send(obj) {
+    // Note that this function handles custom control points defined for lines.
+    // See: line-custom-control-points.js
+    if (obj._dt_sourceObj) {
+      send(obj._dt_sourceObj);
+      return;
+    }
+    if (where === 'front') {
+      obj.bringToFront();
+      // Make sure that custom control point are send to front AFTER shape itself.
+      if (obj._dt_controlPoints) {
+        obj._dt_controlPoints.forEach(function (cp) {
+          cp.bringToFront();
+        });
+      }
+    } else {
+      // Make sure that custom control point are send to back BEFORE shape itself.
+      if (obj._dt_controlPoints) {
+        obj._dt_controlPoints.forEach(function (cp) {
+          cp.sendToBack();
+        });
+      }
+      obj.sendToBack();
+    }
+  }
+};
+
 /**
  * Set the background image for the fabricjs canvas.
  *
@@ -331,14 +391,13 @@ DrawingTool.prototype._setObjectProp = function (object, type, value) {
  *        ex: "resizeBackgroundToCanvas" or "resizeCanvasToBackground"
  */
 DrawingTool.prototype.setBackgroundImage = function (imageSrc, fit) {
-  var self = this;
   this._setBackgroundImage(imageSrc, null, function () {
     switch (fit) {
-      case "resizeBackgroundToCanvas": self.resizeBackgroundToCanvas(); return;
-      case "resizeCanvasToBackground": self.resizeCanvasToBackground(); return;
-      // TODO: default fit?
+      case "resizeBackgroundToCanvas": this.resizeBackgroundToCanvas(); return;
+      case "resizeCanvasToBackground": this.resizeCanvasToBackground(); return;
+      case "shrinkBackgroundToCanvas": this.shrinkBackgroundToCanvas(); return;
     }
-  });
+  }.bind(this));
 };
 
 DrawingTool.prototype.resizeBackgroundToCanvas = function () {
@@ -350,6 +409,24 @@ DrawingTool.prototype.resizeBackgroundToCanvas = function () {
     height: this.canvas.height
   });
   this.canvas.renderAll();
+};
+
+// Fits background to canvas (keeping original aspect ratio) only when background is bigger than canvas.
+DrawingTool.prototype.shrinkBackgroundToCanvas = function () {
+  if (!this._backgroundImage) {
+    return;
+  }
+  var bgImg = this._backgroundImage;
+  var widthRatio  = this.canvas.width / bgImg.width;
+  var heightRatio = this.canvas.height / bgImg.height;
+  var minRatio    = Math.min(widthRatio, heightRatio);
+  if (minRatio < 1) {
+    bgImg.set({
+      width:  bgImg.width * minRatio,
+      height: bgImg.height * minRatio
+    });
+    this.canvas.renderAll();
+  }
 };
 
 DrawingTool.prototype.resizeCanvasToBackground = function () {
@@ -487,13 +564,15 @@ DrawingTool.prototype._initTools = function () {
     circle:      new BasicShapeTool("Circle Tool", this, "circle"),
     free:        new FreeDrawTool("Free Draw Tool", this),
     text:        new TextTool("Text Tool", this),
-    trash:       new DeleteTool("Delete Tool", this)
+    trash:       new DeleteTool("Delete Tool", this),
+    clone:       new CloneTool("Clone Tool", this)
   };
 };
 
 DrawingTool.prototype._initDOM = function () {
   $(this.selector).empty();
-  this.$element = $('<div class="dt-container">').appendTo(this.selector);
+  this.$element = $('<div class="dt-container">')
+    .appendTo(this.selector);
   var $canvasContainer = $('<div class="dt-canvas-container">')
     .attr('tabindex', 0) // makes the canvas focusable for keyboard events
     .appendTo(this.$element);
@@ -513,6 +592,22 @@ DrawingTool.prototype._initFabricJS = function () {
     this.canvas.targetFindTolerance = 12;
   }
   this.canvas.setBackgroundColor("#fff");
+  this._setupHDPISupport();
+};
+
+DrawingTool.prototype._setupHDPISupport = function () {
+  var pixelRatio = window.devicePixelRatio;
+  if (pixelRatio !== 1) {
+    var canvEl = this.canvas.getElement();
+    var w = canvEl.width;
+    var h = canvEl.height;
+    $(canvEl)
+      .attr('width',  w * pixelRatio)
+      .attr('height', h * pixelRatio)
+      .css('width',   w)
+      .css('height',  h);
+    canvEl.getContext('2d').scale(pixelRatio, pixelRatio);
+  }
 };
 
 module.exports = DrawingTool;
@@ -760,7 +855,7 @@ lineCustomControlPoints.controlPointColor = '#bcd2ff';
 lineCustomControlPoints.cornerSize = 12;
 
 function isControlPoint(object, line) {
-  return line && line.ctp && (line.ctp[0] === object || line.ctp[1] === object);
+  return line && line._dt_controlPoints && (line._dt_controlPoints[0] === object || line._dt_controlPoints[1] === object);
 }
 
 function isLine(object) {
@@ -780,7 +875,7 @@ function lineSelected() {
   });
   // Create custom ones.
   var sidelen = lineCustomControlPoints.cornerSize ;
-  this.ctp = [
+  this._dt_controlPoints = [
     makeControlPoint(sidelen, this, 0),
     makeControlPoint(sidelen, this, 1)
   ];
@@ -792,13 +887,13 @@ function lineSelected() {
 }
 
 function lineDeselected() {
-  // Very important - set line property to null / undefined,
+  // Very important - set _dt_sourceObj property to null / undefined,
   // as otherwise control point will remove line as well!
-  this.ctp[0].line = null;
-  this.ctp[1].line = null;
-  this.ctp[0].remove();
-  this.ctp[1].remove();
-  this.ctp = undefined;
+  this._dt_controlPoints[0]._dt_sourceObj = null;
+  this._dt_controlPoints[1]._dt_sourceObj = null;
+  this._dt_controlPoints[0].remove();
+  this._dt_controlPoints[1].remove();
+  this._dt_controlPoints = undefined;
   this.off('moving');
   this.off('removed');
 }
@@ -809,14 +904,14 @@ function lineMoved() {
 
 function lineDeleted() {
   // Do nothing if there are no control points.
-  if (!this.ctp) return;
+  if (!this._dt_controlPoints) return;
   // If there are some, just remove one of them
   // It will cause that the second one will be removed as well.
-  this.ctp[0].remove();
+  this._dt_controlPoints[0].remove();
 }
 
 function controlPointMoved() {
-  var line = this.line;
+  var line = this._dt_sourceObj;
   line.set('x' + (this.id + 1), this.left);
   line.set('y' + (this.id + 1), this.top);
   line.setCoords();
@@ -824,15 +919,15 @@ function controlPointMoved() {
 }
 
 function controlPointDeleted() {
-  var line = this.line;
+  var line = this._dt_sourceObj;
   // Do nothing if there is no reference to source object (line).
   if (!line) return;
   // Otherwise try to remove second point and finally canvas.
   var secondControlPoint;
-  if (line.ctp[0] !== this) {
-    secondControlPoint = line.ctp[0];
+  if (line._dt_controlPoints[0] !== this) {
+    secondControlPoint = line._dt_controlPoints[0];
   } else {
-    secondControlPoint = line.ctp[1];
+    secondControlPoint = line._dt_controlPoints[1];
   }
   secondControlPoint.line = null;
   secondControlPoint.remove();
@@ -844,12 +939,12 @@ function controlPointDeleted() {
 function updateLineControlPoints() {
   translateLineCoords.call(this);
   rotateLineCoords.call(this);
-  this.ctp[0].set('left', this.get('x1'));
-  this.ctp[0].set('top', this.get('y1'));
-  this.ctp[1].set('left', this.get('x2'));
-  this.ctp[1].set('top', this.get('y2'));
-  this.ctp[0].setCoords();
-  this.ctp[1].setCoords();
+  this._dt_controlPoints[0].set('left', this.get('x1'));
+  this._dt_controlPoints[0].set('top', this.get('y1'));
+  this._dt_controlPoints[1].set('left', this.get('x2'));
+  this._dt_controlPoints[1].set('top', this.get('y2'));
+  this._dt_controlPoints[0].setCoords();
+  this._dt_controlPoints[1].setCoords();
 }
 
 function translateLineCoords() {
@@ -906,7 +1001,7 @@ function makeControlPoint(s, source, i) {
     originX: 'center',
     originY: 'center',
     // Custom properties:
-    line: source,
+    _dt_sourceObj: source,
     id: i
   });
   source.canvas.add(point);
@@ -1315,6 +1410,70 @@ module.exports = Tool;
 
 });
 
+require.register("scripts/tools/clone-tool", function(exports, require, module) {
+var inherit = require('scripts/inherit');
+var Tool    = require('scripts/tool');
+
+var CLONE_OFFSET = 15;
+
+/**
+ * Single use tool that clones the currently selected object(s).
+ */
+function CloneTool(name, drawingTool) {
+  Tool.call(this, name, drawingTool);
+  this.singleUse = true;
+}
+
+inherit(CloneTool, Tool);
+
+/**
+ * Clones the currently selected object(s) from the fabricjs canvas.
+ */
+CloneTool.prototype.use = function () {
+  var activeObject = this.canvas.getActiveGroup() || this.canvas.getActiveObject();
+  if (!activeObject) {
+    return;
+  }
+  // We don't want to copy control point, but the source object instead.
+  // See: line-custom-control-points.js
+  if (activeObject._dt_sourceObj) {
+    activeObject = activeObject._dt_sourceObj;
+  }
+  var klass = fabric.util.getKlass(activeObject.type);
+  var propsToInclude = this.master.ADDITIONAL_PROPS_TO_SERIALIZE;
+  if (klass.async) {
+    activeObject.clone(this._processClonedObject.bind(this), propsToInclude);
+  } else {
+    this._processClonedObject(activeObject.clone(null, propsToInclude));
+  }
+};
+
+CloneTool.prototype._processClonedObject = function (clonedObject) {
+  this.canvas.deactivateAllWithDispatch();
+
+  clonedObject.set({
+    left: clonedObject.left + CLONE_OFFSET,
+    top: clonedObject.top + CLONE_OFFSET
+  });
+  clonedObject.setCoords();
+
+  if (clonedObject.type === 'group') {
+    clonedObject.getObjects().forEach(function (o) {
+      this.canvas.add(o);
+    }.bind(this));
+    this.canvas.setActiveGroup(clonedObject);
+  } else {
+    this.canvas.add(clonedObject);
+    this.canvas.setActiveObject(clonedObject);
+  }
+
+  this.canvas.renderAll();
+};
+
+module.exports = CloneTool;
+
+});
+
 require.register("scripts/tools/delete-tool", function(exports, require, module) {
 var inherit  = require('scripts/inherit');
 var Tool     = require('scripts/tool');
@@ -1381,6 +1540,15 @@ function SelectionTool(name, drawTool) {
   this.canvas.on("object:selected", function (opt) {
     opt.target.set(BASIC_SELECTION_PROPERTIES);
     this.canvas.renderAll();
+    this._setLastObject(opt.target);
+  }.bind(this));
+
+  this._lastObject = null;
+  this.canvas.on("object:added", function (opt) {
+    this._setLastObject(opt.target);
+  }.bind(this));
+  this.canvas.on("object:removed", function (opt) {
+    this._checkLastObject(opt.target);
   }.bind(this));
 
   // Set visual options of custom line control points.
@@ -1413,9 +1581,23 @@ SelectionTool.prototype.setSelectable = function (selectable) {
 };
 
 SelectionTool.prototype.selectLastObject = function () {
-  var objects = this.canvas.getObjects();
-  if (objects.length > 0) {
-    this.canvas.setActiveObject(objects[objects.length - 1]);
+  if (this._lastObject) {
+    this.canvas.setActiveObject(this._lastObject);
+  }
+};
+
+SelectionTool.prototype._setLastObject = function (obj) {
+  if (obj._dt_sourceObj) {
+    // Ignore custom control points.
+    return;
+  }
+  this._lastObject = obj;
+};
+
+SelectionTool.prototype._checkLastObject = function (removedObj) {
+  if (removedObj === this._lastObject) {
+    var remainingObjects = this.canvas.getObjects();
+    this._lastObject = remainingObjects[remainingObjects.length - 1];
   }
 };
 
@@ -1451,15 +1633,10 @@ ShapeTool.prototype.minSize = 7;
 ShapeTool.prototype.defSize = 30;
 
 ShapeTool.prototype.activate = function () {
-  // console.warn(this.name + " at shape tool activation");
   ShapeTool.super.activate.call(this);
   this.down = false;
-
-  // Changes cursor to crosshair when drawing a shape
-  // see https://www.pivotaltracker.com/n/projects/1103712/stories/73647372
   this.canvas.defaultCursor = "crosshair";
 };
-
 
 ShapeTool.prototype.activateAgain = function () {
   // This used to activate 'locked' mode. However now it's activated by default.
@@ -1467,12 +1644,14 @@ ShapeTool.prototype.activateAgain = function () {
   // during a "second activation" (usually second click).
 };
 
+ShapeTool.prototype.deactivate = function () {
+  ShapeTool.super.deactivate.call(this);
+  this.canvas.defaultCursor = "default";
+};
+
 ShapeTool.prototype.exit = function () {
   this.down = false;
   this.master.changeOutOfTool();
-  // Changes cursor back to default
-  // see https://www.pivotaltracker.com/n/projects/1103712/stories/73647372
-  this.canvas.defaultCursor = "default";
 };
 
 ShapeTool.prototype.mouseDown = function (e) {
@@ -1507,9 +1686,10 @@ ShapeTool.prototype.actionComplete = function (newObject) {
 };
 
 ShapeTool.prototype.setCentralOrigin = function (object) {
+  var strokeWidth = object.stroke ? object.strokeWidth : 0;
   object.set({
-    left: object.left + (object.width + object.strokeWidth) / 2,
-    top: object.top + (object.height + object.strokeWidth) / 2,
+    left: object.left + (object.width + strokeWidth) / 2,
+    top: object.top + (object.height + strokeWidth) / 2,
     originX: 'center',
     originY: 'center'
   });
@@ -1914,6 +2094,11 @@ module.exports = TextTool;
 require.register("scripts/ui/basic-button", function(exports, require, module) {
 require('scripts/jquery-longpress');
 
+// Note that we use 'mousedown touchstart' everywhere. It's pretty important,
+// as 'click' could interfere with palette auto-hide feature (as it hides on
+// 'mousedown'). Also, it simplifies scenarios for touch devices,
+// as 'mousedown' occurs in the same moment as 'touchstart'.
+
 function BasicButton(options, ui, drawingTool) {
   this.ui = ui;
   this.dt = drawingTool;
@@ -1935,12 +2120,14 @@ function BasicButton(options, ui, drawingTool) {
   if (options.onClick) {
     this.$element.on('mousedown touchstart', function (e) {
       options.onClick.call(this, e, ui, drawingTool);
+      e.preventDefault();
     }.bind(this));
   }
 
   if (options.onLongPress) {
     this.$element.longPress(function (e) {
       options.onLongPress.call(this, e, ui, drawingTool);
+      e.preventDefault();
     }.bind(this));
   }
 
@@ -1959,6 +2146,7 @@ function BasicButton(options, ui, drawingTool) {
   if (options.activatesTool) {
     this.$element.on('mousedown touchstart', function (e) {
       drawingTool.chooseTool(options.activatesTool);
+      e.preventDefault();
     }.bind(this));
 
     drawingTool.on('tool:changed', function (toolName) {
@@ -1992,7 +2180,10 @@ BasicButton.prototype.getLabel = function () {
 };
 
 BasicButton.prototype.click = function () {
-  this.$element.mousedown();
+  // #triggerHandler won't create a native event that bubbles (in contrast
+  // to #trigger). Use it as otherwise it could interfere with some other
+  // handlers listening to 'mousedown' on window (palette auto-hide feature).
+  this.$element.triggerHandler('mousedown');
 };
 
 BasicButton.prototype.setActive = function (v) {
@@ -2057,9 +2248,10 @@ var inherit     = require('scripts/inherit');
 var BasicButton = require('scripts/ui/basic-button');
 
 function FillButton(options, ui, drawingTool) {
-  options.label = 'S';
   BasicButton.call(this, options, ui, drawingTool);
 
+  this.$element
+    .addClass('dt-fill-color');
   $('<div>')
     .addClass('dt-color')
     .appendTo(this.$element);
@@ -2070,6 +2262,8 @@ inherit(FillButton, BasicButton);
 FillButton.prototype.setColor = function(color) {
   if (!color) {
     this.$element.find('.dt-color').addClass('dt-no-color');
+    // Light gray looks better than white / transparent.
+    color = '#ddd';
   } else {
     this.$element.find('.dt-color').removeClass('dt-no-color');
   }
@@ -2148,7 +2342,7 @@ Palette.prototype._show = function () {
   if (this.permanent) {
     return;
   }
-  // Hide palette on first click / touch (if it's not permanent).
+  // Hide palette on first mousedown / touch (if it's not permanent).
   // Timeout ensures that we won't catch the same event which actually
   // opened the palette.
   var self = this;
@@ -2187,7 +2381,6 @@ var inherit     = require('scripts/inherit');
 var BasicButton = require('scripts/ui/basic-button');
 
 function StrokeButton(options, ui, drawingTool) {
-  options.label = 'S';
   BasicButton.call(this, options, ui, drawingTool);
 
   this.$element
@@ -2208,6 +2401,8 @@ inherit(StrokeButton, BasicButton);
 StrokeButton.prototype.setColor = function(color) {
   if (!color) {
     this.$element.find('.dt-color').addClass('dt-no-color');
+    // Light gray looks better than white / transparent.
+    color = '#ddd';
   } else {
     this.$element.find('.dt-color').removeClass('dt-no-color');
   }
@@ -2238,7 +2433,6 @@ var COLORS = [
 ];
 
 var STROKE_WIDTHS = [
-  0,
   1,
   2,
   4,
@@ -2294,13 +2488,11 @@ var ui = {
       reflectsTools: ['line', 'arrow', 'doubleArrow'],
       palette: 'main',
       onInit: function () {
-        this.setLabel(this.ui.getFirstPaletteButton('lines').getLabel());
+        this.setLabel(this.ui.getPaletteActiveButton('lines').getLabel());
       },
       onClick: function () {
-        this.ui.getFirstPaletteButton('lines').click();
-      },
-      onLongPress: function () {
         this.ui.togglePalette('lines');
+        this.ui.getPaletteActiveButton('lines').click();
       }
     },
     {
@@ -2309,12 +2501,10 @@ var ui = {
       reflectsTools: ['rect', 'ellipse', 'square', 'circle'],
       palette: 'main',
       onInit: function () {
-        this.setLabel(this.ui.getFirstPaletteButton('shapes').getLabel());
+        this.setLabel(this.ui.getPaletteActiveButton('shapes').getLabel());
       },
       onClick: function () {
-        this.ui.getFirstPaletteButton('shapes').click();
-      },
-      onLongPress: function () {
+        this.ui.getPaletteActiveButton('shapes').click();
         this.ui.togglePalette('shapes');
       }
     },
@@ -2370,19 +2560,38 @@ var ui = {
       }
     },
     {
+      name: 'sendToFront',
+      label: 'l',
+      classes: 'dt-send-to',
+      palette: 'main',
+      onInit: lockWhenNothingIsSelected,
+      onClick: function () {
+        this.dt.sendSelectionToFront();
+      }
+    },
+    {
+      name: 'sendToBack',
+      label: 'm',
+      classes: 'dt-send-to',
+      palette: 'main',
+      onInit: lockWhenNothingIsSelected,
+      onClick: function () {
+        this.dt.sendSelectionToBack();
+      }
+    },
+    {
+      name: 'clone',
+      label: 'c',
+      activatesTool: 'clone',
+      palette: 'main',
+      onInit: lockWhenNothingIsSelected
+    },
+    {
       name: 'trash',
       label: 'd',
       activatesTool: 'trash',
       palette: 'main',
-      onInit: function () {
-        this.setLocked(true);
-        this.dt.canvas.on("object:selected", function () {
-          this.setLocked(false);
-        }.bind(this));
-        this.dt.canvas.on("selection:cleared", function () {
-          this.setLocked(true);
-        }.bind(this));
-      }
+      onInit: lockWhenNothingIsSelected
     },
     /***
      * Line tools
@@ -2461,6 +2670,19 @@ STROKE_WIDTHS.forEach(function (width) {
   });
 });
 
+// Helper functions that may be used by buttons.
+// Note that all listeners are called in the context
+// of the button isntance (`this` value).
+function lockWhenNothingIsSelected() {
+  this.setLocked(true);
+  this.dt.canvas.on("object:selected", function () {
+    this.setLocked(false);
+  }.bind(this));
+  this.dt.canvas.on("selection:cleared", function () {
+    this.setLocked(true);
+  }.bind(this));
+}
+
 module.exports = ui;
 
 });
@@ -2479,7 +2701,7 @@ function UIManager(drawingTool) {
 
   this._palettes = {};
   this._buttons = {};
-  this._firstPaletteButton = {};
+  this._paletteActiveButton = {};
   this._processUIDefinition(uiDefinition);
 
   for (var name in this._buttons) {
@@ -2508,8 +2730,8 @@ UIManager.prototype.togglePalette = function (name) {
   this._palettes[name].toggle();
 };
 
-UIManager.prototype.getFirstPaletteButton = function (name) {
-  return this._firstPaletteButton[name];
+UIManager.prototype.getPaletteActiveButton = function (name) {
+  return this._paletteActiveButton[name];
 };
 
 UIManager.prototype._createPalette = function (paletteOptions) {
@@ -2523,11 +2745,18 @@ UIManager.prototype._createButton = function (buttonOptions) {
   var button = new BtnClass(buttonOptions, this, this.drawingTool);
   this._buttons[button.name] = button;
 
-  if (!this._firstPaletteButton[button.palette]) {
-    // This is the first button that is added to given palette.
-    // Used by #getFirstPaletteButton.
-    this._firstPaletteButton[button.palette] = button;
+  this._setupPaletteActiveButton(button);
+};
+
+UIManager.prototype._setupPaletteActiveButton = function (button) {
+  if (!this._paletteActiveButton[button.palette]) {
+    // This will first button added to palette as "active" palette button.
+    this._paletteActiveButton[button.palette] = button;
   }
+  button.$element.on('mousedown touchstart', function () {
+    // This will update "active" palette button during every click / touch.
+    this._paletteActiveButton[button.palette] = button;
+  }.bind(this));
 };
 
 module.exports = UIManager;

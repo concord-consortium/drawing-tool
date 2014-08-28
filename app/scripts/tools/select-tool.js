@@ -18,6 +18,15 @@ function SelectionTool(name, drawTool) {
   this.canvas.on("object:selected", function (opt) {
     opt.target.set(BASIC_SELECTION_PROPERTIES);
     this.canvas.renderAll();
+    this._setLastObject(opt.target);
+  }.bind(this));
+
+  this._lastObject = null;
+  this.canvas.on("object:added", function (opt) {
+    this._setLastObject(opt.target);
+  }.bind(this));
+  this.canvas.on("object:removed", function (opt) {
+    this._checkLastObject(opt.target);
   }.bind(this));
 
   // Set visual options of custom line control points.
@@ -50,9 +59,23 @@ SelectionTool.prototype.setSelectable = function (selectable) {
 };
 
 SelectionTool.prototype.selectLastObject = function () {
-  var objects = this.canvas.getObjects();
-  if (objects.length > 0) {
-    this.canvas.setActiveObject(objects[objects.length - 1]);
+  if (this._lastObject) {
+    this.canvas.setActiveObject(this._lastObject);
+  }
+};
+
+SelectionTool.prototype._setLastObject = function (obj) {
+  if (obj._dt_sourceObj) {
+    // Ignore custom control points.
+    return;
+  }
+  this._lastObject = obj;
+};
+
+SelectionTool.prototype._checkLastObject = function (removedObj) {
+  if (removedObj === this._lastObject) {
+    var remainingObjects = this.canvas.getObjects();
+    this._lastObject = remainingObjects[remainingObjects.length - 1];
   }
 };
 

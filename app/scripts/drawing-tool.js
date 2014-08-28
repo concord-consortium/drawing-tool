@@ -298,14 +298,13 @@ DrawingTool.prototype._sendSelectionTo = function (where) {
  *        ex: "resizeBackgroundToCanvas" or "resizeCanvasToBackground"
  */
 DrawingTool.prototype.setBackgroundImage = function (imageSrc, fit) {
-  var self = this;
   this._setBackgroundImage(imageSrc, null, function () {
     switch (fit) {
-      case "resizeBackgroundToCanvas": self.resizeBackgroundToCanvas(); return;
-      case "resizeCanvasToBackground": self.resizeCanvasToBackground(); return;
-      // TODO: default fit?
+      case "resizeBackgroundToCanvas": this.resizeBackgroundToCanvas(); return;
+      case "resizeCanvasToBackground": this.resizeCanvasToBackground(); return;
+      case "shrinkBackgroundToCanvas": this.shrinkBackgroundToCanvas(); return;
     }
-  });
+  }.bind(this));
 };
 
 DrawingTool.prototype.resizeBackgroundToCanvas = function () {
@@ -317,6 +316,24 @@ DrawingTool.prototype.resizeBackgroundToCanvas = function () {
     height: this.canvas.height
   });
   this.canvas.renderAll();
+};
+
+// Fits background to canvas (keeping original aspect ratio) only when background is bigger than canvas.
+DrawingTool.prototype.shrinkBackgroundToCanvas = function () {
+  if (!this._backgroundImage) {
+    return;
+  }
+  var bgImg = this._backgroundImage;
+  var widthRatio  = this.canvas.width / bgImg.width;
+  var heightRatio = this.canvas.height / bgImg.height;
+  var minRatio    = Math.min(widthRatio, heightRatio);
+  if (minRatio < 1) {
+    bgImg.set({
+      width:  bgImg.width * minRatio,
+      height: bgImg.height * minRatio
+    });
+    this.canvas.renderAll();
+  }
 };
 
 DrawingTool.prototype.resizeCanvasToBackground = function () {

@@ -31,7 +31,7 @@ lineCustomControlPoints.controlPointColor = '#bcd2ff';
 lineCustomControlPoints.cornerSize = 12;
 
 function isControlPoint(object, line) {
-  return line && line.ctp && (line.ctp[0] === object || line.ctp[1] === object);
+  return line && line._dt_controlPoints && (line._dt_controlPoints[0] === object || line._dt_controlPoints[1] === object);
 }
 
 function isLine(object) {
@@ -51,7 +51,7 @@ function lineSelected() {
   });
   // Create custom ones.
   var sidelen = lineCustomControlPoints.cornerSize ;
-  this.ctp = [
+  this._dt_controlPoints = [
     makeControlPoint(sidelen, this, 0),
     makeControlPoint(sidelen, this, 1)
   ];
@@ -65,11 +65,11 @@ function lineSelected() {
 function lineDeselected() {
   // Very important - set _dt_sourceObj property to null / undefined,
   // as otherwise control point will remove line as well!
-  this.ctp[0]._dt_sourceObj = null;
-  this.ctp[1]._dt_sourceObj = null;
-  this.ctp[0].remove();
-  this.ctp[1].remove();
-  this.ctp = undefined;
+  this._dt_controlPoints[0]._dt_sourceObj = null;
+  this._dt_controlPoints[1]._dt_sourceObj = null;
+  this._dt_controlPoints[0].remove();
+  this._dt_controlPoints[1].remove();
+  this._dt_controlPoints = undefined;
   this.off('moving');
   this.off('removed');
 }
@@ -80,10 +80,10 @@ function lineMoved() {
 
 function lineDeleted() {
   // Do nothing if there are no control points.
-  if (!this.ctp) return;
+  if (!this._dt_controlPoints) return;
   // If there are some, just remove one of them
   // It will cause that the second one will be removed as well.
-  this.ctp[0].remove();
+  this._dt_controlPoints[0].remove();
 }
 
 function controlPointMoved() {
@@ -100,10 +100,10 @@ function controlPointDeleted() {
   if (!line) return;
   // Otherwise try to remove second point and finally canvas.
   var secondControlPoint;
-  if (line.ctp[0] !== this) {
-    secondControlPoint = line.ctp[0];
+  if (line._dt_controlPoints[0] !== this) {
+    secondControlPoint = line._dt_controlPoints[0];
   } else {
-    secondControlPoint = line.ctp[1];
+    secondControlPoint = line._dt_controlPoints[1];
   }
   secondControlPoint.line = null;
   secondControlPoint.remove();
@@ -115,12 +115,12 @@ function controlPointDeleted() {
 function updateLineControlPoints() {
   translateLineCoords.call(this);
   rotateLineCoords.call(this);
-  this.ctp[0].set('left', this.get('x1'));
-  this.ctp[0].set('top', this.get('y1'));
-  this.ctp[1].set('left', this.get('x2'));
-  this.ctp[1].set('top', this.get('y2'));
-  this.ctp[0].setCoords();
-  this.ctp[1].setCoords();
+  this._dt_controlPoints[0].set('left', this.get('x1'));
+  this._dt_controlPoints[0].set('top', this.get('y1'));
+  this._dt_controlPoints[1].set('left', this.get('x2'));
+  this._dt_controlPoints[1].set('top', this.get('y2'));
+  this._dt_controlPoints[0].setCoords();
+  this._dt_controlPoints[1].setCoords();
 }
 
 function translateLineCoords() {

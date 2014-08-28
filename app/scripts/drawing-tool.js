@@ -263,9 +263,27 @@ DrawingTool.prototype._sendSelectionTo = function (where) {
     this.canvas.setActiveGroup(group);
   }
   function send(obj) {
+    // Note that this function handles custom control points defined for lines.
+    // See: line-custom-control-points.js
+    if (obj._dt_sourceObj) {
+      send(obj._dt_sourceObj);
+      return;
+    }
     if (where === 'front') {
       obj.bringToFront();
+      // Make sure that custom control point are send to front AFTER shape itself.
+      if (obj._dt_controlPoints) {
+        obj._dt_controlPoints.forEach(function (cp) {
+          cp.bringToFront();
+        });
+      }
     } else {
+      // Make sure that custom control point are send to back BEFORE shape itself.
+      if (obj._dt_controlPoints) {
+        obj._dt_controlPoints.forEach(function (cp) {
+          cp.sendToBack();
+        });
+      }
       obj.sendToBack();
     }
   }

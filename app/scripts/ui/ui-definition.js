@@ -146,6 +146,7 @@ var ui = {
     {
       name: 'sendToFront',
       label: 'l',
+      classes: 'dt-send-to',
       palette: 'main',
       onInit: lockWhenNothingIsSelected,
       onClick: function () {
@@ -155,6 +156,7 @@ var ui = {
     {
       name: 'sendToBack',
       label: 'm',
+      classes: 'dt-send-to',
       palette: 'main',
       onInit: lockWhenNothingIsSelected,
       onClick: function () {

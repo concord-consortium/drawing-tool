@@ -47,7 +47,7 @@ $text: Arial, sans-serif;
     color: #fff;
     background: $buttonColor;
     vertical-align: middle;
-    text-align:center;
+    text-align: center;
     padding: 0;
     cursor: pointer;
     -moz-user-select: none;
@@ -68,48 +68,59 @@ $text: Arial, sans-serif;
       cursor: default;
     }
 
-    .dt-color {
+    // Stroke and fill color buttons:
+    &.dt-stroke-color:before, &.dt-fill-color:before {
+      content: '';
       background: #fff;
-      border: solid 1px #1c68aa;
-      overflow: hidden;
       position: absolute;
-      top: 11px;
-      left: 11px;
-      width: 20px;
-      height: 20px;
-
-      &.dt-no-color:after {
-        content: 'L';
-        color: #e66665;
-        position: absolute;
-        left: -9px;
-        bottom: -14px;
-        font-size: 50px;
-      }
+      top: 10px;
+      left: 10px;
+      width: 24px;
+      height: 24px;
     }
 
     &.dt-stroke-color {
       .dt-inner1 { /* inset/overlay white box with black border */
         background: #fff;
-        border: solid 1px #1c68aa;
+        // border: solid 1px #1c68aa;
         position: absolute;
-        height: 10px;
-        width: 10px;
-        left: 4px;
-        top: 4px;
+        height: 12px;
+        width: 12px;
+        left: 5px;
+        top: 5px;
       }
       .dt-inner2 { /* inset/overlay blue box with no border */
         background: #3e8acc;
         border: none;
         position: absolute;
-        height: 8px;
-        width: 8px;
+        height: 10px;
+        width: 10px;
         left: 6px;
         top: 6px;
       }
     }
 
-    // Color button
+    .dt-color {
+      background: #fff;
+      // border: solid 1px #1c68aa;
+      overflow: hidden;
+      position: absolute;
+      top: 11px;
+      left: 11px;
+      width: 22px;
+      height: 22px;
+
+      &.dt-no-color:after {
+        content: 'L';
+        color: #e66665;
+        position: absolute;
+        left: -10px;
+        bottom: -14px;
+        font-size: 50px;
+      }
+    }
+
+    // Color buttons:
     &.dt-transparent {
       background: #f4f4f4;
       &:after {
@@ -122,7 +133,7 @@ $text: Arial, sans-serif;
       }
     }
 
-    // Stroke width button
+    // Stroke width button:
     .dt-line-width-icon {
       height: 28px;
       background: #fff;
@@ -137,6 +148,16 @@ $text: Arial, sans-serif;
           left: 5px;
           top: 2px;
         }
+      }
+    }
+
+    // Send to front and back buttons:
+    &.dt-send-to {
+      // These icons are placed somehow lower, modify line-height to move them up.
+      line-height: 45px;
+      // Also slight margin makes them look better.
+      span {
+        margin-left: 3px;
       }
     }
   }

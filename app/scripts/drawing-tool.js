@@ -464,6 +464,22 @@ DrawingTool.prototype._initFabricJS = function () {
     this.canvas.targetFindTolerance = 12;
   }
   this.canvas.setBackgroundColor("#fff");
+  this._setupHDPISupport();
+};
+
+DrawingTool.prototype._setupHDPISupport = function () {
+  var pixelRatio = window.devicePixelRatio;
+  if (pixelRatio !== 1) {
+    var canvEl = this.canvas.getElement();
+    var w = canvEl.width;
+    var h = canvEl.height;
+    $(canvEl)
+      .attr('width',  w * pixelRatio)
+      .attr('height', h * pixelRatio)
+      .css('width',   w)
+      .css('height',  h);
+    canvEl.getContext('2d').scale(pixelRatio, pixelRatio);
+  }
 };
 
 module.exports = DrawingTool;

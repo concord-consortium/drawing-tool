@@ -2674,6 +2674,26 @@ var ui = {
       }
     },
     {
+      name: 'sendToBack',
+      label: 'm',
+      classes: 'dt-send-to',
+      palette: 'main',
+      onInit: lockWhenNothingIsSelected,
+      onClick: function () {
+        this.dt.sendSelectionToBack();
+      }
+    },
+    {
+      name: 'sendToFront',
+      label: 'l',
+      classes: 'dt-send-to',
+      palette: 'main',
+      onInit: lockWhenNothingIsSelected,
+      onClick: function () {
+        this.dt.sendSelectionToFront();
+      }
+    },
+    {
       name: 'undo',
       label: 'u',
       classes: 'dt-undo-redo',
@@ -2707,26 +2727,6 @@ var ui = {
         this.dt.on("redo:impossible", function () {
           this.setLocked(true);
         }.bind(this));
-      }
-    },
-    {
-      name: 'sendToFront',
-      label: 'l',
-      classes: 'dt-send-to',
-      palette: 'main',
-      onInit: lockWhenNothingIsSelected,
-      onClick: function () {
-        this.dt.sendSelectionToFront();
-      }
-    },
-    {
-      name: 'sendToBack',
-      label: 'm',
-      classes: 'dt-send-to',
-      palette: 'main',
-      onInit: lockWhenNothingIsSelected,
-      onClick: function () {
-        this.dt.sendSelectionToBack();
       }
     },
     {

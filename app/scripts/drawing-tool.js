@@ -6,6 +6,7 @@ var TextTool          = require('scripts/tools/shape-tools/text-tool');
 var DeleteTool        = require('scripts/tools/delete-tool');
 var CloneTool         = require('scripts/tools/clone-tool');
 var UIManager         = require('scripts/ui/ui-manager');
+var UndoRedo          = require('scripts/undo-redo');
 var rescale2resize    = require('scripts/fabric-extensions/rescale-2-resize');
 var multitouchSupport = require('scripts/fabric-extensions/multi-touch-support');
 
@@ -56,6 +57,8 @@ function DrawingTool(selector, options, settings) {
   this._initFabricJS();
   this._initTools();
 
+  this._history = new UndoRedo(this);
+
   new UIManager(this);
 
   // Apply a fix that changes native FabricJS rescaling behavior into resizing.
@@ -66,6 +69,7 @@ function DrawingTool(selector, options, settings) {
   // Note that at the beginning we will emmit two events - state:changed and tool:changed.
   this._fireStateChange();
   this.chooseTool('select');
+  this.pushToHistory();
 }
 
 DrawingTool.prototype.ADDITIONAL_PROPS_TO_SERIALIZE = ADDITIONAL_PROPS_TO_SERIALIZE;
@@ -99,9 +103,10 @@ DrawingTool.prototype.clearSelection = function () {
  * (used in conjunction with `load()`)
  */
 DrawingTool.prototype.save = function () {
+  var selection = this.getSelection();
   // It ensures that all custom control points will be removed before serialization!
   this.clearSelection();
-  return JSON.stringify({
+  var result = JSON.stringify({
     dt: {
       // Drawing Tool specific options.
       width: this.canvas.getWidth(),
@@ -109,6 +114,8 @@ DrawingTool.prototype.save = function () {
     },
     canvas: this.canvas.toJSON(ADDITIONAL_PROPS_TO_SERIALIZE)
   });
+  this.select(selection);
+  return result;
 };
 
 /*
@@ -148,6 +155,18 @@ DrawingTool.prototype.load = function (jsonString) {
     this._setBackgroundImage(imageSrc, backgroundImage);
   }
   this.canvas.renderAll();
+};
+
+DrawingTool.prototype.pushToHistory = function() {
+  this._history.saveState();
+};
+
+DrawingTool.prototype.undo = function() {
+  this._history.undo();
+};
+
+DrawingTool.prototype.redo = function() {
+  this._history.redo();
 };
 
 /**
@@ -193,6 +212,7 @@ DrawingTool.prototype.setSelectionStrokeColor = function (color) {
     this._setObjectProp(obj, 'stroke', color);
   }.bind(this));
   this.canvas.renderAll();
+  this.pushToHistory();
 };
 
 DrawingTool.prototype.setSelectionFillColor = function (color) {
@@ -200,6 +220,7 @@ DrawingTool.prototype.setSelectionFillColor = function (color) {
     this._setObjectProp(obj, 'fill', color);
   }.bind(this));
   this.canvas.renderAll();
+  this.pushToHistory();
 };
 
 DrawingTool.prototype.setSelectionStrokeWidth = function (width) {
@@ -207,14 +228,17 @@ DrawingTool.prototype.setSelectionStrokeWidth = function (width) {
     this._setObjectProp(obj, 'strokeWidth', width);
   }.bind(this));
   this.canvas.renderAll();
+  this.pushToHistory();
 };
 
 DrawingTool.prototype.sendSelectionToFront = function () {
   this._sendSelectionTo('front');
+  this.pushToHistory();
 };
 
 DrawingTool.prototype.sendSelectionToBack = function () {
   this._sendSelectionTo('back');
+  this.pushToHistory();
 };
 
 DrawingTool.prototype.forEachSelectedObject = function (callback) {
@@ -244,23 +268,14 @@ DrawingTool.prototype._sendSelectionTo = function (where) {
   if (this.canvas.getActiveObject()) {
     // Simple case, only a single object is selected.
     send(this.canvas.getActiveObject());
-    return;
-  }
-  if (this.canvas.getActiveGroup()) {
+  } else if (this.canvas.getActiveGroup()) {
     // Yes, this is overcomplicated, however FabricJS cannot handle
     // sending a group to front or back. We need to remove selection,
     // send particular objects and recreate selection...
     var objects = this.canvas.getActiveGroup().getObjects();
     this.clearSelection();
     objects.forEach(send);
-    var group = new fabric.Group(objects, {
-      originX: 'center',
-      originY: 'center',
-      canvas: this.canvas
-    });
-    // Important! E.g. ensures that outlines around objects are visible.
-    group.addWithUpdate();
-    this.canvas.setActiveGroup(group);
+    this.select(objects);
   }
   function send(obj) {
     // Note that this function handles custom control points defined for lines.
@@ -304,6 +319,7 @@ DrawingTool.prototype.setBackgroundImage = function (imageSrc, fit) {
       case "resizeCanvasToBackground": this.resizeCanvasToBackground(); return;
       case "shrinkBackgroundToCanvas": this.shrinkBackgroundToCanvas(); return;
     }
+    this.pushToHistory();
   }.bind(this));
 };
 
@@ -414,6 +430,44 @@ DrawingTool.prototype.on = function () {
 
 DrawingTool.prototype.off = function (name, handler) {
   this._dispatch.off.apply(this._dispatch, arguments);
+};
+
+/**
+ * Selects passed object or array of objects.
+ */
+DrawingTool.prototype.select = function (objectOrObjects) {
+  if (!objectOrObjects) {
+    return;
+  }
+  if (objectOrObjects.length === 1) {
+    objectOrObjects = objectOrObjects[0];
+  }
+  if (!objectOrObjects.length) {
+    // Simple scenario, select a single object.
+    this.canvas.setActiveObject(objectOrObjects);
+    return;
+  }
+  // More complex case, create a group and select it.
+  var group = new fabric.Group(objectOrObjects, {
+    originX: 'center',
+    originY: 'center',
+    canvas: this.canvas
+  });
+  // Important! E.g. ensures that outlines around objects are visible.
+  group.addWithUpdate();
+  this.canvas.setActiveGroup(group);
+};
+
+/**
+ * Returns selected object or array of selected objects.
+ */
+DrawingTool.prototype.getSelection = function () {
+  var actGroup = this.canvas.getActiveGroup();
+  if (actGroup) {
+    return actGroup.getObjects();
+  }
+  var actObject = this.canvas.getActiveObject();
+  return actObject && actObject.isControlPoint ? actObject._dt_sourceObj : actObject;
 };
 
 DrawingTool.prototype._fireStateChange = function () {

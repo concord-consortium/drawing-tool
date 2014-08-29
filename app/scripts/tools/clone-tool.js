@@ -53,8 +53,8 @@ CloneTool.prototype._processClonedObject = function (clonedObject) {
     this.canvas.add(clonedObject);
     this.canvas.setActiveObject(clonedObject);
   }
-
   this.canvas.renderAll();
+  this.master.pushToHistory();
 };
 
 module.exports = CloneTool;

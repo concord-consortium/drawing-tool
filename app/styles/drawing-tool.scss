@@ -160,6 +160,13 @@ $text: Arial, sans-serif;
         margin-left: 3px;
       }
     }
+
+
+    // Undo and redo buttons:
+    &.dt-undo-redo {
+      // These icons are placed somehow lower, modify line-height to move them up.
+      line-height: 45px;
+    }
   }
 
   .dt-expand {

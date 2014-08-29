@@ -5,6 +5,10 @@ function TextTool(name, drawTool) {
   ShapeTool.call(this, name, drawTool);
 
   this.exitTextEditingOnFirstClick();
+
+  this.canvas.on('text:editing:exited', function (opt) {
+    this._pushToHistoryIfModified(opt.target);
+  }.bind(this));
 }
 
 inherit(TextTool, ShapeTool);
@@ -82,12 +86,19 @@ TextTool.prototype.exitTextEditingOnFirstClick = function () {
     if (target !== activeObj && activeObj && activeObj.isEditing) {
       // Deactivate current active (so also exit edit mode) object
       // and mark that this click shouldn't add new text object.
-      canvas.deactivateAllWithDispatch();
+      self.exitTextEditing();
       e._dt_doNotCreateNewTextObj = true;
       // Workaround - note that .deactivateAllWithDispatch() call above always set
       // .selecatble attribute to true, what sometimes is definitely unwanted (lock mode).
       activeObj.selectable = !self._locked;
     }
+  }
+};
+
+TextTool.prototype._pushToHistoryIfModified = function (obj) {
+  if (obj.text !== obj._dt_lastText) {
+    this.master.pushToHistory();
+    obj._dt_lastText = obj.text;
   }
 };
 

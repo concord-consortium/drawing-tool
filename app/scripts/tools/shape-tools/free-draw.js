@@ -13,9 +13,6 @@ function FreeDrawTool(name, drawTool) {
     self.canvas.freeDrawingBrush.color = self.master.state.stroke;
     self.canvas.freeDrawingBrush.width = self.master.state.strokeWidth;
   });
-
-  this.addEventListener('mouse:down', function (e) { self.mouseDown(e); });
-  this.addEventListener('mouse:up', function (e) { self.mouseUp(e); });
 }
 
 inherit(FreeDrawTool, ShapeTool);
@@ -52,6 +49,7 @@ FreeDrawTool.prototype.mouseUp = function (opt) {
   }
   this.actionComplete(lastObject);
   this.curr = undefined;
+  this.master.pushToHistory();
 };
 
 FreeDrawTool.prototype.deactivate = function () {

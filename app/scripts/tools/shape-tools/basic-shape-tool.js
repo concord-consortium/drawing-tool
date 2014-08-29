@@ -95,6 +95,7 @@ BasicShapeTool.prototype.mouseUp = function (e) {
   this.canvas.renderAll();
   this.actionComplete(this.curr);
   this.curr = undefined;
+  this.master.pushToHistory();
 };
 
 BasicShapeTool.prototype._processNewShape = function (s) {

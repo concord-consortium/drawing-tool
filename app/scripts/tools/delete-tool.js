@@ -30,11 +30,13 @@ DeleteTool.prototype.use = function () {
   var canvas = this.canvas;
   if (canvas.getActiveObject()) {
     canvas.remove(canvas.getActiveObject());
+    this.master.pushToHistory();
   } else if (canvas.getActiveGroup()) {
     canvas.getActiveGroup().forEachObject(function (o) {
       canvas.remove(o);
     });
     canvas.discardActiveGroup().renderAll();
+    this.master.pushToHistory();
   }
 };
 

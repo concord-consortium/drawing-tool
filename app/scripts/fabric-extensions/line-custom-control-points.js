@@ -178,7 +178,8 @@ function makeControlPoint(s, source, i) {
     originY: 'center',
     // Custom properties:
     _dt_sourceObj: source,
-    id: i
+    id: i,
+    isControlPoint: true
   });
   source.canvas.add(point);
   point.on("moving", controlPointMoved);

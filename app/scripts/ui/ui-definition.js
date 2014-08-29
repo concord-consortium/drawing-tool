@@ -144,6 +144,24 @@ var ui = {
       }
     },
     {
+      name: 'undo',
+      label: 'u',
+      classes: 'dt-undo-redo',
+      palette: 'main',
+      onClick: function () {
+        this.dt.undo();
+      }
+    },
+    {
+      name: 'redo',
+      label: 'r',
+      classes: 'dt-undo-redo',
+      palette: 'main',
+      onClick: function () {
+        this.dt.redo();
+      }
+    },
+    {
       name: 'sendToFront',
       label: 'l',
       classes: 'dt-send-to',

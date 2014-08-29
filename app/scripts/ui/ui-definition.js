@@ -150,6 +150,15 @@ var ui = {
       palette: 'main',
       onClick: function () {
         this.dt.undo();
+      },
+      onInit: function () {
+        this.setLocked(true);
+        this.dt.on("undo:possible", function () {
+          this.setLocked(false);
+        }.bind(this));
+        this.dt.on("undo:impossible", function () {
+          this.setLocked(true);
+        }.bind(this));
       }
     },
     {
@@ -159,6 +168,15 @@ var ui = {
       palette: 'main',
       onClick: function () {
         this.dt.redo();
+      },
+      onInit: function () {
+        this.setLocked(true);
+        this.dt.on("redo:possible", function () {
+          this.setLocked(false);
+        }.bind(this));
+        this.dt.on("redo:impossible", function () {
+          this.setLocked(true);
+        }.bind(this));
       }
     },
     {

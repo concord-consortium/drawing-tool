@@ -42,6 +42,14 @@ UndoRedo.prototype._load = function (state) {
   this.dt.load(state);
 };
 
+UndoRedo.prototype.canUndo = function () {
+  return !!this._storage[this._idx - 1];
+};
+
+UndoRedo.prototype.canRedo = function () {
+  return !!this._storage[this._idx + 1];
+};
+
 UndoRedo.prototype._saveStateOnUserInteraction = function () {
   this.canvas.on('object:modified', function () {
     this.saveState();

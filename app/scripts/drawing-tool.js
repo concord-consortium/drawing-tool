@@ -22,8 +22,12 @@ var DEF_STATE = {
 };
 
 var EVENTS = {
-  STATE_CHANGED: 'state:changed',
-  TOOL_CHANGED: 'tool:changed'
+  STATE_CHANGED:   'state:changed',
+  TOOL_CHANGED:    'tool:changed',
+  UNDO_POSSIBLE:   'undo:possible',
+  UNDO_IMPOSSIBLE: 'undo:impossible',
+  REDO_POSSIBLE:   'redo:possible',
+  REDO_IMPOSSIBLE: 'redo:impossible'
 };
 
 // Note that some object properties aren't serialized by default by FabricJS.
@@ -157,16 +161,32 @@ DrawingTool.prototype.load = function (jsonString) {
   this.canvas.renderAll();
 };
 
-DrawingTool.prototype.pushToHistory = function() {
+DrawingTool.prototype.pushToHistory = function () {
   this._history.saveState();
+  this._fireHistoryEvents();
 };
 
-DrawingTool.prototype.undo = function() {
+DrawingTool.prototype.undo = function () {
   this._history.undo();
+  this._fireHistoryEvents();
 };
 
-DrawingTool.prototype.redo = function() {
+DrawingTool.prototype.redo = function () {
   this._history.redo();
+  this._fireHistoryEvents();
+};
+
+DrawingTool.prototype._fireHistoryEvents = function () {
+  if (this._history.canUndo()) {
+    this._dispatch.emit(EVENTS.UNDO_POSSIBLE);
+  } else {
+    this._dispatch.emit(EVENTS.UNDO_IMPOSSIBLE);
+  }
+  if (this._history.canRedo()) {
+    this._dispatch.emit(EVENTS.REDO_POSSIBLE);
+  } else {
+    this._dispatch.emit(EVENTS.REDO_IMPOSSIBLE);
+  }
 };
 
 /**

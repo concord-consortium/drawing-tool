@@ -99,12 +99,13 @@ var TextTool          = require('scripts/tools/shape-tools/text-tool');
 var DeleteTool        = require('scripts/tools/delete-tool');
 var CloneTool         = require('scripts/tools/clone-tool');
 var UIManager         = require('scripts/ui/ui-manager');
+var UndoRedo          = require('scripts/undo-redo');
 var rescale2resize    = require('scripts/fabric-extensions/rescale-2-resize');
 var multitouchSupport = require('scripts/fabric-extensions/multi-touch-support');
 
 var DEF_OPTIONS = {
-  width: 700,
-  height: 500
+  width: 800,
+  height: 600
 };
 
 var DEF_STATE = {
@@ -114,8 +115,12 @@ var DEF_STATE = {
 };
 
 var EVENTS = {
-  STATE_CHANGED: 'state:changed',
-  TOOL_CHANGED: 'tool:changed'
+  STATE_CHANGED:   'state:changed',
+  TOOL_CHANGED:    'tool:changed',
+  UNDO_POSSIBLE:   'undo:possible',
+  UNDO_IMPOSSIBLE: 'undo:impossible',
+  REDO_POSSIBLE:   'redo:possible',
+  REDO_IMPOSSIBLE: 'redo:impossible'
 };
 
 // Note that some object properties aren't serialized by default by FabricJS.
@@ -149,6 +154,8 @@ function DrawingTool(selector, options, settings) {
   this._initFabricJS();
   this._initTools();
 
+  this._history = new UndoRedo(this);
+
   new UIManager(this);
 
   // Apply a fix that changes native FabricJS rescaling behavior into resizing.
@@ -159,6 +166,7 @@ function DrawingTool(selector, options, settings) {
   // Note that at the beginning we will emmit two events - state:changed and tool:changed.
   this._fireStateChange();
   this.chooseTool('select');
+  this.pushToHistory();
 }
 
 DrawingTool.prototype.ADDITIONAL_PROPS_TO_SERIALIZE = ADDITIONAL_PROPS_TO_SERIALIZE;
@@ -192,9 +200,10 @@ DrawingTool.prototype.clearSelection = function () {
  * (used in conjunction with `load()`)
  */
 DrawingTool.prototype.save = function () {
+  var selection = this.getSelection();
   // It ensures that all custom control points will be removed before serialization!
   this.clearSelection();
-  return JSON.stringify({
+  var result = JSON.stringify({
     dt: {
       // Drawing Tool specific options.
       width: this.canvas.getWidth(),
@@ -202,6 +211,8 @@ DrawingTool.prototype.save = function () {
     },
     canvas: this.canvas.toJSON(ADDITIONAL_PROPS_TO_SERIALIZE)
   });
+  this.select(selection);
+  return result;
 };
 
 /*
@@ -241,6 +252,38 @@ DrawingTool.prototype.load = function (jsonString) {
     this._setBackgroundImage(imageSrc, backgroundImage);
   }
   this.canvas.renderAll();
+
+  // We don't serialize selectable property which depends on currently selected tool.
+  // Currently objects should be selectable only if select tool is active.
+  this.tools.select.setSelectable(this.tools.select.active);
+};
+
+DrawingTool.prototype.pushToHistory = function () {
+  this._history.saveState();
+  this._fireHistoryEvents();
+};
+
+DrawingTool.prototype.undo = function () {
+  this._history.undo();
+  this._fireHistoryEvents();
+};
+
+DrawingTool.prototype.redo = function () {
+  this._history.redo();
+  this._fireHistoryEvents();
+};
+
+DrawingTool.prototype._fireHistoryEvents = function () {
+  if (this._history.canUndo()) {
+    this._dispatch.emit(EVENTS.UNDO_POSSIBLE);
+  } else {
+    this._dispatch.emit(EVENTS.UNDO_IMPOSSIBLE);
+  }
+  if (this._history.canRedo()) {
+    this._dispatch.emit(EVENTS.REDO_POSSIBLE);
+  } else {
+    this._dispatch.emit(EVENTS.REDO_IMPOSSIBLE);
+  }
 };
 
 /**
@@ -282,32 +325,42 @@ DrawingTool.prototype.setFillColor = function (color) {
 };
 
 DrawingTool.prototype.setSelectionStrokeColor = function (color) {
+  if (!this.getSelection()) return;
   this.forEachSelectedObject(function (obj) {
     this._setObjectProp(obj, 'stroke', color);
   }.bind(this));
   this.canvas.renderAll();
+  this.pushToHistory();
 };
 
 DrawingTool.prototype.setSelectionFillColor = function (color) {
+  if (!this.getSelection()) return;
   this.forEachSelectedObject(function (obj) {
     this._setObjectProp(obj, 'fill', color);
   }.bind(this));
   this.canvas.renderAll();
+  this.pushToHistory();
 };
 
 DrawingTool.prototype.setSelectionStrokeWidth = function (width) {
+  if (!this.getSelection()) return;
   this.forEachSelectedObject(function (obj) {
     this._setObjectProp(obj, 'strokeWidth', width);
   }.bind(this));
   this.canvas.renderAll();
+  this.pushToHistory();
 };
 
 DrawingTool.prototype.sendSelectionToFront = function () {
+  if (!this.getSelection()) return;
   this._sendSelectionTo('front');
+  this.pushToHistory();
 };
 
 DrawingTool.prototype.sendSelectionToBack = function () {
+  if (!this.getSelection()) return;
   this._sendSelectionTo('back');
+  this.pushToHistory();
 };
 
 DrawingTool.prototype.forEachSelectedObject = function (callback) {
@@ -337,23 +390,14 @@ DrawingTool.prototype._sendSelectionTo = function (where) {
   if (this.canvas.getActiveObject()) {
     // Simple case, only a single object is selected.
     send(this.canvas.getActiveObject());
-    return;
-  }
-  if (this.canvas.getActiveGroup()) {
+  } else if (this.canvas.getActiveGroup()) {
     // Yes, this is overcomplicated, however FabricJS cannot handle
     // sending a group to front or back. We need to remove selection,
     // send particular objects and recreate selection...
     var objects = this.canvas.getActiveGroup().getObjects();
     this.clearSelection();
     objects.forEach(send);
-    var group = new fabric.Group(objects, {
-      originX: 'center',
-      originY: 'center',
-      canvas: this.canvas
-    });
-    // Important! E.g. ensures that outlines around objects are visible.
-    group.addWithUpdate();
-    this.canvas.setActiveGroup(group);
+    this.select(objects);
   }
   function send(obj) {
     // Note that this function handles custom control points defined for lines.
@@ -397,6 +441,7 @@ DrawingTool.prototype.setBackgroundImage = function (imageSrc, fit) {
       case "resizeCanvasToBackground": this.resizeCanvasToBackground(); return;
       case "shrinkBackgroundToCanvas": this.shrinkBackgroundToCanvas(); return;
     }
+    this.pushToHistory();
   }.bind(this));
 };
 
@@ -507,6 +552,44 @@ DrawingTool.prototype.on = function () {
 
 DrawingTool.prototype.off = function (name, handler) {
   this._dispatch.off.apply(this._dispatch, arguments);
+};
+
+/**
+ * Selects passed object or array of objects.
+ */
+DrawingTool.prototype.select = function (objectOrObjects) {
+  if (!objectOrObjects) {
+    return;
+  }
+  if (objectOrObjects.length === 1) {
+    objectOrObjects = objectOrObjects[0];
+  }
+  if (!objectOrObjects.length) {
+    // Simple scenario, select a single object.
+    this.canvas.setActiveObject(objectOrObjects);
+    return;
+  }
+  // More complex case, create a group and select it.
+  var group = new fabric.Group(objectOrObjects, {
+    originX: 'center',
+    originY: 'center',
+    canvas: this.canvas
+  });
+  // Important! E.g. ensures that outlines around objects are visible.
+  group.addWithUpdate();
+  this.canvas.setActiveGroup(group);
+};
+
+/**
+ * Returns selected object or array of selected objects.
+ */
+DrawingTool.prototype.getSelection = function () {
+  var actGroup = this.canvas.getActiveGroup();
+  if (actGroup) {
+    return actGroup.getObjects();
+  }
+  var actObject = this.canvas.getActiveObject();
+  return actObject && actObject.isControlPoint ? actObject._dt_sourceObj : actObject;
 };
 
 DrawingTool.prototype._fireStateChange = function () {
@@ -1002,7 +1085,8 @@ function makeControlPoint(s, source, i) {
     originY: 'center',
     // Custom properties:
     _dt_sourceObj: source,
-    id: i
+    id: i,
+    isControlPoint: true
   });
   source.canvas.add(point);
   point.on("moving", controlPointMoved);
@@ -1466,8 +1550,8 @@ CloneTool.prototype._processClonedObject = function (clonedObject) {
     this.canvas.add(clonedObject);
     this.canvas.setActiveObject(clonedObject);
   }
-
   this.canvas.renderAll();
+  this.master.pushToHistory();
 };
 
 module.exports = CloneTool;
@@ -1507,11 +1591,13 @@ DeleteTool.prototype.use = function () {
   var canvas = this.canvas;
   if (canvas.getActiveObject()) {
     canvas.remove(canvas.getActiveObject());
+    this.master.pushToHistory();
   } else if (canvas.getActiveGroup()) {
     canvas.getActiveGroup().forEachObject(function (o) {
       canvas.remove(o);
     });
     canvas.discardActiveGroup().renderAll();
+    this.master.pushToHistory();
   }
 };
 
@@ -1816,6 +1902,7 @@ BasicShapeTool.prototype.mouseUp = function (e) {
   this.canvas.renderAll();
   this.actionComplete(this.curr);
   this.curr = undefined;
+  this.master.pushToHistory();
 };
 
 BasicShapeTool.prototype._processNewShape = function (s) {
@@ -1861,9 +1948,6 @@ function FreeDrawTool(name, drawTool) {
     self.canvas.freeDrawingBrush.color = self.master.state.stroke;
     self.canvas.freeDrawingBrush.width = self.master.state.strokeWidth;
   });
-
-  this.addEventListener('mouse:down', function (e) { self.mouseDown(e); });
-  this.addEventListener('mouse:up', function (e) { self.mouseUp(e); });
 }
 
 inherit(FreeDrawTool, ShapeTool);
@@ -1900,6 +1984,7 @@ FreeDrawTool.prototype.mouseUp = function (opt) {
   }
   this.actionComplete(lastObject);
   this.curr = undefined;
+  this.master.pushToHistory();
 };
 
 FreeDrawTool.prototype.deactivate = function () {
@@ -1973,6 +2058,7 @@ LineTool.prototype.mouseUp = function (e) {
   this.canvas.renderAll();
   this.actionComplete(this.curr);
   this.curr = undefined;
+  this.master.pushToHistory();
 };
 
 LineTool.prototype._processNewShape = function (s) {
@@ -2000,7 +2086,15 @@ var ShapeTool = require('scripts/tools/shape-tool');
 function TextTool(name, drawTool) {
   ShapeTool.call(this, name, drawTool);
 
-  this.exitTextEditingOnFirstClick();
+  this.canvas.on('text:editing:exited', function (opt) {
+    if (this.active) {
+      // This may be confusing, but if you take a look at FabricJS source, you will notice
+      // that text .selectable property is always set to true just before this event
+      // is emitted. Quite often is now what we want, especially when TextTool is active.
+      opt.target.selectable = false;
+    }
+    this._pushToHistoryIfModified(opt.target);
+  }.bind(this));
 }
 
 inherit(TextTool, ShapeTool);
@@ -2018,7 +2112,7 @@ TextTool.prototype.mouseDown = function (opt) {
     this.editText(target, opt.e);
     return;
   }
-  // See #exitTextEditingOnFirstClick method.
+  // See #_exitTextEditingOnFirstClick method.
   if (!this.active || opt.e._dt_doNotCreateNewTextObj) return;
 
   var loc = this.canvas.getPointer(opt.e);
@@ -2057,33 +2151,46 @@ TextTool.prototype.editText = function (text, e) {
   this.canvas.setActiveObject(text);
   text.enterEditing();
   text.setCursorByClick(e);
-  this.exitTextEditingOnFirstClick();
+  this._exitTextEditingOnFirstClick();
 };
 
-TextTool.prototype.exitTextEditingOnFirstClick = function () {
+// FabricJS also disables edit mode on first click, but only when a canvas is the click target.
+// Make sure we always exit edit mode and do it pretty fast, before other handlers are executed
+// (useCapture = true, window). That's important e.g. for state history update (edge case: user
+// is in edit mode and clicks 'undo' button).
+TextTool.prototype._exitTextEditingOnFirstClick = function () {
   var self = this;
   var canvas = this.canvas;
+  addHandlers();
 
-  // TODO: should we cleanup these handlers somewhere?
-  // The perfect option would be to add handler to upperCanvasEl itself, but then
-  // there is no way to execute it before Fabric's mousedown handler (which e.g.
-  // will remove selection and deactivate object we are interested in).
-  canvas.upperCanvasEl.parentElement.addEventListener('mousedown', handler, true);
-  canvas.upperCanvasEl.parentElement.addEventListener('touchstart', handler, true);
-
+  function addHandlers() {
+    window.addEventListener('mousedown', handler, true);
+    window.addEventListener('touchstart', handler, true);
+  }
+  function cleanupHandlers() {
+    window.removeEventListener('mousedown', handler, true);
+    window.removeEventListener('touchstart', handler, true);
+  }
   function handler(e) {
-    if (!self.active) return;
+    cleanupHandlers();
+    if (!self.active) {
+      return;
+    }
     var target = canvas.findTarget(e);
     var activeObj = canvas.getActiveObject();
     if (target !== activeObj && activeObj && activeObj.isEditing) {
-      // Deactivate current active (so also exit edit mode) object
-      // and mark that this click shouldn't add new text object.
-      canvas.deactivateAllWithDispatch();
+      // Exit edit mode and mark that this click shouldn't add a new text object
+      // (when canvas is clicked).
+      self.exitTextEditing();
       e._dt_doNotCreateNewTextObj = true;
-      // Workaround - note that .deactivateAllWithDispatch() call above always set
-      // .selecatble attribute to true, what sometimes is definitely unwanted (lock mode).
-      activeObj.selectable = !self._locked;
     }
+  }
+};
+
+TextTool.prototype._pushToHistoryIfModified = function (obj) {
+  if (obj.text !== obj._dt_lastText) {
+    this.master.pushToHistory();
+    obj._dt_lastText = obj.text;
   }
 };
 
@@ -2521,6 +2628,13 @@ var ui = {
       palette: 'main'
     },
     {
+      name: 'clone',
+      label: 'c',
+      activatesTool: 'clone',
+      palette: 'main',
+      onInit: lockWhenNothingIsSelected
+    },
+    {
       name: 'strokeColorPalette',
       buttonClass: StrokeButton,
       classes: 'dt-expand',
@@ -2560,6 +2674,42 @@ var ui = {
       }
     },
     {
+      name: 'undo',
+      label: 'u',
+      classes: 'dt-undo-redo',
+      palette: 'main',
+      onClick: function () {
+        this.dt.undo();
+      },
+      onInit: function () {
+        this.setLocked(true);
+        this.dt.on("undo:possible", function () {
+          this.setLocked(false);
+        }.bind(this));
+        this.dt.on("undo:impossible", function () {
+          this.setLocked(true);
+        }.bind(this));
+      }
+    },
+    {
+      name: 'redo',
+      label: 'r',
+      classes: 'dt-undo-redo',
+      palette: 'main',
+      onClick: function () {
+        this.dt.redo();
+      },
+      onInit: function () {
+        this.setLocked(true);
+        this.dt.on("redo:possible", function () {
+          this.setLocked(false);
+        }.bind(this));
+        this.dt.on("redo:impossible", function () {
+          this.setLocked(true);
+        }.bind(this));
+      }
+    },
+    {
       name: 'sendToFront',
       label: 'l',
       classes: 'dt-send-to',
@@ -2578,13 +2728,6 @@ var ui = {
       onClick: function () {
         this.dt.sendSelectionToBack();
       }
-    },
-    {
-      name: 'clone',
-      label: 'c',
-      activatesTool: 'clone',
-      palette: 'main',
-      onInit: lockWhenNothingIsSelected
     },
     {
       name: 'trash',
@@ -2760,6 +2903,77 @@ UIManager.prototype._setupPaletteActiveButton = function (button) {
 };
 
 module.exports = UIManager;
+
+});
+
+require.register("scripts/undo-redo", function(exports, require, module) {
+var MAX_HISTORY_LENGTH = 100;
+
+function UndoRedo(drawTool) {
+  this.dt = drawTool;
+  this.canvas = drawTool.canvas;
+
+  this._storage = [];
+  this._idx = -1;
+  this._saveStateOnUserInteraction();
+}
+
+UndoRedo.prototype.undo = function () {
+  var prevState = this._storage[this._idx - 1];
+  if (!prevState) {
+    return;
+  }
+  this._load(prevState);
+  this._idx--;
+  console.log('undo (' + this._idx + ' <=)');
+};
+
+UndoRedo.prototype.redo = function () {
+  var nextState = this._storage[this._idx + 1];
+  if (!nextState) {
+    return;
+  }
+  this._load(nextState);
+  this._idx++;
+  console.log('redo (=> ' + this._idx + ')');
+};
+
+UndoRedo.prototype.saveState = function (opt) {
+  this._idx += 1;
+  this._storage[this._idx] = this.dt.save();
+  // Discard all states after current one.
+  this._storage.length = this._idx + 1;
+  this._cutOffOldStates();
+  console.log('save (# ' + this._idx + ')');
+};
+
+UndoRedo.prototype._load = function (state) {
+  this.dt.load(state);
+};
+
+UndoRedo.prototype.canUndo = function () {
+  return !!this._storage[this._idx - 1];
+};
+
+UndoRedo.prototype.canRedo = function () {
+  return !!this._storage[this._idx + 1];
+};
+
+UndoRedo.prototype._saveStateOnUserInteraction = function () {
+  this.canvas.on('object:modified', function () {
+    this.saveState();
+  }.bind(this));
+};
+
+UndoRedo.prototype._cutOffOldStates = function () {
+  var statesToRemove = this._storage.length - MAX_HISTORY_LENGTH;
+  if (statesToRemove > 0) {
+    this._storage.splice(0, statesToRemove);
+    this._idx = this._storage.length - 1;
+  }
+};
+
+module.exports = UndoRedo;
 
 });
 

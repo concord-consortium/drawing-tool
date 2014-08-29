@@ -11,8 +11,8 @@ var rescale2resize    = require('scripts/fabric-extensions/rescale-2-resize');
 var multitouchSupport = require('scripts/fabric-extensions/multi-touch-support');
 
 var DEF_OPTIONS = {
-  width: 700,
-  height: 500
+  width: 800,
+  height: 600
 };
 
 var DEF_STATE = {

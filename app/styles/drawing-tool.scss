@@ -1,7 +1,6 @@
-$buttonSize: 44px;
-$halfButtonSize: 22px;
-$buttonFontSize: 35px;
-$buttonLineHeight: 50px;
+$buttonSize: 40px;
+$buttonFontSize: 32px;
+$buttonLineHeight: 45px;
 $buttonColor: #3e8acc;
 
 $icons: 'Draw Tool Icons', Arial, sans-serif;
@@ -73,8 +72,8 @@ $text: Arial, sans-serif;
       content: '';
       background: #fff;
       position: absolute;
-      top: 10px;
-      left: 10px;
+      top: 8px;
+      left: 8px;
       width: 24px;
       height: 24px;
     }
@@ -105,8 +104,8 @@ $text: Arial, sans-serif;
       // border: solid 1px #1c68aa;
       overflow: hidden;
       position: absolute;
-      top: 11px;
-      left: 11px;
+      top: 9px;
+      left: 9px;
       width: 22px;
       height: 22px;
 
@@ -114,7 +113,7 @@ $text: Arial, sans-serif;
         content: 'L';
         color: #e66665;
         position: absolute;
-        left: -10px;
+        left: -12px;
         bottom: -14px;
         font-size: 50px;
       }
@@ -127,7 +126,7 @@ $text: Arial, sans-serif;
         content: 'L';
         color: #e66665;
         position: absolute;
-        left: -30px;
+        left: -32px;
         bottom: -16px;
         font-size: 100px;
       }
@@ -135,9 +134,9 @@ $text: Arial, sans-serif;
 
     // Stroke width button:
     .dt-line-width-icon {
-      height: 28px;
+      height: 26px;
       background: #fff;
-      margin: 8px auto;
+      margin: 6px auto;
 
       &.dt-no-stroke {
         width: 1px;
@@ -151,21 +150,10 @@ $text: Arial, sans-serif;
       }
     }
 
-    // Send to front and back buttons:
-    &.dt-send-to {
+    // Undo and redo buttons, send to front and back buttons:
+    &.dt-send-to, &.dt-undo-redo {
       // These icons are placed somehow lower, modify line-height to move them up.
-      line-height: 45px;
-      // Also slight margin makes them look better.
-      span {
-        margin-left: 3px;
-      }
-    }
-
-
-    // Undo and redo buttons:
-    &.dt-undo-redo {
-      // These icons are placed somehow lower, modify line-height to move them up.
-      line-height: 45px;
+      line-height: 41px;
     }
   }
 
@@ -175,7 +163,7 @@ $text: Arial, sans-serif;
       content: 't';
       font-size: $buttonFontSize;
       position: absolute;
-      bottom: -23px;
+      bottom: -21px;
       right: -11px;
     }
   }

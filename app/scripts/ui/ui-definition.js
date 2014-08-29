@@ -105,6 +105,13 @@ var ui = {
       palette: 'main'
     },
     {
+      name: 'clone',
+      label: 'c',
+      activatesTool: 'clone',
+      palette: 'main',
+      onInit: lockWhenNothingIsSelected
+    },
+    {
       name: 'strokeColorPalette',
       buttonClass: StrokeButton,
       classes: 'dt-expand',
@@ -198,13 +205,6 @@ var ui = {
       onClick: function () {
         this.dt.sendSelectionToBack();
       }
-    },
-    {
-      name: 'clone',
-      label: 'c',
-      activatesTool: 'clone',
-      palette: 'main',
-      onInit: lockWhenNothingIsSelected
     },
     {
       name: 'trash',

@@ -4,9 +4,13 @@ var ShapeTool = require('scripts/tools/shape-tool');
 function TextTool(name, drawTool) {
   ShapeTool.call(this, name, drawTool);
 
-  this.exitTextEditingOnFirstClick();
-
   this.canvas.on('text:editing:exited', function (opt) {
+    if (this.active) {
+      // This may be confusing, but if you take a look at FabricJS source, you will notice
+      // that text .selectable property is always set to true just before this event
+      // is emitted. Quite often is now what we want, especially when TextTool is active.
+      opt.target.selectable = false;
+    }
     this._pushToHistoryIfModified(opt.target);
   }.bind(this));
 }
@@ -26,7 +30,7 @@ TextTool.prototype.mouseDown = function (opt) {
     this.editText(target, opt.e);
     return;
   }
-  // See #exitTextEditingOnFirstClick method.
+  // See #_exitTextEditingOnFirstClick method.
   if (!this.active || opt.e._dt_doNotCreateNewTextObj) return;
 
   var loc = this.canvas.getPointer(opt.e);
@@ -65,32 +69,38 @@ TextTool.prototype.editText = function (text, e) {
   this.canvas.setActiveObject(text);
   text.enterEditing();
   text.setCursorByClick(e);
-  this.exitTextEditingOnFirstClick();
+  this._exitTextEditingOnFirstClick();
 };
 
-TextTool.prototype.exitTextEditingOnFirstClick = function () {
+// FabricJS also disables edit mode on first click, but only when a canvas is the click target.
+// Make sure we always exit edit mode and do it pretty fast, before other handlers are executed
+// (useCapture = true, window). That's important e.g. for state history update (edge case: user
+// is in edit mode and clicks 'undo' button).
+TextTool.prototype._exitTextEditingOnFirstClick = function () {
   var self = this;
   var canvas = this.canvas;
+  addHandlers();
 
-  // TODO: should we cleanup these handlers somewhere?
-  // The perfect option would be to add handler to upperCanvasEl itself, but then
-  // there is no way to execute it before Fabric's mousedown handler (which e.g.
-  // will remove selection and deactivate object we are interested in).
-  canvas.upperCanvasEl.parentElement.addEventListener('mousedown', handler, true);
-  canvas.upperCanvasEl.parentElement.addEventListener('touchstart', handler, true);
-
+  function addHandlers() {
+    window.addEventListener('mousedown', handler, true);
+    window.addEventListener('touchstart', handler, true);
+  }
+  function cleanupHandlers() {
+    window.removeEventListener('mousedown', handler, true);
+    window.removeEventListener('touchstart', handler, true);
+  }
   function handler(e) {
-    if (!self.active) return;
+    cleanupHandlers();
+    if (!self.active) {
+      return;
+    }
     var target = canvas.findTarget(e);
     var activeObj = canvas.getActiveObject();
     if (target !== activeObj && activeObj && activeObj.isEditing) {
-      // Deactivate current active (so also exit edit mode) object
-      // and mark that this click shouldn't add new text object.
+      // Exit edit mode and mark that this click shouldn't add a new text object
+      // (when canvas is clicked).
       self.exitTextEditing();
       e._dt_doNotCreateNewTextObj = true;
-      // Workaround - note that .deactivateAllWithDispatch() call above always set
-      // .selecatble attribute to true, what sometimes is definitely unwanted (lock mode).
-      activeObj.selectable = !self._locked;
     }
   }
 };

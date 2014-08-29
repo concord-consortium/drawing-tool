@@ -159,6 +159,10 @@ DrawingTool.prototype.load = function (jsonString) {
     this._setBackgroundImage(imageSrc, backgroundImage);
   }
   this.canvas.renderAll();
+
+  // We don't serialize selectable property which depends on currently selected tool.
+  // Currently objects should be selectable only if select tool is active.
+  this.tools.select.setSelectable(this.tools.select.active);
 };
 
 DrawingTool.prototype.pushToHistory = function () {
@@ -228,6 +232,7 @@ DrawingTool.prototype.setFillColor = function (color) {
 };
 
 DrawingTool.prototype.setSelectionStrokeColor = function (color) {
+  if (!this.getSelection()) return;
   this.forEachSelectedObject(function (obj) {
     this._setObjectProp(obj, 'stroke', color);
   }.bind(this));
@@ -236,6 +241,7 @@ DrawingTool.prototype.setSelectionStrokeColor = function (color) {
 };
 
 DrawingTool.prototype.setSelectionFillColor = function (color) {
+  if (!this.getSelection()) return;
   this.forEachSelectedObject(function (obj) {
     this._setObjectProp(obj, 'fill', color);
   }.bind(this));
@@ -244,6 +250,7 @@ DrawingTool.prototype.setSelectionFillColor = function (color) {
 };
 
 DrawingTool.prototype.setSelectionStrokeWidth = function (width) {
+  if (!this.getSelection()) return;
   this.forEachSelectedObject(function (obj) {
     this._setObjectProp(obj, 'strokeWidth', width);
   }.bind(this));
@@ -252,11 +259,13 @@ DrawingTool.prototype.setSelectionStrokeWidth = function (width) {
 };
 
 DrawingTool.prototype.sendSelectionToFront = function () {
+  if (!this.getSelection()) return;
   this._sendSelectionTo('front');
   this.pushToHistory();
 };
 
 DrawingTool.prototype.sendSelectionToBack = function () {
+  if (!this.getSelection()) return;
   this._sendSelectionTo('back');
   this.pushToHistory();
 };

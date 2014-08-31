@@ -88,7 +88,6 @@ DrawingTool.prototype.clear = function (clearBackground) {
   this.canvas.clear();
   if (clearBackground) {
     this.canvas.setBackgroundImage(null);
-    this._backgroundImage = null;
   }
   this.canvas.renderAll();
 };
@@ -157,6 +156,8 @@ DrawingTool.prototype.load = function (jsonString) {
     var imageSrc = backgroundImage.src;
     delete backgroundImage.src;
     this._setBackgroundImage(imageSrc, backgroundImage);
+  } else {
+    this._setBackgroundImage(null);
   }
   this.canvas.renderAll();
 
@@ -340,8 +341,9 @@ DrawingTool.prototype._sendSelectionTo = function (where) {
  *  - imageSrc: string with location of the image
  *  - fit: (string) how to put the image into the canvas
  *        ex: "resizeBackgroundToCanvas" or "resizeCanvasToBackground"
+ *  - callback: function which is called when background image is loaded and set.
  */
-DrawingTool.prototype.setBackgroundImage = function (imageSrc, fit) {
+DrawingTool.prototype.setBackgroundImage = function (imageSrc, fit, callback) {
   this._setBackgroundImage(imageSrc, null, function () {
     switch (fit) {
       case "resizeBackgroundToCanvas": this.resizeBackgroundToCanvas(); return;
@@ -349,14 +351,17 @@ DrawingTool.prototype.setBackgroundImage = function (imageSrc, fit) {
       case "shrinkBackgroundToCanvas": this.shrinkBackgroundToCanvas(); return;
     }
     this.pushToHistory();
+    if (typeof callback === 'function') {
+      callback();
+    }
   }.bind(this));
 };
 
 DrawingTool.prototype.resizeBackgroundToCanvas = function () {
-  if (!this._backgroundImage) {
+  if (!this.canvas.backgroundImage) {
     return;
   }
-  this._backgroundImage.set({
+  this.canvas.backgroundImage.set({
     width: this.canvas.width,
     height: this.canvas.height
   });
@@ -365,10 +370,10 @@ DrawingTool.prototype.resizeBackgroundToCanvas = function () {
 
 // Fits background to canvas (keeping original aspect ratio) only when background is bigger than canvas.
 DrawingTool.prototype.shrinkBackgroundToCanvas = function () {
-  if (!this._backgroundImage) {
+  if (!this.canvas.backgroundImage) {
     return;
   }
-  var bgImg = this._backgroundImage;
+  var bgImg = this.canvas.backgroundImage;
   var widthRatio  = this.canvas.width / bgImg.width;
   var heightRatio = this.canvas.height / bgImg.height;
   var minRatio    = Math.min(widthRatio, heightRatio);
@@ -382,14 +387,14 @@ DrawingTool.prototype.shrinkBackgroundToCanvas = function () {
 };
 
 DrawingTool.prototype.resizeCanvasToBackground = function () {
-  if (!this._backgroundImage) {
+  if (!this.canvas.backgroundImage) {
     return;
   }
   this.canvas.setDimensions({
-    width: this._backgroundImage.width,
-    height: this._backgroundImage.height
+    width: this.canvas.backgroundImage.width,
+    height: this.canvas.backgroundImage.height
   });
-  this._backgroundImage.set({
+  this.canvas.backgroundImage.set({
     top: this.canvas.height / 2,
     left: this.canvas.width / 2
   });
@@ -511,8 +516,14 @@ DrawingTool.prototype._setBackgroundImage = function (imageSrc, options, backgro
     left: this.canvas.width / 2,
     crossOrigin: 'anonymous'
   };
+  var self = this;
 
-  loadImage();
+  if (!imageSrc) {
+    // Fast path when we remove background image.
+    this.canvas.setBackgroundImage(null, bgLoaded.bind(this));
+  } else {
+    loadImage();
+  }
 
   function loadImage(crossOrigin) {
     // Note we cannot use fabric.Image.fromURL, as then we would always get
@@ -520,8 +531,6 @@ DrawingTool.prototype._setBackgroundImage = function (imageSrc, options, backgro
     // util.loadImage provides null to callback when loading fails.
     fabric.util.loadImage(imageSrc, callback, null, options.crossOrigin);
   }
-
-  var self = this;
   function callback (img) {
     // If image is null and crossOrigin settings are available, it probably means that loading failed
     // due to lack of CORS headers. Try again without them.
@@ -532,12 +541,13 @@ DrawingTool.prototype._setBackgroundImage = function (imageSrc, options, backgro
       loadImage();
       return;
     }
-    img = new fabric.Image(img, options);
-    self.canvas.setBackgroundImage(img, self.canvas.renderAll.bind(self.canvas));
-    self._backgroundImage = img;
+    self.canvas.setBackgroundImage(new fabric.Image(img, options), bgLoaded);
+  }
+  function bgLoaded() {
     if (typeof backgroundLoadedCallback === 'function') {
       backgroundLoadedCallback();
     }
+    self.canvas.renderAll();
   }
 };
 

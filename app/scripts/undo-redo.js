@@ -4,8 +4,7 @@ function UndoRedo(drawTool) {
   this.dt = drawTool;
   this.canvas = drawTool.canvas;
 
-  this._storage = [];
-  this._idx = -1;
+  this.reset();
   this._saveStateOnUserInteraction();
 }
 
@@ -16,7 +15,6 @@ UndoRedo.prototype.undo = function () {
   }
   this._load(prevState);
   this._idx--;
-  console.log('undo (' + this._idx + ' <=)');
 };
 
 UndoRedo.prototype.redo = function () {
@@ -26,7 +24,6 @@ UndoRedo.prototype.redo = function () {
   }
   this._load(nextState);
   this._idx++;
-  console.log('redo (=> ' + this._idx + ')');
 };
 
 UndoRedo.prototype.saveState = function (opt) {
@@ -39,15 +36,11 @@ UndoRedo.prototype.saveState = function (opt) {
   // Discard all states after current one.
   this._storage.length = this._idx + 1;
   this._cutOffOldStates();
-  console.log('save (# ' + this._idx + ')');
 };
 
-UndoRedo.prototype._lastState = function () {
-  return this._storage[this._idx];
-};
-
-UndoRedo.prototype._load = function (state) {
-  this.dt.load(state);
+UndoRedo.prototype.reset = function () {
+  this._storage = [];
+  this._idx = -1;
 };
 
 UndoRedo.prototype.canUndo = function () {
@@ -56,6 +49,14 @@ UndoRedo.prototype.canUndo = function () {
 
 UndoRedo.prototype.canRedo = function () {
   return !!this._storage[this._idx + 1];
+};
+
+UndoRedo.prototype._lastState = function () {
+  return this._storage[this._idx];
+};
+
+UndoRedo.prototype._load = function (state) {
+  this.dt.load(state);
 };
 
 UndoRedo.prototype._saveStateOnUserInteraction = function () {

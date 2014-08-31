@@ -181,6 +181,12 @@ DrawingTool.prototype.redo = function () {
   this._fireHistoryEvents();
 };
 
+DrawingTool.prototype.resetHistory = function () {
+  this._history.reset();
+  // Push the "initial" state.
+  this.pushToHistory();
+};
+
 DrawingTool.prototype._fireHistoryEvents = function () {
   if (this._history.canUndo()) {
     this._dispatch.emit(EVENTS.UNDO_POSSIBLE);

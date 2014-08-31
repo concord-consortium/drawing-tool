@@ -30,12 +30,20 @@ UndoRedo.prototype.redo = function () {
 };
 
 UndoRedo.prototype.saveState = function (opt) {
+  var newState = this.dt.save();
+  if (newState === this._lastState()) {
+    return;
+  }
   this._idx += 1;
-  this._storage[this._idx] = this.dt.save();
+  this._storage[this._idx] = newState;
   // Discard all states after current one.
   this._storage.length = this._idx + 1;
   this._cutOffOldStates();
   console.log('save (# ' + this._idx + ')');
+};
+
+UndoRedo.prototype._lastState = function () {
+  return this._storage[this._idx];
 };
 
 UndoRedo.prototype._load = function (state) {

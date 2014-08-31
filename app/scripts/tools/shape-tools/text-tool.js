@@ -90,13 +90,10 @@ TextTool.prototype._exitTextEditingOnFirstClick = function () {
     window.removeEventListener('touchstart', handler, true);
   }
   function handler(e) {
-    cleanupHandlers();
-    if (!self.active) {
-      return;
-    }
     var target = canvas.findTarget(e);
     var activeObj = canvas.getActiveObject();
     if (target !== activeObj && activeObj && activeObj.isEditing) {
+      cleanupHandlers();
       // Exit edit mode and mark that this click shouldn't add a new text object
       // (when canvas is clicked).
       self.exitTextEditing();

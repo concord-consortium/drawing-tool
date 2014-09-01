@@ -360,9 +360,9 @@ DrawingTool.prototype._sendSelectionTo = function (where) {
 DrawingTool.prototype.setBackgroundImage = function (imageSrc, fit, callback) {
   this._setBackgroundImage(imageSrc, null, function () {
     switch (fit) {
-      case "resizeBackgroundToCanvas": this.resizeBackgroundToCanvas(); return;
-      case "resizeCanvasToBackground": this.resizeCanvasToBackground(); return;
-      case "shrinkBackgroundToCanvas": this.shrinkBackgroundToCanvas(); return;
+      case "resizeBackgroundToCanvas": this.resizeBackgroundToCanvas(); break;
+      case "resizeCanvasToBackground": this.resizeCanvasToBackground(); break;
+      case "shrinkBackgroundToCanvas": this.shrinkBackgroundToCanvas(); break;
     }
     if (typeof callback === 'function') {
       callback();

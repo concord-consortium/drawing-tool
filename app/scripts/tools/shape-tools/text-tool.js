@@ -69,6 +69,16 @@ TextTool.prototype.editText = function (text, e) {
   this.canvas.setActiveObject(text);
   text.enterEditing();
   text.setCursorByClick(e);
+  // Unfortunately there is no reliable method to enter editing mode through
+  // FabricJS API. Entering edit mode highly depends on sequence of mouse / touch
+  // events. Lines below fix: https://www.pivotaltracker.com/story/show/77905208
+  // They ensure that user will be able to immediately enter text in some edge cases
+  // (drawing tool inside jQuery UI modal dialog).
+  // Note that it's exactly the same what FabricJS does in IText onMouseDown handler
+  // (at least in FabricJS v1.4.11).
+  if (text.hiddenTextarea && text.canvas) {
+    text.canvas.wrapperEl.appendChild(text.hiddenTextarea);
+  }
   this._exitTextEditingOnFirstClick();
 };
 

@@ -539,7 +539,7 @@ DrawingTool.prototype._setBackgroundImage = function (imageSrc, options, backgro
     loadImage();
   }
 
-  function loadImage(crossOrigin) {
+  function loadImage() {
     // Note we cannot use fabric.Image.fromURL, as then we would always get
     // fabric.Image instance and we couldn't guess whether load failed or not.
     // util.loadImage provides null to callback when loading fails.
@@ -610,7 +610,8 @@ DrawingTool.prototype._initFabricJS = function () {
 };
 
 DrawingTool.prototype._setupHDPISupport = function () {
-  var pixelRatio = window.devicePixelRatio;
+  // devicePixelRatio may be undefined in old browsers.
+  var pixelRatio = window.devicePixelRatio || 1;
   if (pixelRatio !== 1) {
     var canvEl = this.canvas.getElement();
     var w = canvEl.width;

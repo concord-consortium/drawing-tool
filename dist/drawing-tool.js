@@ -217,15 +217,20 @@ DrawingTool.prototype.save = function () {
 
 /*
  * Loads a previous state of the fabricjs canvas from JSON.
- * (used in conjunction with `save()`)
+ * (used in conjunction with `save()`).
  *
  * parameters:
- *  - jsonString: JSON data
+ *  - jsonString: JSON data, when it is not provided, canvas will be cleared
  *  - callback: function invoked when load is finished
  *  - noHistoryUpdate: if true, this action won't be saved in undo / redo history
  */
 DrawingTool.prototype.load = function (jsonString, callback, noHistoryUpdate) {
+  // When JSON string is not provided (or empty) just clear the canvas.
   if (!jsonString) {
+    this.canvas.clear();
+    this.canvas.setBackgroundImage(null);
+    this.canvas.renderAll();
+    loadFinished.call(this);
     return;
   }
 
@@ -255,10 +260,11 @@ DrawingTool.prototype.load = function (jsonString, callback, noHistoryUpdate) {
   } else {
     this._setBackgroundImage(null, null, bgImgDef.resolve.bind(bgImgDef));
   }
-
   // Call load finished callback when both loading from JSON and separate background
   // loading process are done.
-  $.when(loadDef, bgImgDef).done(function () {
+  $.when(loadDef, bgImgDef).done(loadFinished.bind(this));
+
+  function loadFinished() {
     // We don't serialize selectable property which depends on currently selected tool.
     // Currently objects should be selectable only if select tool is active.
     this.tools.select.setSelectable(this.tools.select.active);
@@ -268,7 +274,7 @@ DrawingTool.prototype.load = function (jsonString, callback, noHistoryUpdate) {
     if (typeof callback === 'function') {
       callback();
     }
-  }.bind(this));
+  }
 };
 
 DrawingTool.prototype.pushToHistory = function () {

@@ -181,9 +181,9 @@ DrawingTool.prototype.clear = function (clearBackground) {
   this.canvas.clear();
   if (clearBackground) {
     this.canvas.setBackgroundImage(null);
-    this._backgroundImage = null;
   }
   this.canvas.renderAll();
+  this.pushToHistory();
 };
 
 /**
@@ -221,11 +221,11 @@ DrawingTool.prototype.save = function () {
  *
  * parameters:
  *  - jsonString: JSON data
+ *  - callback: function invoked when load is finished
+ *  - noHistoryUpdate: if true, this action won't be saved in undo / redo history
  */
-DrawingTool.prototype.load = function (jsonString) {
-  // Undefined, null or empty string just clears drawing tool.
+DrawingTool.prototype.load = function (jsonString, callback, noHistoryUpdate) {
   if (!jsonString) {
-    this.clear(true);
     return;
   }
 
@@ -239,23 +239,36 @@ DrawingTool.prototype.load = function (jsonString) {
   });
 
   // Load FabricJS state.
+  var loadDef = $.Deferred();
+  var bgImgDef = $.Deferred();
   // Note that we remove background definition before we call #loadFromJSON
   // and then add the same background manually. Otherwise, the background
   // won't be loaded due to CORS error (FabricJS bug?).
   var canvasState = state.canvas;
   var backgroundImage = canvasState.backgroundImage;
   delete canvasState.backgroundImage;
-  this.canvas.loadFromJSON(canvasState);
+  this.canvas.loadFromJSON(canvasState, loadDef.resolve.bind(loadDef));
   if (backgroundImage !== undefined) {
     var imageSrc = backgroundImage.src;
     delete backgroundImage.src;
-    this._setBackgroundImage(imageSrc, backgroundImage);
+    this._setBackgroundImage(imageSrc, backgroundImage, bgImgDef.resolve.bind(bgImgDef));
+  } else {
+    this._setBackgroundImage(null, null, bgImgDef.resolve.bind(bgImgDef));
   }
-  this.canvas.renderAll();
 
-  // We don't serialize selectable property which depends on currently selected tool.
-  // Currently objects should be selectable only if select tool is active.
-  this.tools.select.setSelectable(this.tools.select.active);
+  // Call load finished callback when both loading from JSON and separate background
+  // loading process are done.
+  $.when(loadDef, bgImgDef).done(function () {
+    // We don't serialize selectable property which depends on currently selected tool.
+    // Currently objects should be selectable only if select tool is active.
+    this.tools.select.setSelectable(this.tools.select.active);
+    if (!noHistoryUpdate) {
+      this.pushToHistory();
+    }
+    if (typeof callback === 'function') {
+      callback();
+    }
+  }.bind(this));
 };
 
 DrawingTool.prototype.pushToHistory = function () {
@@ -271,6 +284,12 @@ DrawingTool.prototype.undo = function () {
 DrawingTool.prototype.redo = function () {
   this._history.redo();
   this._fireHistoryEvents();
+};
+
+DrawingTool.prototype.resetHistory = function () {
+  this._history.reset();
+  // Push the "initial" state.
+  this.pushToHistory();
 };
 
 DrawingTool.prototype._fireHistoryEvents = function () {
@@ -433,23 +452,27 @@ DrawingTool.prototype._sendSelectionTo = function (where) {
  *  - imageSrc: string with location of the image
  *  - fit: (string) how to put the image into the canvas
  *        ex: "resizeBackgroundToCanvas" or "resizeCanvasToBackground"
+ *  - callback: function which is called when background image is loaded and set.
  */
-DrawingTool.prototype.setBackgroundImage = function (imageSrc, fit) {
+DrawingTool.prototype.setBackgroundImage = function (imageSrc, fit, callback) {
   this._setBackgroundImage(imageSrc, null, function () {
     switch (fit) {
-      case "resizeBackgroundToCanvas": this.resizeBackgroundToCanvas(); return;
-      case "resizeCanvasToBackground": this.resizeCanvasToBackground(); return;
-      case "shrinkBackgroundToCanvas": this.shrinkBackgroundToCanvas(); return;
+      case "resizeBackgroundToCanvas": this.resizeBackgroundToCanvas(); break;
+      case "resizeCanvasToBackground": this.resizeCanvasToBackground(); break;
+      case "shrinkBackgroundToCanvas": this.shrinkBackgroundToCanvas(); break;
+    }
+    if (typeof callback === 'function') {
+      callback();
     }
     this.pushToHistory();
   }.bind(this));
 };
 
 DrawingTool.prototype.resizeBackgroundToCanvas = function () {
-  if (!this._backgroundImage) {
+  if (!this.canvas.backgroundImage) {
     return;
   }
-  this._backgroundImage.set({
+  this.canvas.backgroundImage.set({
     width: this.canvas.width,
     height: this.canvas.height
   });
@@ -458,10 +481,10 @@ DrawingTool.prototype.resizeBackgroundToCanvas = function () {
 
 // Fits background to canvas (keeping original aspect ratio) only when background is bigger than canvas.
 DrawingTool.prototype.shrinkBackgroundToCanvas = function () {
-  if (!this._backgroundImage) {
+  if (!this.canvas.backgroundImage) {
     return;
   }
-  var bgImg = this._backgroundImage;
+  var bgImg = this.canvas.backgroundImage;
   var widthRatio  = this.canvas.width / bgImg.width;
   var heightRatio = this.canvas.height / bgImg.height;
   var minRatio    = Math.min(widthRatio, heightRatio);
@@ -475,14 +498,14 @@ DrawingTool.prototype.shrinkBackgroundToCanvas = function () {
 };
 
 DrawingTool.prototype.resizeCanvasToBackground = function () {
-  if (!this._backgroundImage) {
+  if (!this.canvas.backgroundImage) {
     return;
   }
   this.canvas.setDimensions({
-    width: this._backgroundImage.width,
-    height: this._backgroundImage.height
+    width: this.canvas.backgroundImage.width,
+    height: this.canvas.backgroundImage.height
   });
-  this._backgroundImage.set({
+  this.canvas.backgroundImage.set({
     top: this.canvas.height / 2,
     left: this.canvas.width / 2
   });
@@ -604,17 +627,21 @@ DrawingTool.prototype._setBackgroundImage = function (imageSrc, options, backgro
     left: this.canvas.width / 2,
     crossOrigin: 'anonymous'
   };
+  var self = this;
 
-  loadImage();
+  if (!imageSrc) {
+    // Fast path when we remove background image.
+    this.canvas.setBackgroundImage(null, bgLoaded);
+  } else {
+    loadImage();
+  }
 
-  function loadImage(crossOrigin) {
+  function loadImage() {
     // Note we cannot use fabric.Image.fromURL, as then we would always get
     // fabric.Image instance and we couldn't guess whether load failed or not.
     // util.loadImage provides null to callback when loading fails.
     fabric.util.loadImage(imageSrc, callback, null, options.crossOrigin);
   }
-
-  var self = this;
   function callback (img) {
     // If image is null and crossOrigin settings are available, it probably means that loading failed
     // due to lack of CORS headers. Try again without them.
@@ -625,12 +652,13 @@ DrawingTool.prototype._setBackgroundImage = function (imageSrc, options, backgro
       loadImage();
       return;
     }
-    img = new fabric.Image(img, options);
-    self.canvas.setBackgroundImage(img, self.canvas.renderAll.bind(self.canvas));
-    self._backgroundImage = img;
+    self.canvas.setBackgroundImage(new fabric.Image(img, options), bgLoaded);
+  }
+  function bgLoaded() {
     if (typeof backgroundLoadedCallback === 'function') {
       backgroundLoadedCallback();
     }
+    self.canvas.renderAll();
   }
 };
 
@@ -679,7 +707,8 @@ DrawingTool.prototype._initFabricJS = function () {
 };
 
 DrawingTool.prototype._setupHDPISupport = function () {
-  var pixelRatio = window.devicePixelRatio;
+  // devicePixelRatio may be undefined in old browsers.
+  var pixelRatio = window.devicePixelRatio || 1;
   if (pixelRatio !== 1) {
     var canvEl = this.canvas.getElement();
     var w = canvEl.width;
@@ -2151,6 +2180,16 @@ TextTool.prototype.editText = function (text, e) {
   this.canvas.setActiveObject(text);
   text.enterEditing();
   text.setCursorByClick(e);
+  // Unfortunately there is no reliable method to enter editing mode through
+  // FabricJS API. Entering edit mode highly depends on sequence of mouse / touch
+  // events. Lines below fix: https://www.pivotaltracker.com/story/show/77905208
+  // They ensure that user will be able to immediately enter text in some edge cases
+  // (drawing tool inside jQuery UI modal dialog).
+  // Note that it's exactly the same what FabricJS does in IText onMouseDown handler
+  // (at least in FabricJS v1.4.11).
+  if (text.hiddenTextarea && text.canvas) {
+    text.canvas.wrapperEl.appendChild(text.hiddenTextarea);
+  }
   this._exitTextEditingOnFirstClick();
 };
 
@@ -2172,13 +2211,10 @@ TextTool.prototype._exitTextEditingOnFirstClick = function () {
     window.removeEventListener('touchstart', handler, true);
   }
   function handler(e) {
-    cleanupHandlers();
-    if (!self.active) {
-      return;
-    }
     var target = canvas.findTarget(e);
     var activeObj = canvas.getActiveObject();
     if (target !== activeObj && activeObj && activeObj.isEditing) {
+      cleanupHandlers();
       // Exit edit mode and mark that this click shouldn't add a new text object
       // (when canvas is clicked).
       self.exitTextEditing();
@@ -2912,9 +2948,9 @@ var MAX_HISTORY_LENGTH = 100;
 function UndoRedo(drawTool) {
   this.dt = drawTool;
   this.canvas = drawTool.canvas;
+  this._suppressHistoryUpdate = false;
 
-  this._storage = [];
-  this._idx = -1;
+  this.reset();
   this._saveStateOnUserInteraction();
 }
 
@@ -2924,8 +2960,7 @@ UndoRedo.prototype.undo = function () {
     return;
   }
   this._load(prevState);
-  this._idx--;
-  console.log('undo (' + this._idx + ' <=)');
+  this._idx -= 1;
 };
 
 UndoRedo.prototype.redo = function () {
@@ -2934,21 +2969,24 @@ UndoRedo.prototype.redo = function () {
     return;
   }
   this._load(nextState);
-  this._idx++;
-  console.log('redo (=> ' + this._idx + ')');
+  this._idx += 1;
 };
 
 UndoRedo.prototype.saveState = function (opt) {
+  var newState = this.dt.save();
+  if (this._suppressHistoryUpdate || newState === this._lastState()) {
+    return;
+  }
   this._idx += 1;
-  this._storage[this._idx] = this.dt.save();
+  this._storage[this._idx] = newState;
   // Discard all states after current one.
   this._storage.length = this._idx + 1;
   this._cutOffOldStates();
-  console.log('save (# ' + this._idx + ')');
 };
 
-UndoRedo.prototype._load = function (state) {
-  this.dt.load(state);
+UndoRedo.prototype.reset = function () {
+  this._storage = [];
+  this._idx = -1;
 };
 
 UndoRedo.prototype.canUndo = function () {
@@ -2957,6 +2995,16 @@ UndoRedo.prototype.canUndo = function () {
 
 UndoRedo.prototype.canRedo = function () {
   return !!this._storage[this._idx + 1];
+};
+
+UndoRedo.prototype._lastState = function () {
+  return this._storage[this._idx];
+};
+
+UndoRedo.prototype._load = function (state) {
+  // Note that #load is a normal action that updates history. However when
+  // a state is restored from the history, it's definitely unwanted.
+  this.dt.load(state, null, true);
 };
 
 UndoRedo.prototype._saveStateOnUserInteraction = function () {

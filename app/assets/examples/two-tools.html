@@ -8,22 +8,22 @@
       body {
         font-family: Arial;
       }
+      #drawing-tool-1, #drawing-tool-2 {
+        display: inline-block;
+      }
     </style>
   </head>
   <body>
-    <div class="container" style="
-      padding: 0;
-      margin: 0;
-      width: 100%;">
+    <div class="container">
         <h1>HTML5 Drawing Tool</h1>
-        <div id="drawing-tool"></div>
+        <div id="drawing-tool-1"></div>
         <div id="drawing-tool-2"></div>
     </div>
   <script src="../vendor.js"></script>
   <script src="../drawing-tool.js"></script>
   <script>
-    var drawingTool = new DrawingTool("#drawing-tool", { width: 500, height: 350 });
-    var drawingTool2 = new DrawingTool("#drawing-tool-2", { width: 500, height: 350 });
+    var drawingTool = new DrawingTool("#drawing-tool-1", { width: 500, height: 600 });
+    var drawingTool2 = new DrawingTool("#drawing-tool-2", { width: 500, height: 600 });
   </script>
   </body>
 </html>

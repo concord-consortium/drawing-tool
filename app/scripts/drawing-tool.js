@@ -90,6 +90,7 @@ DrawingTool.prototype.clear = function (clearBackground) {
     this.canvas.setBackgroundImage(null);
   }
   this.canvas.renderAll();
+  this.pushToHistory();
 };
 
 /**
@@ -144,26 +145,33 @@ DrawingTool.prototype.load = function (jsonString) {
     height: dtState.height
   });
 
+
   // Load FabricJS state.
+  var loadDef = $.Deferred();
+  var bgImgDef = $.Deferred();
   // Note that we remove background definition before we call #loadFromJSON
   // and then add the same background manually. Otherwise, the background
   // won't be loaded due to CORS error (FabricJS bug?).
   var canvasState = state.canvas;
   var backgroundImage = canvasState.backgroundImage;
   delete canvasState.backgroundImage;
-  this.canvas.loadFromJSON(canvasState);
+  this.canvas.loadFromJSON(canvasState, loadDef.resolve.bind(loadDef));
   if (backgroundImage !== undefined) {
     var imageSrc = backgroundImage.src;
     delete backgroundImage.src;
-    this._setBackgroundImage(imageSrc, backgroundImage);
+    this._setBackgroundImage(imageSrc, backgroundImage, bgImgDef.resolve.bind(bgImgDef));
   } else {
-    this._setBackgroundImage(null);
+    this._setBackgroundImage(null, null, bgImgDef.resolve.bind(bgImgDef));
   }
-  this.canvas.renderAll();
 
-  // We don't serialize selectable property which depends on currently selected tool.
-  // Currently objects should be selectable only if select tool is active.
-  this.tools.select.setSelectable(this.tools.select.active);
+  // Call load finished callback when both loading from JSON and separate background
+  // loading process are done.
+  $.when(loadDef, bgImgDef).done(function () {
+    // We don't serialize selectable property which depends on currently selected tool.
+    // Currently objects should be selectable only if select tool is active.
+    this.tools.select.setSelectable(this.tools.select.active);
+    this.pushToHistory();
+  }.bind(this));
 };
 
 DrawingTool.prototype.pushToHistory = function () {
@@ -356,10 +364,10 @@ DrawingTool.prototype.setBackgroundImage = function (imageSrc, fit, callback) {
       case "resizeCanvasToBackground": this.resizeCanvasToBackground(); return;
       case "shrinkBackgroundToCanvas": this.shrinkBackgroundToCanvas(); return;
     }
-    this.pushToHistory();
     if (typeof callback === 'function') {
       callback();
     }
+    this.pushToHistory();
   }.bind(this));
 };
 
@@ -526,7 +534,7 @@ DrawingTool.prototype._setBackgroundImage = function (imageSrc, options, backgro
 
   if (!imageSrc) {
     // Fast path when we remove background image.
-    this.canvas.setBackgroundImage(null, bgLoaded.bind(this));
+    this.canvas.setBackgroundImage(null, bgLoaded);
   } else {
     loadImage();
   }

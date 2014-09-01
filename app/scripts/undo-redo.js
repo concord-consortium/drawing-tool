@@ -3,6 +3,7 @@ var MAX_HISTORY_LENGTH = 100;
 function UndoRedo(drawTool) {
   this.dt = drawTool;
   this.canvas = drawTool.canvas;
+  this._suppressHistoryUpdate = false;
 
   this.reset();
   this._saveStateOnUserInteraction();
@@ -28,7 +29,7 @@ UndoRedo.prototype.redo = function () {
 
 UndoRedo.prototype.saveState = function (opt) {
   var newState = this.dt.save();
-  if (newState === this._lastState()) {
+  if (this._suppressHistoryUpdate || newState === this._lastState()) {
     return;
   }
   this._idx += 1;
@@ -51,12 +52,23 @@ UndoRedo.prototype.canRedo = function () {
   return !!this._storage[this._idx + 1];
 };
 
+UndoRedo.prototype.withoutHistoryUpdate = function (callback) {
+  this._suppressHistoryUpdate = true;
+  callback();
+  this._suppressHistoryUpdate = false;
+};
+
 UndoRedo.prototype._lastState = function () {
   return this._storage[this._idx];
 };
 
 UndoRedo.prototype._load = function (state) {
-  this.dt.load(state);
+  var dt = this.dt;
+  // Note that #load is a normal action that updates history. However when
+  // a state is restored from the history, it's definitely unwanted.
+  this.withoutHistoryUpdate(function () {
+    dt.load(state);
+  });
 };
 
 UndoRedo.prototype._saveStateOnUserInteraction = function () {

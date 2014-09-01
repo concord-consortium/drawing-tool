@@ -128,11 +128,11 @@ DrawingTool.prototype.save = function () {
  *
  * parameters:
  *  - jsonString: JSON data
+ *  - callback: function invoked when load is finished
+ *  - noHistoryUpdate: if true, this action won't be saved in undo / redo history
  */
-DrawingTool.prototype.load = function (jsonString) {
-  // Undefined, null or empty string just clears drawing tool.
+DrawingTool.prototype.load = function (jsonString, callback, noHistoryUpdate) {
   if (!jsonString) {
-    this.clear(true);
     return;
   }
 
@@ -144,7 +144,6 @@ DrawingTool.prototype.load = function (jsonString) {
     width: dtState.width,
     height: dtState.height
   });
-
 
   // Load FabricJS state.
   var loadDef = $.Deferred();
@@ -170,7 +169,12 @@ DrawingTool.prototype.load = function (jsonString) {
     // We don't serialize selectable property which depends on currently selected tool.
     // Currently objects should be selectable only if select tool is active.
     this.tools.select.setSelectable(this.tools.select.active);
-    this.pushToHistory();
+    if (!noHistoryUpdate) {
+      this.pushToHistory();
+    }
+    if (typeof callback === 'function') {
+      callback();
+    }
   }.bind(this));
 };
 

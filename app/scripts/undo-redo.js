@@ -15,7 +15,7 @@ UndoRedo.prototype.undo = function () {
     return;
   }
   this._load(prevState);
-  this._idx--;
+  this._idx -= 1;
 };
 
 UndoRedo.prototype.redo = function () {
@@ -24,7 +24,7 @@ UndoRedo.prototype.redo = function () {
     return;
   }
   this._load(nextState);
-  this._idx++;
+  this._idx += 1;
 };
 
 UndoRedo.prototype.saveState = function (opt) {
@@ -52,23 +52,14 @@ UndoRedo.prototype.canRedo = function () {
   return !!this._storage[this._idx + 1];
 };
 
-UndoRedo.prototype.withoutHistoryUpdate = function (callback) {
-  this._suppressHistoryUpdate = true;
-  callback();
-  this._suppressHistoryUpdate = false;
-};
-
 UndoRedo.prototype._lastState = function () {
   return this._storage[this._idx];
 };
 
 UndoRedo.prototype._load = function (state) {
-  var dt = this.dt;
   // Note that #load is a normal action that updates history. However when
   // a state is restored from the history, it's definitely unwanted.
-  this.withoutHistoryUpdate(function () {
-    dt.load(state);
-  });
+  this.dt.load(state, null, true);
 };
 
 UndoRedo.prototype._saveStateOnUserInteraction = function () {

@@ -59,7 +59,7 @@ function DrawingTool(selector, options, settings) {
 
   this._initDOM();
   this._initFabricJS();
-  this.setDimensions(this.options.width, this.options.height);
+  this._setDimensions(this.options.width, this.options.height);
   this._initTools();
 
   this._history = new UndoRedo(this);
@@ -146,7 +146,7 @@ DrawingTool.prototype.load = function (jsonString, callback, noHistoryUpdate) {
 
   // Process Drawing Tool specific options.
   var dtState = state.dt;
-  this.setDimensions(dtState.width, dtState.height);
+  this._setDimensions(dtState.width, dtState.height);
 
   // Load FabricJS state.
   var loadDef = $.Deferred();
@@ -372,10 +372,10 @@ DrawingTool.prototype.setBackgroundImage = function (imageSrc, fit, callback) {
       case "resizeCanvasToBackground": this.resizeCanvasToBackground(); break;
       case "shrinkBackgroundToCanvas": this.shrinkBackgroundToCanvas(); break;
     }
+    this.pushToHistory();
     if (typeof callback === 'function') {
       callback();
     }
-    this.pushToHistory();
   }.bind(this));
 };
 
@@ -388,6 +388,7 @@ DrawingTool.prototype.resizeBackgroundToCanvas = function () {
     height: this.canvas.height
   });
   this.canvas.renderAll();
+  this.pushToHistory();
 };
 
 // Fits background to canvas (keeping original aspect ratio) only when background is bigger than canvas.
@@ -405,6 +406,7 @@ DrawingTool.prototype.shrinkBackgroundToCanvas = function () {
       height: bgImg.height * minRatio
     });
     this.canvas.renderAll();
+    this.pushToHistory();
   }
 };
 
@@ -412,12 +414,18 @@ DrawingTool.prototype.resizeCanvasToBackground = function () {
   if (!this.canvas.backgroundImage) {
     return;
   }
-  this.setDimensions(this.canvas.backgroundImage.width, this.canvas.backgroundImage.height);
+  this._setDimensions(this.canvas.backgroundImage.width, this.canvas.backgroundImage.height);
   this.canvas.backgroundImage.set({
     top: this.canvas.height / 2,
     left: this.canvas.width / 2
   });
   this.canvas.renderAll();
+  this.pushToHistory();
+};
+
+DrawingTool.prototype.setDimensions = function (width, height) {
+  this._setDimensions(width, height);
+  this.pushToHistory();
 };
 
 /**
@@ -611,7 +619,7 @@ DrawingTool.prototype._initFabricJS = function () {
   this.canvas.setBackgroundColor("#fff");
 };
 
-DrawingTool.prototype.setDimensions = function (width, height) {
+DrawingTool.prototype._setDimensions = function (width, height) {
   this.canvas.setDimensions({
     width: width,
     height: height

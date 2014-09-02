@@ -44,5 +44,33 @@ http://bower.io/search/?q=drawing-tool
 
 ## Dependencies
 
-* jQuery 
+* jQuery
 * FabricJS
+* EventEmitter2
+* HammerJS (optional, adds multi-touch support)
+
+All of these libraries are concatenated together in `dist/vendor.js` file.
+
+## Undo / redo feature
+
+If you are planning to add new feature that will be exposed in UI or via main API, you should consider whether
+this action should be saved in history (so undo and redo is possible) or not.
+
+If so, all you need to do is to call `DrawingTool.pushToHistory` method.
+
+The current convention is that everything that modifies **canvas** should be saved in history, e.g.:
+
+* new object created
+* object removed
+* object stroke color changed
+* canvas dimensions changed
+
+However state of the drawing tool itself is not tracked, so e.g. following events are **not** saved:
+
+* tool changed
+* current stroke color changed
+* current fill color changed
+
+If an action is async and callback can be provided, callback should be invoked **after** history is updated
+(see `DrawingTool.setBackgroundImage`). It gives us more flexibility, as the client code can reset history
+after action is complete so user won't be able to undo it (sometimes it is useful).

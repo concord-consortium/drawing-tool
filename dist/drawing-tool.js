@@ -152,6 +152,7 @@ function DrawingTool(selector, options, settings) {
 
   this._initDOM();
   this._initFabricJS();
+  this._setDimensions(this.options.width, this.options.height);
   this._initTools();
 
   this._history = new UndoRedo(this);
@@ -238,10 +239,7 @@ DrawingTool.prototype.load = function (jsonString, callback, noHistoryUpdate) {
 
   // Process Drawing Tool specific options.
   var dtState = state.dt;
-  this.canvas.setDimensions({
-    width: dtState.width,
-    height: dtState.height
-  });
+  this._setDimensions(dtState.width, dtState.height);
 
   // Load FabricJS state.
   var loadDef = $.Deferred();
@@ -467,10 +465,10 @@ DrawingTool.prototype.setBackgroundImage = function (imageSrc, fit, callback) {
       case "resizeCanvasToBackground": this.resizeCanvasToBackground(); break;
       case "shrinkBackgroundToCanvas": this.shrinkBackgroundToCanvas(); break;
     }
+    this.pushToHistory();
     if (typeof callback === 'function') {
       callback();
     }
-    this.pushToHistory();
   }.bind(this));
 };
 
@@ -483,6 +481,7 @@ DrawingTool.prototype.resizeBackgroundToCanvas = function () {
     height: this.canvas.height
   });
   this.canvas.renderAll();
+  this.pushToHistory();
 };
 
 // Fits background to canvas (keeping original aspect ratio) only when background is bigger than canvas.
@@ -500,6 +499,7 @@ DrawingTool.prototype.shrinkBackgroundToCanvas = function () {
       height: bgImg.height * minRatio
     });
     this.canvas.renderAll();
+    this.pushToHistory();
   }
 };
 
@@ -507,15 +507,18 @@ DrawingTool.prototype.resizeCanvasToBackground = function () {
   if (!this.canvas.backgroundImage) {
     return;
   }
-  this.canvas.setDimensions({
-    width: this.canvas.backgroundImage.width,
-    height: this.canvas.backgroundImage.height
-  });
+  this._setDimensions(this.canvas.backgroundImage.width, this.canvas.backgroundImage.height);
   this.canvas.backgroundImage.set({
     top: this.canvas.height / 2,
     left: this.canvas.width / 2
   });
   this.canvas.renderAll();
+  this.pushToHistory();
+};
+
+DrawingTool.prototype.setDimensions = function (width, height) {
+  this._setDimensions(width, height);
+  this.pushToHistory();
 };
 
 /**
@@ -694,8 +697,6 @@ DrawingTool.prototype._initDOM = function () {
     .attr('tabindex', 0) // makes the canvas focusable for keyboard events
     .appendTo(this.$element);
   this.$canvas = $('<canvas>')
-    .attr('width', this.options.width + 'px')
-    .attr('height', this.options.height + 'px')
     .appendTo($canvasContainer);
 };
 
@@ -709,21 +710,22 @@ DrawingTool.prototype._initFabricJS = function () {
     this.canvas.targetFindTolerance = 12;
   }
   this.canvas.setBackgroundColor("#fff");
-  this._setupHDPISupport();
 };
 
-DrawingTool.prototype._setupHDPISupport = function () {
+DrawingTool.prototype._setDimensions = function (width, height) {
+  this.canvas.setDimensions({
+    width: width,
+    height: height
+  });
   // devicePixelRatio may be undefined in old browsers.
   var pixelRatio = window.devicePixelRatio || 1;
   if (pixelRatio !== 1) {
     var canvEl = this.canvas.getElement();
-    var w = canvEl.width;
-    var h = canvEl.height;
     $(canvEl)
-      .attr('width',  w * pixelRatio)
-      .attr('height', h * pixelRatio)
-      .css('width',   w)
-      .css('height',  h);
+      .attr('width',  width  * pixelRatio)
+      .attr('height', height * pixelRatio)
+      .css('width',   width)
+      .css('height',  height);
     canvEl.getContext('2d').scale(pixelRatio, pixelRatio);
   }
 };

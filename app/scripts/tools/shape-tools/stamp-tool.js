@@ -70,7 +70,11 @@ StampTool.prototype.mouseUp = function (e) {
 
 StampTool.prototype.setStampImage = function (imgElement) {
   this._imgElement = imgElement;
-}
+};
+
+StampTool.prototype.getStampImageSrc = function () {
+  return this._imgElement && this._imgElement.src;
+};
 
 StampTool.prototype._processNewShape = function (s) {
   this.convertToPositiveDimensions(s);

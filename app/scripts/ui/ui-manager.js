@@ -1,6 +1,7 @@
-var BasicButton  = require('scripts/ui/basic-button');
-var Palette      = require('scripts/ui/palette');
-var uiDefinition = require('scripts/ui/ui-definition');
+var BasicButton    = require('scripts/ui/basic-button');
+var Palette        = require('scripts/ui/palette');
+var generateStamps = require('scripts/ui/generate-stamps');
+var uiDefinition   = require('scripts/ui/ui-definition');
 
 function UIManager(drawingTool) {
   this.drawingTool = drawingTool;
@@ -12,6 +13,9 @@ function UIManager(drawingTool) {
   this._palettes = {};
   this._buttons = {};
   this._paletteActiveButton = {};
+  if (this.drawingTool.options.stamps) {
+    generateStamps(uiDefinition, this.drawingTool.options.stamps);
+  }
   this._processUIDefinition(uiDefinition);
 
   for (var name in this._buttons) {
@@ -38,6 +42,10 @@ UIManager.prototype.getPalette = function (name) {
 
 UIManager.prototype.togglePalette = function (name) {
   this._palettes[name].toggle();
+};
+
+UIManager.prototype.getMainContainer = function () {
+  return this.drawingTool.$element;
 };
 
 UIManager.prototype.getPaletteActiveButton = function (name) {

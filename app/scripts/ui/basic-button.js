@@ -14,6 +14,8 @@ function BasicButton(options, ui, drawingTool) {
   // Note that this will be called later by UI manager.
   this.onInit = options.onInit;
 
+  this._locked = false;
+
   this.$element = $('<div>')
     .addClass('dt-btn')
     .addClass(options.classes)
@@ -25,6 +27,7 @@ function BasicButton(options, ui, drawingTool) {
 
   if (options.onClick) {
     this.$element.on('mousedown touchstart', function (e) {
+      if (this._locked) return;
       options.onClick.call(this, e, ui, drawingTool);
       e.preventDefault();
     }.bind(this));
@@ -32,6 +35,7 @@ function BasicButton(options, ui, drawingTool) {
 
   if (options.onLongPress) {
     this.$element.longPress(function (e) {
+      if (this._locked) return;
       options.onLongPress.call(this, e, ui, drawingTool);
       e.preventDefault();
     }.bind(this));
@@ -51,6 +55,7 @@ function BasicButton(options, ui, drawingTool) {
 
   if (options.activatesTool) {
     this.$element.on('mousedown touchstart', function (e) {
+      if (this._locked) return;
       drawingTool.chooseTool(options.activatesTool);
       e.preventDefault();
     }.bind(this));
@@ -106,6 +111,7 @@ BasicButton.prototype.setLocked = function (v) {
   } else {
     this.$element.removeClass('dt-locked');
   }
+  this._locked = v;
 };
 
 module.exports = BasicButton;

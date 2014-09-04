@@ -1,9 +1,10 @@
 function Palette(options, ui) {
-  this.ui        = ui;
-  this.name      = options.name;
-  this.permanent = !!options.permanent;
-  this.anchor    = options.anchor;
-  this.$element  = $('<div>')
+  this.ui          = ui;
+  this.name        = options.name;
+  this.permanent   = !!options.permanent;
+  this.hideOnClick = options.hideOnClick === undefined ? true : options.hideOnClick;
+  this.anchor      = options.anchor;
+  this.$element    = $('<div>')
     .addClass('dt-palette')
     .addClass(options.vertical ? 'dt-vertical' : 'dt-horizontal');
 
@@ -30,14 +31,20 @@ Palette.prototype._show = function () {
   // Hide palette on first mousedown / touch (if it's not permanent).
   // Timeout ensures that we won't catch the same event which actually
   // opened the palette.
-  var self = this;
   setTimeout(function () {
-    $(window).one('mousedown touchstart', function () {
-      if (self.$element.is(':visible')) {
-        self._hide();
-      }
-    });
+    $(window).on('mousedown touchstart', closeOnClick);
   }, 16);
+
+  var self = this;
+  function closeOnClick (e) {
+    if (!self.hideOnClick && (self.$element === e.target || self.$element.find(e.target).length > 0)) {
+      return;
+    }
+    if (self.$element.is(':visible')) {
+      self._hide();
+    }
+    $(window).off('mousedown touchstart', closeOnClick);
+  }
 };
 
 Palette.prototype._hide = function () {
@@ -49,11 +56,12 @@ Palette.prototype._position = function () {
   if (!anchorButton) {
     return;
   }
-  var p = anchorButton.$element.position();
+  var p = anchorButton.$element.offset();
+  var mainP = this.ui.getMainContainer().offset();
   this.$element.css({
     position: 'absolute',
-    top:      p.top,
-    left:     p.left + anchorButton.$element.outerWidth()
+    top:      p.top - mainP.top,
+    left:     p.left + anchorButton.$element.outerWidth() - mainP.left,
   });
 };
 

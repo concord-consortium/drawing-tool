@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>HTML5 Drawing Tool Demo</title>
+  	<link rel="stylesheet" type="text/css" href="../drawing-tool.css">
+    <style type="text/css">
+      body {
+        font-family: Arial;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+        <h1>HTML5 Drawing Tool</h1>
+        <div id="drawing-tool"></div>
+    </div>
+  <script src="../vendor.js"></script>
+  <script src="../drawing-tool.js"></script>
+  <script>
+  	var drawingTool = new DrawingTool("#drawing-tool", {
+      stamps: {
+        'Electronics': [
+          'http://upload.wikimedia.org/wikipedia/commons/9/95/Schutzklasse_1_fett.svg',
+          'http://upload.wikimedia.org/wikipedia/commons/4/4d/Schutzklasse_3_fett.svg',
+          'http://upload.wikimedia.org/wikipedia/commons/e/e1/Schaltsymbol-Keramikresonator.svg'
+        ],
+        'Molecules': [
+          'http://upload.wikimedia.org/wikipedia/commons/b/ba/Ammonia_2D_dimensions.svg',
+          'http://upload.wikimedia.org/wikipedia/commons/0/0a/Empilement_compact_plan.svg'
+        ]
+      }
+    });
+  </script>
+  </body>
+</html>

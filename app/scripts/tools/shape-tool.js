@@ -77,13 +77,37 @@ ShapeTool.prototype.actionComplete = function (newObject) {
   }
 };
 
-ShapeTool.prototype.setCentralOrigin = function (object) {
+ShapeTool.prototype.setCentralOrigin = function (object, keepPosition) {
   var strokeWidth = object.stroke ? object.strokeWidth : 0;
+  var left = object.left + (object.width + strokeWidth) / 2;
+  var top  = object.top + (object.height + strokeWidth) / 2;
   object.set({
-    left: object.left + (object.width + strokeWidth) / 2,
-    top: object.top + (object.height + strokeWidth) / 2,
+    left: left,
+    top: top,
     originX: 'center',
     originY: 'center'
+  });
+};
+
+// During object creation it can end up with negative dimensions. Convert them to positive ones.
+ShapeTool.prototype.convertToPositiveDimensions = function (object) {
+  if (object.width < 0) {
+    object.left = object.left + object.width;
+    object.width = -object.width;
+  }
+  if (object.height < 0) {
+    object.top = object.top + object.height;
+    object.height = -object.height;
+  }
+};
+
+ShapeTool.prototype.moveObjectLeftTop = function (object) {
+  var strokeWidth = object.stroke ? object.strokeWidth : 0;
+  var left = object.left - (object.width + strokeWidth) / 2;
+  var top  = object.top - (object.height + strokeWidth) / 2;
+  object.set({
+    left: left,
+    top: top
   });
 };
 

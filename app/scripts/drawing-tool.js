@@ -3,6 +3,7 @@ var LineTool          = require('scripts/tools/shape-tools/line-tool');
 var BasicShapeTool    = require('scripts/tools/shape-tools/basic-shape-tool');
 var FreeDrawTool      = require('scripts/tools/shape-tools/free-draw');
 var TextTool          = require('scripts/tools/shape-tools/text-tool');
+var StampTool         = require('scripts/tools/shape-tools/stamp-tool');
 var DeleteTool        = require('scripts/tools/delete-tool');
 var CloneTool         = require('scripts/tools/clone-tool');
 var UIManager         = require('scripts/ui/ui-manager');
@@ -590,6 +591,7 @@ DrawingTool.prototype._initTools = function () {
     square:      new BasicShapeTool("Square Tool", this, "square"),
     circle:      new BasicShapeTool("Circle Tool", this, "circle"),
     free:        new FreeDrawTool("Free Draw Tool", this),
+    stamp:       new StampTool("Stamp Tool", this),
     text:        new TextTool("Text Tool", this),
     trash:       new DeleteTool("Delete Tool", this),
     clone:       new CloneTool("Clone Tool", this)

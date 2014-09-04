@@ -99,25 +99,18 @@ BasicShapeTool.prototype.mouseUp = function (e) {
 };
 
 BasicShapeTool.prototype._processNewShape = function (s) {
-  if (s.width < 0) {
-    s.left = s.left + s.width;
-    s.width = -s.width;
-  }
-  if (s.height < 0) {
-    s.top = s.top + s.height;
-    s.height = -s.height;
-  }
-  this.setCentralOrigin(s);
+  this.convertToPositiveDimensions(s);
   if (Math.max(s.width, s.height) < this.minSize) {
     s.set('width', this.defSize);
     s.set('height', this.defSize);
-    s.set('top', s.get('top') - (s.get('height') / 2) + s.get('strokeWidth'));
-    s.set('left', s.get('left') - (s.get('width') / 2) + s.get('strokeWidth'));
     if (this._type.radius) {
       s.set('rx', this.defSize / 2);
       s.set('ry', this.defSize / 2);
     }
+    // So the center of the object is directly underneath the cursor.
+    this.moveObjectLeftTop(s);
   }
+  this.setCentralOrigin(s);
   s.setCoords();
 };
 

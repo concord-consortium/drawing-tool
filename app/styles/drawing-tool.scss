@@ -1,5 +1,6 @@
 $buttonSize: 40px;
 $buttonFontSize: 32px;
+$textButtonFontSize: 12px;
 $buttonLineHeight: 45px;
 $buttonColor: #3e8acc;
 
@@ -65,6 +66,30 @@ $text: Arial, sans-serif;
     &.dt-locked {
       background: #839CB1;
       cursor: default;
+    }
+
+    // Text buttons:
+    &.dt-text-btn {
+      font-size: $textButtonFontSize;
+      font-family: $text;
+      width: auto;
+      padding: 0 5px;
+    }
+
+    &.dt-img-btn {
+      line-height: normal;
+      img {
+        display: inline-block;
+        max-width: 100%;
+        max-height: 100%;
+        vertical-align: middle;
+      }
+      img:after {
+        content: ' ';
+        display: inline-block;
+        height: 100%;
+        vertical-align: middle;
+      }
     }
 
     // Stroke and fill color buttons:
@@ -161,6 +186,7 @@ $text: Arial, sans-serif;
     position: relative;
     &:after {
       content: 't';
+      font-family: $icons;
       font-size: $buttonFontSize;
       position: absolute;
       bottom: -21px;
@@ -180,5 +206,31 @@ $text: Arial, sans-serif;
         display: block;
       }
     }
+  }
+
+  .dt-spin {
+    -webkit-animation: dt-spin 2s infinite linear;
+    animation: dt-spin 2s infinite linear;
+  }
+}
+
+@-webkit-keyframes dt-spin {
+  0% {
+    -webkit-transform: rotate(0deg);
+    transform: rotate(0deg);
+  }
+  100% {
+    -webkit-transform: rotate(359deg);
+    transform: rotate(359deg);
+  }
+}
+@keyframes dt-spin {
+  0% {
+    -webkit-transform: rotate(0deg);
+    transform: rotate(0deg);
+  }
+  100% {
+    -webkit-transform: rotate(359deg);
+    transform: rotate(359deg);
   }
 }

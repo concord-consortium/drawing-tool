@@ -6,6 +6,10 @@ function StampTool(name, drawTool) {
 
   // HTML Image Element or null.
   this._imgElement = null;
+
+  this._curr = null
+  this._startX = null;
+  this._startY = null;
 }
 
 inherit(StampTool, ShapeTool);
@@ -16,27 +20,30 @@ StampTool.prototype.mouseDown = function (e) {
   if (!this.active || !this._imgElement) return;
 
   var loc = this.canvas.getPointer(e.e);
-  var x = loc.x;
-  var y = loc.y;
+  this._startX = loc.x;
+  this._startY = loc.y;
 
-  this.curr = new fabric.Image(this._imgElement, {
-    left: x,
-    top: y,
+  this._curr = new fabric.Image(this._imgElement, {
+    left: this._startX,
+    top: this._startY,
     width: 0,
     height: 0,
-    selectable: false
+    originX: 'center',
+    originY: 'center',
+    selectable: false,
+    crossOrigin: this._imgElement.crossOrigin
   });
 
-  this.canvas.add(this.curr);
+  this.canvas.add(this._curr);
 };
 
 StampTool.prototype.mouseMove = function (e) {
   StampTool.super.mouseMove.call(this, e);
-  if (this.down === false || !this.curr) return;
+  if (this.down === false || !this._curr) return;
 
   var loc = this.canvas.getPointer(e.e);
-  var width = loc.x - this.curr.left;
-  var height = loc.y - this.curr.top;
+  var width = loc.x - this._startX;
+  var height = loc.y - this._startY;
   var imgAspectRatio = this._imgElement.width / this._imgElement.height;
 
   // Keep original image aspect ratio.
@@ -46,9 +53,11 @@ StampTool.prototype.mouseMove = function (e) {
     height = sign(height) * Math.abs(width) / imgAspectRatio;
   }
 
-  this.curr.set({
-    width: width,
-    height: height
+  this._curr.set({
+    width: Math.abs(width),
+    height: Math.abs(height),
+    left: this._startX + width * 0.5,
+    top: this._startY + height * 0.5
   });
 
   this.canvas.renderAll();
@@ -60,11 +69,11 @@ function sign(num) {
 
 StampTool.prototype.mouseUp = function (e) {
   StampTool.super.mouseUp.call(this, e);
-  if (!this.curr) return;
-  this._processNewShape(this.curr);
+  if (!this._curr) return;
+  this._processNewShape(this._curr);
   this.canvas.renderAll();
-  this.actionComplete(this.curr);
-  this.curr = undefined;
+  this.actionComplete(this._curr);
+  this._curr = undefined;
   this.master.pushToHistory();
 };
 
@@ -77,16 +86,12 @@ StampTool.prototype.getStampImageSrc = function () {
 };
 
 StampTool.prototype._processNewShape = function (s) {
-  this.convertToPositiveDimensions(s);
   if (Math.max(s.width, s.height) < this.minSize) {
     s.set({
       width: this._imgElement.width,
       height: this._imgElement.height,
     });
-    // So the center of the object is directly underneath the cursor.
-    this.moveObjectLeftTop(s);
   }
-  this.setCentralOrigin(s);
   s.setCoords();
 };
 

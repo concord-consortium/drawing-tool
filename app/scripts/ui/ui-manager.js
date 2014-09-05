@@ -13,6 +13,8 @@ function UIManager(drawingTool) {
   this._palettes = {};
   this._buttons = {};
   this._paletteActiveButton = {};
+  // Copy ui definition so custom modifications won't affect globally available object.
+  var uiDef = $.extend(true, {}, uiDefinition);
   if (this.drawingTool.options.stamps) {
     generateStamps(uiDefinition, this.drawingTool.options.stamps);
   }

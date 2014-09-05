@@ -41,7 +41,7 @@ StampImageButton.prototype._startWaiting = function () {
   this.setLocked(true);
   this.$element.find('span')
     .addClass('dt-spin')
-    .text('.');
+    .text('/');
 };
 
 StampImageButton.prototype._stopWaiting = function () {

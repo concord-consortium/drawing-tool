@@ -78,6 +78,10 @@ $text: Arial, sans-serif;
 
     &.dt-img-btn {
       line-height: normal;
+      span {
+        // To make rotation work in all browsers (used during waiting for image load).
+        display: inline-block;
+      }
       img {
         display: inline-block;
         max-width: 85%;

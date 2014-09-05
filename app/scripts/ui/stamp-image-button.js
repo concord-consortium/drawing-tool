@@ -7,12 +7,14 @@ function StampImageButton(options, ui, drawingTool) {
   };
   BasicButton.call(this, options, ui, drawingTool);
 
+  this._imageSrc = drawingTool.proxy(options.imageSrc);
+
   this.$element.addClass('dt-img-btn');
 
   this._startWaiting();
   // TODO: REMOVE setTimeout, it's only for demo reasons.
   setTimeout(function () {
-    fabric.util.loadImage(options.imageSrc, function (img) {
+    fabric.util.loadImage(this._imageSrc, function (img) {
       this._imageEl = img;
       this.$image = $(this._imageEl).appendTo(this.$element);
       this._stopWaiting();
@@ -27,7 +29,7 @@ function StampImageButton(options, ui, drawingTool) {
   // It's impossible to see this button without prior stamp tool activation.
   // So 'tool:changed' will be always emitted before and active state updated.
   drawingTool.on('tool:changed', function (toolName) {
-    if (toolName === 'stamp' && drawingTool.tools.stamp.getStampImageSrc() === options.imageSrc) {
+    if (toolName === 'stamp' && drawingTool.tools.stamp.getStampImageSrc() === this._imageSrc) {
       this.setActive(true);
     } else {
       this.setActive(false);

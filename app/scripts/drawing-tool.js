@@ -80,6 +80,21 @@ function DrawingTool(selector, options, settings) {
 
 DrawingTool.prototype.ADDITIONAL_PROPS_TO_SERIALIZE = ADDITIONAL_PROPS_TO_SERIALIZE;
 
+
+/**
+ * Proxy function that is used when images are loaded. Basic version just returns the same URL.
+ * Client code may provide custom function in DrawingTool options to return proxied url.
+ * E.g.:
+ * new DrawingTool({
+ *   proxy: function (url) {
+ *     return 'http://myproxy.com?url=' + url;
+ *   }
+ * });
+ */
+DrawingTool.prototype.proxy = function (url) {
+  return (this.options.proxy && this.options.proxy(url)) || url;
+};
+
 /**
  * Clears all objects from the fabric canvas and can also clear the background image
  *
@@ -550,6 +565,7 @@ DrawingTool.prototype._setBackgroundImage = function (imageSrc, options, backgro
     // Fast path when we remove background image.
     this.canvas.setBackgroundImage(null, bgLoaded);
   } else {
+    imageSrc = this.proxy(imageSrc);
     loadImage();
   }
 

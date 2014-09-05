@@ -19,6 +19,9 @@
   <script src="../drawing-tool.js"></script>
   <script>
   	var drawingTool = new DrawingTool("#drawing-tool", {
+      proxy: function (url) {
+        return 'https://cors-anywhere.herokuapp.com/' + url;
+      },
       stamps: {
         'Electronics': [
           'http://upload.wikimedia.org/wikipedia/commons/9/95/Schutzklasse_1_fett.svg',

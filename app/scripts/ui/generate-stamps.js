@@ -15,7 +15,7 @@ function generateStamps(uiDefinition, stampsDefition) {
     label: 'M',
     palette: 'main',
     activatesTool: 'stamp',
-    onClick: function () {
+    onLongPress: function () {
       this.ui.togglePalette('stampCategories');
     }
   });

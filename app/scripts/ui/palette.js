@@ -8,6 +8,16 @@ function Palette(options, ui) {
     .addClass('dt-palette')
     .addClass(options.vertical ? 'dt-vertical' : 'dt-horizontal');
 
+  this._closeOnClick = function (e) {
+    if (!this.hideOnClick && (this.$element === e.target || this.$element.find(e.target).length > 0)) {
+      return;
+    }
+    if (this.$element.is(':visible')) {
+      this._hide();
+    }
+    this._clearWindowHandlers();
+  }.bind(this);
+
   if (!this.permanent) {
     this.$element.hide();
   }
@@ -32,23 +42,17 @@ Palette.prototype._show = function () {
   // Timeout ensures that we won't catch the same event which actually
   // opened the palette.
   setTimeout(function () {
-    $(window).on('mousedown touchstart', closeOnClick);
-  }, 16);
-
-  var self = this;
-  function closeOnClick (e) {
-    if (!self.hideOnClick && (self.$element === e.target || self.$element.find(e.target).length > 0)) {
-      return;
-    }
-    if (self.$element.is(':visible')) {
-      self._hide();
-    }
-    $(window).off('mousedown touchstart', closeOnClick);
-  }
+    $(window).on('mousedown touchstart', this._closeOnClick);
+  }.bind(this), 16);
 };
 
 Palette.prototype._hide = function () {
   this.$element.hide();
+  this._clearWindowHandlers();
+};
+
+Palette.prototype._clearWindowHandlers = function () {
+  $(window).off('mousedown touchstart', this._closeOnClick);
 };
 
 Palette.prototype._position = function () {

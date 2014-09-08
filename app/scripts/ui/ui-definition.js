@@ -75,8 +75,10 @@ var ui = {
         this.setLabel(this.ui.getPaletteActiveButton('lines').getLabel());
       },
       onClick: function () {
-        this.ui.togglePalette('lines');
         this.ui.getPaletteActiveButton('lines').click();
+      },
+      onLongPress: function () {
+        this.ui.togglePalette('lines');
       }
     },
     {
@@ -89,6 +91,8 @@ var ui = {
       },
       onClick: function () {
         this.ui.getPaletteActiveButton('shapes').click();
+      },
+      onLongPress: function () {
         this.ui.togglePalette('shapes');
       }
     },

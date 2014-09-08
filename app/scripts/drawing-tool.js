@@ -18,6 +18,10 @@ var DEF_OPTIONS = {
   // using parser provided by FabricJS. It lets us avoid tainting canvas
   // in some browsers which always do that when SVG image is rendered
   // on canvas (e.g. Safari, IE).
+  // Also, when this option is set to false, it will case that bounding-box
+  // target find method is used instead of per-pixel one. It's cause by the fact
+  // that some browsers always taint canvas when SVG is rendered on it,
+  // (Safari, IE). Untainted canvas is necessary for per-pixel method.
   parseSVG: true
 };
 
@@ -633,7 +637,11 @@ DrawingTool.prototype._initDOM = function () {
 DrawingTool.prototype._initFabricJS = function () {
   this.canvas = new fabric.Canvas(this.$canvas[0]);
   // Target find would be more tolerant on touch devices.
-  if (fabric.isTouchSupported) {
+  // Also SVG images added to canvas will taint it in some browsers, no matter whether
+  // it's coming from the same or another domain (e.g. Safari, IE). In such case, we
+  // have to use bounding box target find, as per pixel tries to read canvas data
+  // (impossible when canvas is tainted).
+  if (fabric.isTouchSupported || !this.options.parseSVG) {
     this.canvas.perPixelTargetFind = false;
   } else {
     this.canvas.perPixelTargetFind = true;

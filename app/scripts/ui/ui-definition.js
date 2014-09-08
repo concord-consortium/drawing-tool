@@ -26,6 +26,16 @@ var STROKE_WIDTHS = [
   20
 ];
 
+var FONT_SIZES = [
+  10,
+  15,
+  20,
+  25,
+  30,
+  35,
+  40
+];
+
 var ui = {
   /***
    * Palettes
@@ -43,6 +53,10 @@ var ui = {
     {
       name: 'shapes',
       anchor: 'shapesPalette'
+    },
+    {
+      name: 'fontSizes',
+      anchor: 'text'
     },
     {
       name: 'strokeColors',
@@ -105,8 +119,12 @@ var ui = {
     {
       name: 'text',
       label: 'T',
+      classes: 'dt-expand',
       activatesTool: 'text',
-      palette: 'main'
+      palette: 'main',
+      onLongPress: function () {
+        this.ui.togglePalette('fontSizes');
+      }
     },
     {
       name: 'clone',
@@ -265,11 +283,28 @@ var ui = {
       activatesTool: 'circle',
       palette: 'shapes'
     }
-    /***
-     * Stroke colors and fill colors are added in a loop below
-     ***/
   ]
 };
+
+FONT_SIZES.forEach(function (fontSize) {
+  ui.buttons.push({
+    label: 'T',
+    onInit: function () {
+      console.log('init ' + fontSize);
+      this.$element.css('font-size', fontSize);
+      // It just looks better for given set of font sizes.
+      this.$element.css('line-height', '50px');
+    },
+    onClick: function () {
+      this.dt.setFontSize(fontSize);
+      this.dt.setSelectionFontSize(fontSize);
+    },
+    onStateChange: function (state) {
+      this.setActive(state.fontSize === fontSize);
+    },
+    palette: 'fontSizes'
+  });
+});
 
 COLORS.forEach(function (color) {
   ui.buttons.push({

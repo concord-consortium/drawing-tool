@@ -56,14 +56,16 @@ UIManager.prototype.getPaletteActiveButton = function (name) {
 
 UIManager.prototype._createPalette = function (paletteOptions) {
   var palette = new Palette(paletteOptions, this);
+  var paletteName = palette.name || getUniqueName();
   palette.$element.appendTo(this.$tools);
-  this._palettes[palette.name] = palette;
+  this._palettes[paletteName] = palette;
 };
 
 UIManager.prototype._createButton = function (buttonOptions) {
   var BtnClass = buttonOptions.buttonClass || BasicButton;
   var button = new BtnClass(buttonOptions, this, this.drawingTool);
-  this._buttons[button.name] = button;
+  var buttonName = button.name || getUniqueName();
+  this._buttons[buttonName] = button;
 
   this._setupPaletteActiveButton(button);
 };
@@ -78,5 +80,10 @@ UIManager.prototype._setupPaletteActiveButton = function (button) {
     this._paletteActiveButton[button.palette] = button;
   }.bind(this));
 };
+
+var _idx = 0;
+function getUniqueName() {
+  return _idx++;
+}
 
 module.exports = UIManager;

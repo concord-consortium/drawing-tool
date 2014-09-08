@@ -3,10 +3,11 @@ var BasicButton = require('scripts/ui/basic-button');
 
 function StampImageButton(options, ui, drawingTool) {
   options.onClick = function () {
-    this.dt.tools.stamp.setStampImage(this._imageEl);
+    this.dt.tools.stamp.setStampObject(this._stamp);
   };
   BasicButton.call(this, options, ui, drawingTool);
 
+  this._stamp = null;
   this._imageSrc = drawingTool.proxy(options.imageSrc);
 
   this.$element.addClass('dt-img-btn');
@@ -14,22 +15,22 @@ function StampImageButton(options, ui, drawingTool) {
   this._startWaiting();
   // TODO: REMOVE setTimeout, it's only for demo reasons.
   setTimeout(function () {
-    fabric.util.loadImage(this._imageSrc, function (img) {
-      this._imageEl = img;
-      this.$image = $(this._imageEl).appendTo(this.$element);
+    this.dt.tools.stamp.loadImage(this._imageSrc, function (fabricObj, img) {
+      this._stamp = fabricObj;
+      this.$image = $(img).appendTo(this.$element);
       this._stopWaiting();
       if (options.setStampOnImgLoad) {
-        this.dt.tools.stamp.setStampImage(this._imageEl);
+        this.dt.tools.stamp.setStampObject(this._stamp);
       }
     }.bind(this), null, 'anonymous');
-  }.bind(this), 5000);
+  }.bind(this), 3000);
 
   // Note that we should have some other event like 'stampToolImage:changed'.
   // However 'tool:changed' is good enough for now to handle all cases.
   // It's impossible to see this button without prior stamp tool activation.
   // So 'tool:changed' will be always emitted before and active state updated.
   drawingTool.on('tool:changed', function (toolName) {
-    if (toolName === 'stamp' && drawingTool.tools.stamp.getStampImageSrc() === this._imageSrc) {
+    if (toolName === 'stamp' && drawingTool.tools.stamp.getStampSrc() === this._imageSrc) {
       this.setActive(true);
     } else {
       this.setActive(false);

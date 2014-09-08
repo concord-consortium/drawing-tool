@@ -13,7 +13,12 @@ var multitouchSupport = require('scripts/fabric-extensions/multi-touch-support')
 
 var DEF_OPTIONS = {
   width: 800,
-  height: 600
+  height: 600,
+  // If this flag is set to true, stamp tool will try to parse SVG images
+  // using parser provided by FabricJS. It lets us avoid tainting canvas
+  // in some browsers which always do that when SVG image is rendered
+  // on canvas (e.g. Safari, IE).
+  parseSVG: true
 };
 
 var DEF_STATE = {
@@ -607,7 +612,7 @@ DrawingTool.prototype._initTools = function () {
     square:      new BasicShapeTool("Square Tool", this, "square"),
     circle:      new BasicShapeTool("Circle Tool", this, "circle"),
     free:        new FreeDrawTool("Free Draw Tool", this),
-    stamp:       new StampTool("Stamp Tool", this),
+    stamp:       new StampTool("Stamp Tool", this, this.options.parseSVG),
     text:        new TextTool("Text Tool", this),
     trash:       new DeleteTool("Delete Tool", this),
     clone:       new CloneTool("Clone Tool", this)

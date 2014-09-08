@@ -27,8 +27,9 @@ var DEF_OPTIONS = {
 
 var DEF_STATE = {
   stroke: '#333',
+  fill: "",
   strokeWidth: 8,
-  fill: ""
+  fontSize: 25
 };
 
 var EVENTS = {
@@ -256,7 +257,7 @@ DrawingTool.prototype.setStrokeColor = function (color) {
 
 /**
  * Sets the stroke width for new shapes and fires a `stateEvent` to signal a
- * change in the stroke width. This is also the font size for the text tool.
+ * change in the stroke width.
  *
  * parameters:
  *  - width: integer for the desired width
@@ -265,6 +266,19 @@ DrawingTool.prototype.setStrokeWidth = function (width) {
   this.state.strokeWidth = width;
   this._fireStateChange();
 };
+
+/**
+ * Sets the font size for new text objects and fires a `stateEvent` to signal a
+ * change in the font size.
+ *
+ * parameters:
+ *  - fontSize: integer for the desired font size
+ */
+DrawingTool.prototype.setFontSize = function (fontSize) {
+  this.state.fontSize = fontSize;
+  this._fireStateChange();
+};
+
 
 /**
  * Sets the fill color for new shapes and fires a `stateEvent` to signal a
@@ -306,6 +320,17 @@ DrawingTool.prototype.setSelectionStrokeWidth = function (width) {
   this.pushToHistory();
 };
 
+DrawingTool.prototype.setSelectionFontSize = function (fontSize) {
+  if (!this.getSelection()) return;
+  this.forEachSelectedObject(function (obj) {
+    if (obj.type === 'i-text') {
+      this._setObjectProp(obj, 'fontSize', fontSize);
+    }
+  }.bind(this));
+  this.canvas.renderAll();
+  this.pushToHistory();
+};
+
 DrawingTool.prototype.sendSelectionToFront = function () {
   if (!this.getSelection()) return;
   this._sendSelectionTo('front');
@@ -334,8 +359,7 @@ DrawingTool.prototype._setObjectProp = function (object, type, value) {
     } else if (type === 'fill') {
       return;
     } else if (type === 'strokeWidth') {
-      type = 'fontSize';
-      value = value * 4;
+      return;
     }
   }
   object.set(type, value);

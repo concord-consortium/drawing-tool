@@ -10,10 +10,20 @@ function CloneTool(name, drawingTool) {
   Tool.call(this, name, drawingTool);
   this.singleUse = true;
 
-  // Ctrl / Cmd + C to clone objects.
+  this._clipboard = null;
+
+  // Ctrl / Cmd + C to copy, Ctrl / Cmd + V to paste.
   this.master.$element.on('keydown', function (e) {
-    if (e.keyCode === 67 && (e.ctrlKey || e.metaKey)) {
-      this.use();
+    if (this._inTextEditMode()) {
+      // Keep default copy and paste actions during text edit.
+      return;
+    }
+    if (e.keyCode === 67 /* C */ && (e.ctrlKey || e.metaKey)) {
+      this.copy();
+      e.preventDefault();
+    }
+    if (e.keyCode === 86 /* V */ && (e.ctrlKey || e.metaKey)) {
+      this.paste();
       e.preventDefault();
     }
   }.bind(this));
@@ -25,6 +35,13 @@ inherit(CloneTool, Tool);
  * Clones the currently selected object(s) from the fabricjs canvas.
  */
 CloneTool.prototype.use = function () {
+  // It's just copy and paste sequence at once.
+  this.copy(function () {
+    this.paste();
+  }.bind(this));
+};
+
+CloneTool.prototype.copy = function (callback) {
   var activeObject = this.canvas.getActiveGroup() || this.canvas.getActiveObject();
   if (!activeObject) {
     return;
@@ -37,13 +54,26 @@ CloneTool.prototype.use = function () {
   var klass = fabric.util.getKlass(activeObject.type);
   var propsToInclude = this.master.ADDITIONAL_PROPS_TO_SERIALIZE;
   if (klass.async) {
-    activeObject.clone(this._processClonedObject.bind(this), propsToInclude);
+    activeObject.clone(function (clonedObject) {
+      this._updateClipboard(clonedObject);
+      if (typeof callback === 'function') {
+        callback();
+      }
+    }.bind(this), propsToInclude);
   } else {
-    this._processClonedObject(activeObject.clone(null, propsToInclude));
+    this._updateClipboard(activeObject.clone(null, propsToInclude));
+    if (typeof callback === 'function') {
+      callback();
+    }
   }
 };
 
-CloneTool.prototype._processClonedObject = function (clonedObject) {
+CloneTool.prototype.paste = function () {
+  if (!this._clipboard) {
+    return;
+  }
+  var clonedObject = this._clipboard;
+
   this.canvas.deactivateAllWithDispatch();
 
   clonedObject.set({
@@ -63,6 +93,21 @@ CloneTool.prototype._processClonedObject = function (clonedObject) {
   }
   this.canvas.renderAll();
   this.master.pushToHistory();
+
+  // Before user can paste again, we have to clone clipboard object again.
+  // Do it just by calling #copy again (note that objects we just pasted are selected).
+  this._clipboard = null;
+  this.copy();
 };
+
+CloneTool.prototype._updateClipboard = function (clonedObject) {
+  this._clipboard = clonedObject;
+};
+
+CloneTool.prototype._inTextEditMode = function () {
+  var activeObject = this.canvas.getActiveObject();
+  return activeObject && activeObject.isEditing;
+};
+
 
 module.exports = CloneTool;

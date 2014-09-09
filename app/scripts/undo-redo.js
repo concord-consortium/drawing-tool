@@ -9,10 +9,10 @@ function UndoRedo(drawTool) {
   this._saveStateOnUserInteraction();
 
   this.dt.$element.on('keydown', function (e) {
-    if (e.keyCode === 90 && (e.ctrlKey || e.metaKey)) {
+    if (e.keyCode === 90 /* Z */ && (e.ctrlKey || e.metaKey)) {
       this.undo();
       e.preventDefault();
-    } else if (e.keyCode === 89 && (e.ctrlKey || e.metaKey)) {
+    } else if (e.keyCode === 89 /* V */ && (e.ctrlKey || e.metaKey)) {
       this.redo();
       e.preventDefault();
     }

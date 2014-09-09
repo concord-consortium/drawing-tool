@@ -24,10 +24,16 @@ inherit(ShapeTool, Tool);
 ShapeTool.prototype.minSize = 7;
 ShapeTool.prototype.defSize = 30;
 
-ShapeTool.prototype.activate = function () {
+ShapeTool.prototype.activate = function (keepSelection) {
   ShapeTool.super.activate.call(this);
   this.down = false;
   this.canvas.defaultCursor = "crosshair";
+  // By default it makes sense to clear selected objects before we switch to another shape tool.
+  // However they may be some edge cases when the current selection is useful (text tool and font size
+  // change).
+  if (!keepSelection) {
+    this.master.clearSelection();
+  }
 };
 
 ShapeTool.prototype.activateAgain = function () {

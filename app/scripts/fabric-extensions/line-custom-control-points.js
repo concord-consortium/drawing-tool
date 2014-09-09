@@ -50,11 +50,12 @@ function lineSelected() {
     hasBorders: false
   });
   // Create custom ones.
-  var sidelen = lineCustomControlPoints.cornerSize ;
+  var sidelen = lineCustomControlPoints.cornerSize;
   this._dt_controlPoints = [
     makeControlPoint(sidelen, this, 0),
     makeControlPoint(sidelen, this, 1)
   ];
+  this.hasCustomControlPoints = true;
   updateLineControlPoints.call(this);
   this.on('moving', lineMoved);
   this.on('removed', lineDeleted);
@@ -70,6 +71,7 @@ function lineDeselected() {
   this._dt_controlPoints[0].remove();
   this._dt_controlPoints[1].remove();
   this._dt_controlPoints = undefined;
+  this.hasCustomControlPoints = false;
   this.off('moving');
   this.off('removed');
 }

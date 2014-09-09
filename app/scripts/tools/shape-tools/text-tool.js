@@ -51,6 +51,11 @@ TextTool.prototype.mouseDown = function (opt) {
   this.editText(text, opt.e);
 };
 
+TextTool.prototype.activate = function () {
+  // Keep selected object so user can change its font size.
+  TextTool.super.activate.call(this, true);
+};
+
 TextTool.prototype.deactivate = function () {
   TextTool.super.deactivate.call(this);
   // If text is in edit mode, deactivate it before changing the tool.
@@ -100,6 +105,12 @@ TextTool.prototype._exitTextEditingOnFirstClick = function () {
     window.removeEventListener('touchstart', handler, true);
   }
   function handler(e) {
+    // By default when you click any element, active text should exit edit mode.
+    // However if clicked element (or his ancestor) has special class 'dt-keep-text-edit-mode',
+    // click will be ignored and edit mode won't be exited.
+    if ($(e.target).closest('.dt-keep-text-edit-mode').length > 0) {
+      return;
+    }
     var target = canvas.findTarget(e);
     var activeObj = canvas.getActiveObject();
     if (target !== activeObj && activeObj && activeObj.isEditing) {

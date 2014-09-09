@@ -27,13 +27,13 @@ var STROKE_WIDTHS = [
 ];
 
 var FONT_SIZES = [
-  10,
-  15,
-  20,
-  25,
-  30,
-  35,
-  40
+  12,
+  17,
+  22,
+  27,
+  32,
+  37,
+  42
 ];
 
 var ui = {
@@ -119,7 +119,8 @@ var ui = {
     {
       name: 'text',
       label: 'T',
-      classes: 'dt-expand',
+      // Do not exit text edit mode on click. See text tool class.
+      classes: 'dt-expand dt-keep-text-edit-mode',
       activatesTool: 'text',
       palette: 'main',
       onLongPress: function () {
@@ -136,7 +137,8 @@ var ui = {
     {
       name: 'strokeColorPalette',
       buttonClass: StrokeButton,
-      classes: 'dt-expand',
+      // Do not exit text edit mode on click. See text tool class.
+      classes: 'dt-expand dt-keep-text-edit-mode',
       palette: 'main',
       onInit: function () {
         this.setColor(this.dt.state.stroke);
@@ -289,8 +291,9 @@ var ui = {
 FONT_SIZES.forEach(function (fontSize) {
   ui.buttons.push({
     label: 'T',
+    // Do not exit text edit mode on click. See text tool class.
+    classes: 'dt-keep-text-edit-mode',
     onInit: function () {
-      console.log('init ' + fontSize);
       this.$element.css('font-size', fontSize);
       // It just looks better for given set of font sizes.
       this.$element.css('line-height', '50px');
@@ -309,6 +312,8 @@ FONT_SIZES.forEach(function (fontSize) {
 COLORS.forEach(function (color) {
   ui.buttons.push({
     buttonClass: ColorButton,
+    // Do not exit text edit mode on click. See text tool class.
+    classes: 'dt-keep-text-edit-mode',
     color: color,
     type: 'stroke',
     palette: 'strokeColors'

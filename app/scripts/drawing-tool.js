@@ -136,7 +136,13 @@ DrawingTool.prototype.clearSelection = function () {
 DrawingTool.prototype.save = function () {
   var selection = this.getSelection();
   // It ensures that all custom control points will be removed before serialization!
-  this.clearSelection();
+  // Note that there is a convention that control points should be removed
+  // when selection is cleared.
+  var selectionCleared = false;
+  if (selection && selection.hasCustomControlPoints) {
+    this.clearSelection();
+    selectionCleared = true;
+  }
   var result = JSON.stringify({
     dt: {
       // Drawing Tool specific options.
@@ -145,7 +151,9 @@ DrawingTool.prototype.save = function () {
     },
     canvas: this.canvas.toJSON(ADDITIONAL_PROPS_TO_SERIALIZE)
   });
-  this.select(selection);
+  if (selectionCleared) {
+    this.select(selection);
+  }
   return result;
 };
 
@@ -498,8 +506,7 @@ DrawingTool.prototype.chooseTool = function (toolSelector) {
     return;
   }
 
-  if (this.currentTool !== undefined &&
-      this.currentTool.selector === toolSelector) {
+  if (this.currentTool === newTool) {
     // Some tools may implement .activateAgain() method and
     // enable some special behavior.
     this.currentTool.activateAgain();

@@ -9,6 +9,14 @@ var CLONE_OFFSET = 15;
 function CloneTool(name, drawingTool) {
   Tool.call(this, name, drawingTool);
   this.singleUse = true;
+
+  // Ctrl / Cmd + C to clone objects.
+  this.master.$element.on('keydown', function (e) {
+    if (e.keyCode === 67 && (e.ctrlKey || e.metaKey)) {
+      this.use();
+      e.preventDefault();
+    }
+  }.bind(this));
 }
 
 inherit(CloneTool, Tool);

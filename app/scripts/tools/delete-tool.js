@@ -10,15 +10,13 @@ function DeleteTool(name, drawTool) {
 
   this.singleUse = true;
 
-  // delete the selected object(s) with the backspace key
-  // see: https://www.pivotaltracker.com/story/show/74415780
-  var self = this;
-  drawTool.$element.keydown(function(e) {
+  // Delete the selected object(s) with the backspace key.
+  this.master.$element.on('keydown', function(e) {
     if (e.keyCode === 8) {
+      this.use();
       e.preventDefault();
-      self.use();
     }
-  });
+  }.bind(this));
 }
 
 inherit(DeleteTool, Tool);

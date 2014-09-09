@@ -29,6 +29,14 @@ function SelectionTool(name, drawTool) {
     this._checkLastObject(opt.target);
   }.bind(this));
 
+  // Bind Ctrl / Cmd + A to select all action.
+  this.master.$element.on('keydown', function (e) {
+    if (e.keyCode === 65 && (e.ctrlKey || e.metaKey)) {
+      this.selectAll();
+      e.preventDefault();
+    }
+  }.bind(this));
+
   // Set visual options of custom line control points.
   lineCustomControlPoints.controlPointColor = '#bcd2ff';
   lineCustomControlPoints.cornerSize = BASIC_SELECTION_PROPERTIES.cornerSize;
@@ -55,6 +63,11 @@ SelectionTool.prototype.setSelectable = function (selectable) {
   for (var i = items.length - 1; i >= 0; i--) {
     items[i].selectable = selectable;
   }
+};
+
+SelectionTool.prototype.selectAll = function () {
+  this.master.chooseTool('select');
+  this.master.select(this.canvas.getObjects());
 };
 
 SelectionTool.prototype.selectLastObject = function () {

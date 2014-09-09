@@ -7,6 +7,16 @@ function UndoRedo(drawTool) {
 
   this.reset();
   this._saveStateOnUserInteraction();
+
+  this.dt.$element.on('keydown', function (e) {
+    if (e.keyCode === 90 && (e.ctrlKey || e.metaKey)) {
+      this.undo();
+      e.preventDefault();
+    } else if (e.keyCode === 89 && (e.ctrlKey || e.metaKey)) {
+      this.redo();
+      e.preventDefault();
+    }
+  }.bind(this));
 }
 
 UndoRedo.prototype.undo = function () {

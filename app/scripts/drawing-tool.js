@@ -553,6 +553,7 @@ DrawingTool.prototype.off = function (name, handler) {
  * Selects passed object or array of objects.
  */
 DrawingTool.prototype.select = function (objectOrObjects) {
+  this.clearSelection();
   if (!objectOrObjects) {
     return;
   }

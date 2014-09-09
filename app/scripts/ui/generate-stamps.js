@@ -11,6 +11,7 @@ function generateStamps(uiDefinition, stampsDefition) {
   var prevBtnIdx = findButtonIndex(INSERT_STAMP_AFTER, uiDefinition.buttons);
   uiDefinition.buttons.splice(prevBtnIdx + 1, 0, {
     name: 'stamp',
+    tooltip: 'Stamp tool (click and hold to show available categories)',
     classes: 'dt-expand',
     label: 'M',
     palette: 'main',
@@ -37,6 +38,7 @@ function generateStamps(uiDefinition, stampsDefition) {
     var categoryBtn = {
       name: categoryBtnName,
       label: category,
+      tooltip: category + ' category (click to show available stamps)',
       classes: 'dt-text-btn dt-expand',
       palette: 'stampCategories',
       onClick: function () {

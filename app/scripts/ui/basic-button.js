@@ -19,6 +19,7 @@ function BasicButton(options, ui, drawingTool) {
   this.$element = $('<div>')
     .addClass('dt-btn')
     .addClass(options.classes)
+    .attr('title', options.tooltip)
     .appendTo(ui.getPalette(options.palette).$element);
 
   this.$label = $('<span>')

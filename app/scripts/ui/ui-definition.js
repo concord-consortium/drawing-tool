@@ -77,11 +77,13 @@ var ui = {
      ***/
     {
       label: 's',
+      tooltip: 'Select tool',
       activatesTool: 'select',
       palette: 'main'
     },
     {
       name: 'linesPalette',
+      tooltip: 'Lines tool (click and hold to show available line types)',
       classes: 'dt-expand',
       reflectsTools: ['line', 'arrow', 'doubleArrow'],
       palette: 'main',
@@ -97,6 +99,7 @@ var ui = {
     },
     {
       name: 'shapesPalette',
+      tooltip: 'Basic shapes tool (click and hold to show available shapes)',
       classes: 'dt-expand',
       reflectsTools: ['rect', 'ellipse', 'square', 'circle'],
       palette: 'main',
@@ -112,12 +115,14 @@ var ui = {
     },
     {
       name: 'free',
+      tooltip: 'Free hand drawing tool',
       label: 'F',
       activatesTool: 'free',
       palette: 'main'
     },
     {
       name: 'text',
+      tooltip: 'Text tool (click and hold to show available font sizes)',
       label: 'T',
       // Do not exit text edit mode on click. See text tool class.
       classes: 'dt-expand dt-keep-text-edit-mode',
@@ -129,6 +134,7 @@ var ui = {
     },
     {
       name: 'clone',
+      tooltip: 'Clone tool',
       label: 'c',
       activatesTool: 'clone',
       palette: 'main',
@@ -136,6 +142,7 @@ var ui = {
     },
     {
       name: 'strokeColorPalette',
+      tooltip: 'Stroke color (click and hold to show available colors)',
       buttonClass: StrokeButton,
       // Do not exit text edit mode on click. See text tool class.
       classes: 'dt-expand dt-keep-text-edit-mode',
@@ -152,6 +159,7 @@ var ui = {
     },
     {
       name: 'fillColorPalette',
+      tooltip: 'Fill color (click and hold to show available colors)',
       buttonClass: FillButton,
       classes: 'dt-expand',
       palette: 'main',
@@ -167,6 +175,7 @@ var ui = {
     },
     {
       name: 'strokeWidthPalette',
+      tooltip: 'Stroke width (click and hold to show available options)',
       label: 'w',
       classes: 'dt-expand',
       palette: 'main',
@@ -176,6 +185,7 @@ var ui = {
     },
     {
       name: 'sendToBack',
+      tooltip: 'Send selected objects to back',
       label: 'm',
       classes: 'dt-send-to',
       palette: 'main',
@@ -186,6 +196,7 @@ var ui = {
     },
     {
       name: 'sendToFront',
+      tooltip: 'Send selected objects to front',
       label: 'l',
       classes: 'dt-send-to',
       palette: 'main',
@@ -196,6 +207,7 @@ var ui = {
     },
     {
       name: 'undo',
+      tooltip: 'Undo',
       label: 'u',
       classes: 'dt-undo-redo',
       palette: 'main',
@@ -214,6 +226,7 @@ var ui = {
     },
     {
       name: 'redo',
+      tooltip: 'Redo',
       label: 'r',
       classes: 'dt-undo-redo',
       palette: 'main',
@@ -232,6 +245,7 @@ var ui = {
     },
     {
       name: 'trash',
+      tooltip: 'Delete selected objects',
       label: 'd',
       activatesTool: 'trash',
       palette: 'main',
@@ -242,18 +256,21 @@ var ui = {
      ***/
     {
       name: 'line',
+      tooltip: 'Line',
       label: 'L',
       activatesTool: 'line',
       palette: 'lines'
     },
     {
       name: 'arrow',
+      tooltip: 'Arrow',
       label: 'A',
       activatesTool: 'arrow',
       palette: 'lines'
     },
     {
       name: 'doubleArrow',
+      tooltip: 'Double arrow',
       label: 'D',
       activatesTool: 'doubleArrow',
       palette: 'lines'
@@ -263,24 +280,28 @@ var ui = {
      ***/
     {
       name: 'rect',
+      tooltip: 'Rectangle',
       label: 'R',
       activatesTool: 'rect',
       palette: 'shapes'
     },
     {
       name: 'ellipse',
+      tooltip: 'Ellipse',
       label: 'E',
       activatesTool: 'ellipse',
       palette: 'shapes'
     },
     {
       name: 'square',
+      tooltip: 'Square',
       label: 'S',
       activatesTool: 'square',
       palette: 'shapes'
     },
     {
       name: 'circle',
+      tooltip: 'Circle',
       label: 'C',
       activatesTool: 'circle',
       palette: 'shapes'
@@ -291,6 +312,7 @@ var ui = {
 FONT_SIZES.forEach(function (fontSize) {
   ui.buttons.push({
     label: 'T',
+    tooltip: fontSize + 'px',
     // Do not exit text edit mode on click. See text tool class.
     classes: 'dt-keep-text-edit-mode',
     onInit: function () {
@@ -312,6 +334,7 @@ FONT_SIZES.forEach(function (fontSize) {
 COLORS.forEach(function (color) {
   ui.buttons.push({
     buttonClass: ColorButton,
+    tooltip: color,
     // Do not exit text edit mode on click. See text tool class.
     classes: 'dt-keep-text-edit-mode',
     color: color,
@@ -320,6 +343,7 @@ COLORS.forEach(function (color) {
   });
   ui.buttons.push({
     buttonClass: ColorButton,
+    tooltip: color,
     color: color,
     type: 'fill',
     palette: 'fillColors'
@@ -329,6 +353,7 @@ COLORS.forEach(function (color) {
 STROKE_WIDTHS.forEach(function (width) {
   ui.buttons.push({
     buttonClass: LineWidthButton,
+    tooltip: width + 'px',
     width: width,
     palette: 'strokeWidths'
   });

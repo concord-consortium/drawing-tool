@@ -29,7 +29,7 @@ var DEF_STATE = {
   stroke: '#333',
   fill: "",
   strokeWidth: 8,
-  fontSize: 25
+  fontSize: 27
 };
 
 var EVENTS = {

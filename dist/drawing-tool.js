@@ -96,6 +96,7 @@ var LineTool          = require('scripts/tools/shape-tools/line-tool');
 var BasicShapeTool    = require('scripts/tools/shape-tools/basic-shape-tool');
 var FreeDrawTool      = require('scripts/tools/shape-tools/free-draw');
 var TextTool          = require('scripts/tools/shape-tools/text-tool');
+var StampTool         = require('scripts/tools/shape-tools/stamp-tool');
 var DeleteTool        = require('scripts/tools/delete-tool');
 var CloneTool         = require('scripts/tools/clone-tool');
 var UIManager         = require('scripts/ui/ui-manager');
@@ -105,13 +106,23 @@ var multitouchSupport = require('scripts/fabric-extensions/multi-touch-support')
 
 var DEF_OPTIONS = {
   width: 800,
-  height: 600
+  height: 600,
+  // If this flag is set to true, stamp tool will try to parse SVG images
+  // using parser provided by FabricJS. It lets us avoid tainting canvas
+  // in some browsers which always do that when SVG image is rendered
+  // on canvas (e.g. Safari, IE).
+  // Also, when this option is set to false, it will case that bounding-box
+  // target find method is used instead of per-pixel one. It's cause by the fact
+  // that some browsers always taint canvas when SVG is rendered on it,
+  // (Safari, IE). Untainted canvas is necessary for per-pixel method.
+  parseSVG: true
 };
 
 var DEF_STATE = {
   stroke: '#333',
+  fill: "",
   strokeWidth: 8,
-  fill: ""
+  fontSize: 27
 };
 
 var EVENTS = {
@@ -172,6 +183,21 @@ function DrawingTool(selector, options, settings) {
 
 DrawingTool.prototype.ADDITIONAL_PROPS_TO_SERIALIZE = ADDITIONAL_PROPS_TO_SERIALIZE;
 
+
+/**
+ * Proxy function that is used when images are loaded. Basic version just returns the same URL.
+ * Client code may provide custom function in DrawingTool options to return proxied url.
+ * E.g.:
+ * new DrawingTool({
+ *   proxy: function (url) {
+ *     return 'http://myproxy.com?url=' + url;
+ *   }
+ * });
+ */
+DrawingTool.prototype.proxy = function (url) {
+  return (this.options.proxy && this.options.proxy(url)) || url;
+};
+
 /**
  * Clears all objects from the fabric canvas and can also clear the background image
  *
@@ -203,7 +229,13 @@ DrawingTool.prototype.clearSelection = function () {
 DrawingTool.prototype.save = function () {
   var selection = this.getSelection();
   // It ensures that all custom control points will be removed before serialization!
-  this.clearSelection();
+  // Note that there is a convention that control points should be removed
+  // when selection is cleared.
+  var selectionCleared = false;
+  if (selection && selection.hasCustomControlPoints) {
+    this.clearSelection();
+    selectionCleared = true;
+  }
   var result = JSON.stringify({
     dt: {
       // Drawing Tool specific options.
@@ -212,7 +244,9 @@ DrawingTool.prototype.save = function () {
     },
     canvas: this.canvas.toJSON(ADDITIONAL_PROPS_TO_SERIALIZE)
   });
-  this.select(selection);
+  if (selectionCleared) {
+    this.select(selection);
+  }
   return result;
 };
 
@@ -324,7 +358,7 @@ DrawingTool.prototype.setStrokeColor = function (color) {
 
 /**
  * Sets the stroke width for new shapes and fires a `stateEvent` to signal a
- * change in the stroke width. This is also the font size for the text tool.
+ * change in the stroke width.
  *
  * parameters:
  *  - width: integer for the desired width
@@ -333,6 +367,19 @@ DrawingTool.prototype.setStrokeWidth = function (width) {
   this.state.strokeWidth = width;
   this._fireStateChange();
 };
+
+/**
+ * Sets the font size for new text objects and fires a `stateEvent` to signal a
+ * change in the font size.
+ *
+ * parameters:
+ *  - fontSize: integer for the desired font size
+ */
+DrawingTool.prototype.setFontSize = function (fontSize) {
+  this.state.fontSize = fontSize;
+  this._fireStateChange();
+};
+
 
 /**
  * Sets the fill color for new shapes and fires a `stateEvent` to signal a
@@ -374,6 +421,17 @@ DrawingTool.prototype.setSelectionStrokeWidth = function (width) {
   this.pushToHistory();
 };
 
+DrawingTool.prototype.setSelectionFontSize = function (fontSize) {
+  if (!this.getSelection()) return;
+  this.forEachSelectedObject(function (obj) {
+    if (obj.type === 'i-text') {
+      this._setObjectProp(obj, 'fontSize', fontSize);
+    }
+  }.bind(this));
+  this.canvas.renderAll();
+  this.pushToHistory();
+};
+
 DrawingTool.prototype.sendSelectionToFront = function () {
   if (!this.getSelection()) return;
   this._sendSelectionTo('front');
@@ -402,8 +460,7 @@ DrawingTool.prototype._setObjectProp = function (object, type, value) {
     } else if (type === 'fill') {
       return;
     } else if (type === 'strokeWidth') {
-      type = 'fontSize';
-      value = value * 4;
+      return;
     }
   }
   object.set(type, value);
@@ -542,8 +599,7 @@ DrawingTool.prototype.chooseTool = function (toolSelector) {
     return;
   }
 
-  if (this.currentTool !== undefined &&
-      this.currentTool.selector === toolSelector) {
+  if (this.currentTool === newTool) {
     // Some tools may implement .activateAgain() method and
     // enable some special behavior.
     this.currentTool.activateAgain();
@@ -590,6 +646,7 @@ DrawingTool.prototype.off = function (name, handler) {
  * Selects passed object or array of objects.
  */
 DrawingTool.prototype.select = function (objectOrObjects) {
+  this.clearSelection();
   if (!objectOrObjects) {
     return;
   }
@@ -642,6 +699,7 @@ DrawingTool.prototype._setBackgroundImage = function (imageSrc, options, backgro
     // Fast path when we remove background image.
     this.canvas.setBackgroundImage(null, bgLoaded);
   } else {
+    imageSrc = this.proxy(imageSrc);
     loadImage();
   }
 
@@ -683,6 +741,7 @@ DrawingTool.prototype._initTools = function () {
     square:      new BasicShapeTool("Square Tool", this, "square"),
     circle:      new BasicShapeTool("Circle Tool", this, "circle"),
     free:        new FreeDrawTool("Free Draw Tool", this),
+    stamp:       new StampTool("Stamp Tool", this, this.options.parseSVG),
     text:        new TextTool("Text Tool", this),
     trash:       new DeleteTool("Delete Tool", this),
     clone:       new CloneTool("Clone Tool", this)
@@ -703,7 +762,11 @@ DrawingTool.prototype._initDOM = function () {
 DrawingTool.prototype._initFabricJS = function () {
   this.canvas = new fabric.Canvas(this.$canvas[0]);
   // Target find would be more tolerant on touch devices.
-  if (fabric.isTouchSupported) {
+  // Also SVG images added to canvas will taint it in some browsers, no matter whether
+  // it's coming from the same or another domain (e.g. Safari, IE). In such case, we
+  // have to use bounding box target find, as per pixel tries to read canvas data
+  // (impossible when canvas is tainted).
+  if (fabric.isTouchSupported || !this.options.parseSVG) {
     this.canvas.perPixelTargetFind = false;
   } else {
     this.canvas.perPixelTargetFind = true;
@@ -994,11 +1057,12 @@ function lineSelected() {
     hasBorders: false
   });
   // Create custom ones.
-  var sidelen = lineCustomControlPoints.cornerSize ;
+  var sidelen = lineCustomControlPoints.cornerSize;
   this._dt_controlPoints = [
     makeControlPoint(sidelen, this, 0),
     makeControlPoint(sidelen, this, 1)
   ];
+  this.hasCustomControlPoints = true;
   updateLineControlPoints.call(this);
   this.on('moving', lineMoved);
   this.on('removed', lineDeleted);
@@ -1014,6 +1078,7 @@ function lineDeselected() {
   this._dt_controlPoints[0].remove();
   this._dt_controlPoints[1].remove();
   this._dt_controlPoints = undefined;
+  this.hasCustomControlPoints = false;
   this.off('moving');
   this.off('removed');
 }
@@ -1543,6 +1608,24 @@ var CLONE_OFFSET = 15;
 function CloneTool(name, drawingTool) {
   Tool.call(this, name, drawingTool);
   this.singleUse = true;
+
+  this._clipboard = null;
+
+  // Ctrl / Cmd + C to copy, Ctrl / Cmd + V to paste.
+  this.master.$element.on('keydown', function (e) {
+    if (this._inTextEditMode()) {
+      // Keep default copy and paste actions during text edit.
+      return;
+    }
+    if (e.keyCode === 67 /* C */ && (e.ctrlKey || e.metaKey)) {
+      this.copy();
+      e.preventDefault();
+    }
+    if (e.keyCode === 86 /* V */ && (e.ctrlKey || e.metaKey)) {
+      this.paste();
+      e.preventDefault();
+    }
+  }.bind(this));
 }
 
 inherit(CloneTool, Tool);
@@ -1551,6 +1634,13 @@ inherit(CloneTool, Tool);
  * Clones the currently selected object(s) from the fabricjs canvas.
  */
 CloneTool.prototype.use = function () {
+  // It's just copy and paste sequence at once.
+  this.copy(function () {
+    this.paste();
+  }.bind(this));
+};
+
+CloneTool.prototype.copy = function (callback) {
   var activeObject = this.canvas.getActiveGroup() || this.canvas.getActiveObject();
   if (!activeObject) {
     return;
@@ -1563,13 +1653,26 @@ CloneTool.prototype.use = function () {
   var klass = fabric.util.getKlass(activeObject.type);
   var propsToInclude = this.master.ADDITIONAL_PROPS_TO_SERIALIZE;
   if (klass.async) {
-    activeObject.clone(this._processClonedObject.bind(this), propsToInclude);
+    activeObject.clone(function (clonedObject) {
+      this._updateClipboard(clonedObject);
+      if (typeof callback === 'function') {
+        callback();
+      }
+    }.bind(this), propsToInclude);
   } else {
-    this._processClonedObject(activeObject.clone(null, propsToInclude));
+    this._updateClipboard(activeObject.clone(null, propsToInclude));
+    if (typeof callback === 'function') {
+      callback();
+    }
   }
 };
 
-CloneTool.prototype._processClonedObject = function (clonedObject) {
+CloneTool.prototype.paste = function () {
+  if (!this._clipboard) {
+    return;
+  }
+  var clonedObject = this._clipboard;
+
   this.canvas.deactivateAllWithDispatch();
 
   clonedObject.set({
@@ -1589,7 +1692,22 @@ CloneTool.prototype._processClonedObject = function (clonedObject) {
   }
   this.canvas.renderAll();
   this.master.pushToHistory();
+
+  // Before user can paste again, we have to clone clipboard object again.
+  // Do it just by calling #copy again (note that objects we just pasted are selected).
+  this._clipboard = null;
+  this.copy();
 };
+
+CloneTool.prototype._updateClipboard = function (clonedObject) {
+  this._clipboard = clonedObject;
+};
+
+CloneTool.prototype._inTextEditMode = function () {
+  var activeObject = this.canvas.getActiveObject();
+  return activeObject && activeObject.isEditing;
+};
+
 
 module.exports = CloneTool;
 
@@ -1608,15 +1726,13 @@ function DeleteTool(name, drawTool) {
 
   this.singleUse = true;
 
-  // delete the selected object(s) with the backspace key
-  // see: https://www.pivotaltracker.com/story/show/74415780
-  var self = this;
-  drawTool.$element.keydown(function(e) {
+  // Delete the selected object(s) with the backspace key.
+  this.master.$element.on('keydown', function(e) {
     if (e.keyCode === 8) {
+      this.use();
       e.preventDefault();
-      self.use();
     }
-  });
+  }.bind(this));
 }
 
 inherit(DeleteTool, Tool);
@@ -1674,6 +1790,14 @@ function SelectionTool(name, drawTool) {
     this._checkLastObject(opt.target);
   }.bind(this));
 
+  // Bind Ctrl / Cmd + A to select all action.
+  this.master.$element.on('keydown', function (e) {
+    if (e.keyCode === 65 && (e.ctrlKey || e.metaKey)) {
+      this.selectAll();
+      e.preventDefault();
+    }
+  }.bind(this));
+
   // Set visual options of custom line control points.
   lineCustomControlPoints.controlPointColor = '#bcd2ff';
   lineCustomControlPoints.cornerSize = BASIC_SELECTION_PROPERTIES.cornerSize;
@@ -1692,7 +1816,6 @@ SelectionTool.prototype.activate = function () {
 SelectionTool.prototype.deactivate = function () {
   SelectionTool.super.deactivate.call(this);
   this.setSelectable(false);
-  this.canvas.deactivateAllWithDispatch();
 };
 
 SelectionTool.prototype.setSelectable = function (selectable) {
@@ -1701,6 +1824,11 @@ SelectionTool.prototype.setSelectable = function (selectable) {
   for (var i = items.length - 1; i >= 0; i--) {
     items[i].selectable = selectable;
   }
+};
+
+SelectionTool.prototype.selectAll = function () {
+  this.master.chooseTool('select');
+  this.master.select(this.canvas.getObjects());
 };
 
 SelectionTool.prototype.selectLastObject = function () {
@@ -1755,10 +1883,16 @@ inherit(ShapeTool, Tool);
 ShapeTool.prototype.minSize = 7;
 ShapeTool.prototype.defSize = 30;
 
-ShapeTool.prototype.activate = function () {
+ShapeTool.prototype.activate = function (keepSelection) {
   ShapeTool.super.activate.call(this);
   this.down = false;
   this.canvas.defaultCursor = "crosshair";
+  // By default it makes sense to clear selected objects before we switch to another shape tool.
+  // However they may be some edge cases when the current selection is useful (text tool and font size
+  // change).
+  if (!keepSelection) {
+    this.master.clearSelection();
+  }
 };
 
 ShapeTool.prototype.activateAgain = function () {
@@ -1808,13 +1942,37 @@ ShapeTool.prototype.actionComplete = function (newObject) {
   }
 };
 
-ShapeTool.prototype.setCentralOrigin = function (object) {
+ShapeTool.prototype.setCentralOrigin = function (object, keepPosition) {
   var strokeWidth = object.stroke ? object.strokeWidth : 0;
+  var left = object.left + (object.width + strokeWidth) / 2;
+  var top  = object.top + (object.height + strokeWidth) / 2;
   object.set({
-    left: object.left + (object.width + strokeWidth) / 2,
-    top: object.top + (object.height + strokeWidth) / 2,
+    left: left,
+    top: top,
     originX: 'center',
     originY: 'center'
+  });
+};
+
+// During object creation it can end up with negative dimensions. Convert them to positive ones.
+ShapeTool.prototype.convertToPositiveDimensions = function (object) {
+  if (object.width < 0) {
+    object.left = object.left + object.width;
+    object.width = -object.width;
+  }
+  if (object.height < 0) {
+    object.top = object.top + object.height;
+    object.height = -object.height;
+  }
+};
+
+ShapeTool.prototype.moveObjectLeftTop = function (object) {
+  var strokeWidth = object.stroke ? object.strokeWidth : 0;
+  var left = object.left - (object.width + strokeWidth) / 2;
+  var top  = object.top - (object.height + strokeWidth) / 2;
+  object.set({
+    left: left,
+    top: top
   });
 };
 
@@ -1943,25 +2101,18 @@ BasicShapeTool.prototype.mouseUp = function (e) {
 };
 
 BasicShapeTool.prototype._processNewShape = function (s) {
-  if (s.width < 0) {
-    s.left = s.left + s.width;
-    s.width = -s.width;
-  }
-  if (s.height < 0) {
-    s.top = s.top + s.height;
-    s.height = -s.height;
-  }
-  this.setCentralOrigin(s);
+  this.convertToPositiveDimensions(s);
   if (Math.max(s.width, s.height) < this.minSize) {
     s.set('width', this.defSize);
     s.set('height', this.defSize);
-    s.set('top', s.get('top') - (s.get('height') / 2) + s.get('strokeWidth'));
-    s.set('left', s.get('left') - (s.get('width') / 2) + s.get('strokeWidth'));
     if (this._type.radius) {
       s.set('rx', this.defSize / 2);
       s.set('ry', this.defSize / 2);
     }
+    // So the center of the object is directly underneath the cursor.
+    this.moveObjectLeftTop(s);
   }
+  this.setCentralOrigin(s);
   s.setCoords();
 };
 
@@ -2116,6 +2267,156 @@ module.exports = LineTool;
 
 });
 
+require.register("scripts/tools/shape-tools/stamp-tool", function(exports, require, module) {
+var inherit   = require('scripts/inherit');
+var ShapeTool = require('scripts/tools/shape-tool');
+
+function StampTool(name, drawTool, parseSVG) {
+  ShapeTool.call(this, name, drawTool);
+
+  // If this flag is set to true, stamp tool will try to parse SVG images
+  // using parser provided by FabricJS. It lets us avoid tainting canvas
+  // in some browsers which always do that when SVG image is rendered
+  // on canvas (e.g. Safari, IE).
+  this._parseSVG = parseSVG;
+  // FabricJS object.
+  this._stamp = null;
+
+  this._curr = null
+  this._startX = null;
+  this._startY = null;
+}
+
+inherit(StampTool, ShapeTool);
+
+StampTool.prototype.mouseDown = function (e) {
+  StampTool.super.mouseDown.call(this, e);
+
+  if (!this.active || !this._stamp) return;
+
+  var loc = this.canvas.getPointer(e.e);
+  this._startX = loc.x;
+  this._startY = loc.y;
+
+  this._stamp.clone(function (clonedStamp) {
+    clonedStamp.set({
+      left: this._startX,
+      top: this._startY,
+      scaleX: 0,
+      scaleY: 0,
+      originX: 'center',
+      originY: 'center',
+      selectable: false
+    });
+    this._curr = clonedStamp;
+    this.canvas.add(this._curr);
+  }.bind(this));
+};
+
+StampTool.prototype.mouseMove = function (e) {
+  StampTool.super.mouseMove.call(this, e);
+  if (this.down === false || !this._curr) return;
+
+  var loc = this.canvas.getPointer(e.e);
+  var width = loc.x - this._startX;
+  var height = loc.y - this._startY;
+  var imgAspectRatio = this._stamp.width / this._stamp.height || 1;
+
+  // Keep original image aspect ratio.
+  if (Math.abs(width / height) > imgAspectRatio) {
+    width = sign(width) * Math.abs(height) * imgAspectRatio;
+  } else {
+    height = sign(height) * Math.abs(width) / imgAspectRatio;
+  }
+
+  this._curr.set({
+    scaleX: Math.abs(width) / this._stamp.width,
+    scaleY: Math.abs(height) / this._stamp.height,
+    left: this._startX + width * 0.5,
+    top: this._startY + height * 0.5
+  });
+
+  this.canvas.renderAll();
+};
+
+function sign(num) {
+  return num >= 0 ? 1 : -1;
+}
+
+StampTool.prototype.mouseUp = function (e) {
+  StampTool.super.mouseUp.call(this, e);
+  if (!this._curr) return;
+  this._processNewShape(this._curr);
+  this.canvas.renderAll();
+  this.actionComplete(this._curr);
+  this._curr = undefined;
+  this.master.pushToHistory();
+};
+
+// Loads an image from URL.
+// Callback will be invoked with two arguments - ready FabricJS object and Image element.
+// Note that when URL points SVG image, it will be processed in a special way and path group
+// object will be created instead of regular image.
+StampTool.prototype.loadImage = function(url, callback) {
+  if (this._parseSVG && url.toLowerCase().substr(-4) === ".svg") {
+    this._loadSVGImage(url, callback);
+  } else {
+    this._loadNonSVGImage(url, callback);
+  }
+};
+
+StampTool.prototype.setStampObject = function (stamp) {
+  this._stamp = stamp;
+};
+
+StampTool.prototype.getStampSrc = function () {
+  return this._stamp && this._stamp._dt_sourceURL;
+};
+
+StampTool.prototype._processNewShape = function (s) {
+  if (Math.max(s.width * s.scaleX, s.height * s.scaleY) < this.minSize) {
+    s.set({
+      scaleX: 1,
+      scaleY: 1,
+    });
+  }
+  s.setCoords();
+};
+
+StampTool.prototype._loadSVGImage = function (url, callback) {
+  fabric.loadSVGFromURL(url, function (objects, options) {
+    var fabricObj = fabric.util.groupSVGElements(objects, options);
+    fabricObj._dt_sourceURL = url;
+    callback(fabricObj, this._renderToImage(fabricObj));
+  }.bind(this));
+};
+
+StampTool.prototype._loadNonSVGImage = function (url, callback) {
+  fabric.util.loadImage(url, function (img) {
+    var fabricObj = new fabric.Image(img, {
+      crossOrigin: img.crossOrigin
+    });
+    fabricObj._dt_sourceURL = url;
+    callback(fabricObj, img)
+  }, null, 'anonymous');
+};
+
+StampTool.prototype._renderToImage = function (fabricObj) {
+  var canv = new fabric.Canvas(document.createElement('canvas'));
+  canv.setDimensions({
+    width: fabricObj.width,
+    height: fabricObj.height
+  });
+  canv.add(fabricObj).renderAll();
+  var img = new Image();
+  img.src = canv.toDataURL();
+  return img;
+};
+
+module.exports = StampTool;
+
+});
+
 require.register("scripts/tools/shape-tools/text-tool", function(exports, require, module) {
 var inherit   = require('scripts/inherit');
 var ShapeTool = require('scripts/tools/shape-tool');
@@ -2161,13 +2462,18 @@ TextTool.prototype.mouseDown = function (opt) {
     top: y,
     lockUniScaling: true,
     fontFamily: 'Arial',
-    fontSize: this.master.state.strokeWidth * 4,
+    fontSize: this.master.state.fontSize,
     // Yes, looks strange, but I guess stroke color should be used (as it would be the "main" one).
     fill: this.master.state.stroke
   });
   this.actionComplete(text);
   this.canvas.add(text);
   this.editText(text, opt.e);
+};
+
+TextTool.prototype.activate = function () {
+  // Keep selected object so user can change its font size.
+  TextTool.super.activate.call(this, true);
 };
 
 TextTool.prototype.deactivate = function () {
@@ -2219,6 +2525,12 @@ TextTool.prototype._exitTextEditingOnFirstClick = function () {
     window.removeEventListener('touchstart', handler, true);
   }
   function handler(e) {
+    // By default when you click any element, active text should exit edit mode.
+    // However if clicked element (or his ancestor) has special class 'dt-keep-text-edit-mode',
+    // click will be ignored and edit mode won't be exited.
+    if ($(e.target).closest('.dt-keep-text-edit-mode').length > 0) {
+      return;
+    }
     var target = canvas.findTarget(e);
     var activeObj = canvas.getActiveObject();
     if (target !== activeObj && activeObj && activeObj.isEditing) {
@@ -2259,9 +2571,12 @@ function BasicButton(options, ui, drawingTool) {
   // Note that this will be called later by UI manager.
   this.onInit = options.onInit;
 
+  this._locked = false;
+
   this.$element = $('<div>')
     .addClass('dt-btn')
     .addClass(options.classes)
+    .attr('title', options.tooltip)
     .appendTo(ui.getPalette(options.palette).$element);
 
   this.$label = $('<span>')
@@ -2270,6 +2585,7 @@ function BasicButton(options, ui, drawingTool) {
 
   if (options.onClick) {
     this.$element.on('mousedown touchstart', function (e) {
+      if (this._locked) return;
       options.onClick.call(this, e, ui, drawingTool);
       e.preventDefault();
     }.bind(this));
@@ -2277,6 +2593,7 @@ function BasicButton(options, ui, drawingTool) {
 
   if (options.onLongPress) {
     this.$element.longPress(function (e) {
+      if (this._locked) return;
       options.onLongPress.call(this, e, ui, drawingTool);
       e.preventDefault();
     }.bind(this));
@@ -2296,6 +2613,7 @@ function BasicButton(options, ui, drawingTool) {
 
   if (options.activatesTool) {
     this.$element.on('mousedown touchstart', function (e) {
+      if (this._locked) return;
       drawingTool.chooseTool(options.activatesTool);
       e.preventDefault();
     }.bind(this));
@@ -2351,6 +2669,7 @@ BasicButton.prototype.setLocked = function (v) {
   } else {
     this.$element.removeClass('dt-locked');
   }
+  this._locked = v;
 };
 
 module.exports = BasicButton;
@@ -2425,6 +2744,100 @@ module.exports = FillButton;
 
 });
 
+require.register("scripts/ui/generate-stamps", function(exports, require, module) {
+var StampImageButton = require('scripts/ui/stamp-image-button');
+
+var INSERT_STAMP_AFTER = 'text';
+
+function generateStamps(uiDefinition, stampsDefition) {
+  if (!stampsDefition) {
+    return;
+  }
+
+  // Main stamp button.
+  var prevBtnIdx = findButtonIndex(INSERT_STAMP_AFTER, uiDefinition.buttons);
+  uiDefinition.buttons.splice(prevBtnIdx + 1, 0, {
+    name: 'stamp',
+    tooltip: 'Stamp tool (click and hold to show available categories)',
+    classes: 'dt-expand',
+    label: 'M',
+    palette: 'main',
+    activatesTool: 'stamp',
+    onLongPress: function () {
+      this.ui.togglePalette('stampCategories');
+    }
+  });
+
+  // Palette with stamp categories.
+  uiDefinition.palettes.push({
+    name: 'stampCategories',
+    anchor: 'stamp',
+    vertical: true,
+    hideOnClick: false
+  });
+
+  // Generate separate palettes with stamp buttons for each category.
+  var firstStamp = true;
+  Object.keys(stampsDefition).forEach(function (category) {
+    var categoryBtnName = category + 'StampsCategory';
+    var categoryPaletteName = category + 'StampsPalette';
+
+    var categoryBtn = {
+      name: categoryBtnName,
+      label: category,
+      tooltip: category + ' category (click to show available stamps)',
+      classes: 'dt-text-btn dt-expand',
+      palette: 'stampCategories',
+      onClick: function () {
+        this.ui.togglePalette(categoryPaletteName);
+      }
+    }
+    uiDefinition.buttons.push(categoryBtn);
+
+    var categoryPalette = {
+      name: categoryPaletteName,
+      anchor: categoryBtnName
+    };
+    uiDefinition.palettes.push(categoryPalette);
+
+    var stampButtons = generateStampButtons(categoryPaletteName, stampsDefition[category]);
+    stampButtons.forEach(function (stampButton) {
+      uiDefinition.buttons.push(stampButton);
+    })
+  });
+
+  function generateStampButtons(paletteName, imagesArray) {
+    var result = [];
+    imagesArray.forEach(function (imgSrc) {
+      result.push({
+        imageSrc: imgSrc,
+        setStampOnImgLoad: firstStamp,
+        buttonClass: StampImageButton,
+        palette: paletteName
+      });
+      // The first stamp we create will set its image as a default stamp in stamp tool.
+      // So when user select stamp tool, he would be able to draw something even without
+      // entering sub-menus.
+      if (firstStamp) {
+        firstStamp = false;
+      }
+    });
+    return result;
+  }
+
+  function findButtonIndex(name, buttons) {
+    for (var i = 0; i < buttons.length; i++) {
+      if (buttons[i].name === name) {
+        return i;
+      }
+    }
+  }
+}
+
+module.exports = generateStamps;
+
+});
+
 require.register("scripts/ui/line-width-button", function(exports, require, module) {
 var inherit     = require('scripts/inherit');
 var BasicButton = require('scripts/ui/basic-button');
@@ -2465,13 +2878,24 @@ module.exports = LineWidthButton;
 
 require.register("scripts/ui/palette", function(exports, require, module) {
 function Palette(options, ui) {
-  this.ui        = ui;
-  this.name      = options.name;
-  this.permanent = !!options.permanent;
-  this.anchor    = options.anchor;
-  this.$element  = $('<div>')
+  this.ui          = ui;
+  this.name        = options.name;
+  this.permanent   = !!options.permanent;
+  this.hideOnClick = options.hideOnClick === undefined ? true : options.hideOnClick;
+  this.anchor      = options.anchor;
+  this.$element    = $('<div>')
     .addClass('dt-palette')
     .addClass(options.vertical ? 'dt-vertical' : 'dt-horizontal');
+
+  this._closeOnClick = function (e) {
+    if (!this.hideOnClick && (this.$element === e.target || this.$element.find(e.target).length > 0)) {
+      return;
+    }
+    if (this.$element.is(':visible')) {
+      this._hide();
+    }
+    this._clearWindowHandlers();
+  }.bind(this);
 
   if (!this.permanent) {
     this.$element.hide();
@@ -2496,18 +2920,18 @@ Palette.prototype._show = function () {
   // Hide palette on first mousedown / touch (if it's not permanent).
   // Timeout ensures that we won't catch the same event which actually
   // opened the palette.
-  var self = this;
   setTimeout(function () {
-    $(window).one('mousedown touchstart', function () {
-      if (self.$element.is(':visible')) {
-        self._hide();
-      }
-    });
-  }, 16);
+    $(window).on('mousedown touchstart', this._closeOnClick);
+  }.bind(this), 16);
 };
 
 Palette.prototype._hide = function () {
   this.$element.hide();
+  this._clearWindowHandlers();
+};
+
+Palette.prototype._clearWindowHandlers = function () {
+  $(window).off('mousedown touchstart', this._closeOnClick);
 };
 
 Palette.prototype._position = function () {
@@ -2515,15 +2939,77 @@ Palette.prototype._position = function () {
   if (!anchorButton) {
     return;
   }
-  var p = anchorButton.$element.position();
+  var p = anchorButton.$element.offset();
+  var mainP = this.ui.getMainContainer().offset();
   this.$element.css({
     position: 'absolute',
-    top:      p.top,
-    left:     p.left + anchorButton.$element.outerWidth()
+    top:      p.top - mainP.top,
+    left:     p.left + anchorButton.$element.outerWidth() - mainP.left,
   });
 };
 
 module.exports = Palette;
+
+});
+
+require.register("scripts/ui/stamp-image-button", function(exports, require, module) {
+var inherit     = require('scripts/inherit');
+var BasicButton = require('scripts/ui/basic-button');
+
+function StampImageButton(options, ui, drawingTool) {
+  options.onClick = function () {
+    this.dt.tools.stamp.setStampObject(this._stamp);
+  };
+  BasicButton.call(this, options, ui, drawingTool);
+
+  this._stamp = null;
+  this._imageSrc = drawingTool.proxy(options.imageSrc);
+
+  this.$element.addClass('dt-img-btn');
+
+  this._startWaiting();
+  // TODO: REMOVE setTimeout, it's only for demo reasons.
+  setTimeout(function () {
+    this.dt.tools.stamp.loadImage(this._imageSrc, function (fabricObj, img) {
+      this._stamp = fabricObj;
+      this.$image = $(img).appendTo(this.$element);
+      this._stopWaiting();
+      if (options.setStampOnImgLoad) {
+        this.dt.tools.stamp.setStampObject(this._stamp);
+      }
+    }.bind(this), null, 'anonymous');
+  }.bind(this), 3000);
+
+  // Note that we should have some other event like 'stampToolImage:changed'.
+  // However 'tool:changed' is good enough for now to handle all cases.
+  // It's impossible to see this button without prior stamp tool activation.
+  // So 'tool:changed' will be always emitted before and active state updated.
+  drawingTool.on('tool:changed', function (toolName) {
+    if (toolName === 'stamp' && drawingTool.tools.stamp.getStampSrc() === this._imageSrc) {
+      this.setActive(true);
+    } else {
+      this.setActive(false);
+    }
+  }.bind(this));
+}
+
+inherit(StampImageButton, BasicButton);
+
+StampImageButton.prototype._startWaiting = function () {
+  this.setLocked(true);
+  this.$element.find('span')
+    .addClass('dt-spin')
+    .text('/');
+};
+
+StampImageButton.prototype._stopWaiting = function () {
+  this.setLocked(false);
+  this.$element.find('span')
+    .removeClass('dt-spin')
+    .text('');
+};
+
+module.exports = StampImageButton;
 
 });
 
@@ -2593,6 +3079,16 @@ var STROKE_WIDTHS = [
   20
 ];
 
+var FONT_SIZES = [
+  12,
+  17,
+  22,
+  27,
+  32,
+  37,
+  42
+];
+
 var ui = {
   /***
    * Palettes
@@ -2610,6 +3106,10 @@ var ui = {
     {
       name: 'shapes',
       anchor: 'shapesPalette'
+    },
+    {
+      name: 'fontSizes',
+      anchor: 'text'
     },
     {
       name: 'strokeColors',
@@ -2630,11 +3130,13 @@ var ui = {
      ***/
     {
       label: 's',
+      tooltip: 'Select tool',
       activatesTool: 'select',
       palette: 'main'
     },
     {
       name: 'linesPalette',
+      tooltip: 'Lines tool (click and hold to show available line types)',
       classes: 'dt-expand',
       reflectsTools: ['line', 'arrow', 'doubleArrow'],
       palette: 'main',
@@ -2642,12 +3144,15 @@ var ui = {
         this.setLabel(this.ui.getPaletteActiveButton('lines').getLabel());
       },
       onClick: function () {
-        this.ui.togglePalette('lines');
         this.ui.getPaletteActiveButton('lines').click();
+      },
+      onLongPress: function () {
+        this.ui.togglePalette('lines');
       }
     },
     {
       name: 'shapesPalette',
+      tooltip: 'Basic shapes tool (click and hold to show available shapes)',
       classes: 'dt-expand',
       reflectsTools: ['rect', 'ellipse', 'square', 'circle'],
       palette: 'main',
@@ -2656,23 +3161,33 @@ var ui = {
       },
       onClick: function () {
         this.ui.getPaletteActiveButton('shapes').click();
+      },
+      onLongPress: function () {
         this.ui.togglePalette('shapes');
       }
     },
     {
       name: 'free',
+      tooltip: 'Free hand drawing tool',
       label: 'F',
       activatesTool: 'free',
       palette: 'main'
     },
     {
       name: 'text',
+      tooltip: 'Text tool (click and hold to show available font sizes)',
       label: 'T',
+      // Do not exit text edit mode on click. See text tool class.
+      classes: 'dt-expand dt-keep-text-edit-mode',
       activatesTool: 'text',
-      palette: 'main'
+      palette: 'main',
+      onLongPress: function () {
+        this.ui.togglePalette('fontSizes');
+      }
     },
     {
       name: 'clone',
+      tooltip: 'Clone tool',
       label: 'c',
       activatesTool: 'clone',
       palette: 'main',
@@ -2680,8 +3195,10 @@ var ui = {
     },
     {
       name: 'strokeColorPalette',
+      tooltip: 'Stroke color (click and hold to show available colors)',
       buttonClass: StrokeButton,
-      classes: 'dt-expand',
+      // Do not exit text edit mode on click. See text tool class.
+      classes: 'dt-expand dt-keep-text-edit-mode',
       palette: 'main',
       onInit: function () {
         this.setColor(this.dt.state.stroke);
@@ -2695,6 +3212,7 @@ var ui = {
     },
     {
       name: 'fillColorPalette',
+      tooltip: 'Fill color (click and hold to show available colors)',
       buttonClass: FillButton,
       classes: 'dt-expand',
       palette: 'main',
@@ -2710,6 +3228,7 @@ var ui = {
     },
     {
       name: 'strokeWidthPalette',
+      tooltip: 'Stroke width (click and hold to show available options)',
       label: 'w',
       classes: 'dt-expand',
       palette: 'main',
@@ -2719,6 +3238,7 @@ var ui = {
     },
     {
       name: 'sendToBack',
+      tooltip: 'Send selected objects to back',
       label: 'm',
       classes: 'dt-send-to',
       palette: 'main',
@@ -2729,6 +3249,7 @@ var ui = {
     },
     {
       name: 'sendToFront',
+      tooltip: 'Send selected objects to front',
       label: 'l',
       classes: 'dt-send-to',
       palette: 'main',
@@ -2739,6 +3260,7 @@ var ui = {
     },
     {
       name: 'undo',
+      tooltip: 'Undo',
       label: 'u',
       classes: 'dt-undo-redo',
       palette: 'main',
@@ -2757,6 +3279,7 @@ var ui = {
     },
     {
       name: 'redo',
+      tooltip: 'Redo',
       label: 'r',
       classes: 'dt-undo-redo',
       palette: 'main',
@@ -2775,6 +3298,7 @@ var ui = {
     },
     {
       name: 'trash',
+      tooltip: 'Delete selected objects',
       label: 'd',
       activatesTool: 'trash',
       palette: 'main',
@@ -2785,18 +3309,21 @@ var ui = {
      ***/
     {
       name: 'line',
+      tooltip: 'Line',
       label: 'L',
       activatesTool: 'line',
       palette: 'lines'
     },
     {
       name: 'arrow',
+      tooltip: 'Arrow',
       label: 'A',
       activatesTool: 'arrow',
       palette: 'lines'
     },
     {
       name: 'doubleArrow',
+      tooltip: 'Double arrow',
       label: 'D',
       activatesTool: 'doubleArrow',
       palette: 'lines'
@@ -2806,43 +3333,70 @@ var ui = {
      ***/
     {
       name: 'rect',
+      tooltip: 'Rectangle',
       label: 'R',
       activatesTool: 'rect',
       palette: 'shapes'
     },
     {
       name: 'ellipse',
+      tooltip: 'Ellipse',
       label: 'E',
       activatesTool: 'ellipse',
       palette: 'shapes'
     },
     {
       name: 'square',
+      tooltip: 'Square',
       label: 'S',
       activatesTool: 'square',
       palette: 'shapes'
     },
     {
       name: 'circle',
+      tooltip: 'Circle',
       label: 'C',
       activatesTool: 'circle',
       palette: 'shapes'
     }
-    /***
-     * Stroke colors and fill colors are added in a loop below
-     ***/
   ]
 };
+
+FONT_SIZES.forEach(function (fontSize) {
+  ui.buttons.push({
+    label: 'T',
+    tooltip: fontSize + 'px',
+    // Do not exit text edit mode on click. See text tool class.
+    classes: 'dt-keep-text-edit-mode',
+    onInit: function () {
+      this.$element.css('font-size', fontSize);
+      // It just looks better for given set of font sizes.
+      this.$element.css('line-height', '50px');
+    },
+    onClick: function () {
+      this.dt.setFontSize(fontSize);
+      this.dt.setSelectionFontSize(fontSize);
+    },
+    onStateChange: function (state) {
+      this.setActive(state.fontSize === fontSize);
+    },
+    palette: 'fontSizes'
+  });
+});
 
 COLORS.forEach(function (color) {
   ui.buttons.push({
     buttonClass: ColorButton,
+    tooltip: color,
+    // Do not exit text edit mode on click. See text tool class.
+    classes: 'dt-keep-text-edit-mode',
     color: color,
     type: 'stroke',
     palette: 'strokeColors'
   });
   ui.buttons.push({
     buttonClass: ColorButton,
+    tooltip: color,
     color: color,
     type: 'fill',
     palette: 'fillColors'
@@ -2852,6 +3406,7 @@ COLORS.forEach(function (color) {
 STROKE_WIDTHS.forEach(function (width) {
   ui.buttons.push({
     buttonClass: LineWidthButton,
+    tooltip: width + 'px',
     width: width,
     palette: 'strokeWidths'
   });
@@ -2875,9 +3430,10 @@ module.exports = ui;
 });
 
 require.register("scripts/ui/ui-manager", function(exports, require, module) {
-var BasicButton  = require('scripts/ui/basic-button');
-var Palette      = require('scripts/ui/palette');
-var uiDefinition = require('scripts/ui/ui-definition');
+var BasicButton    = require('scripts/ui/basic-button');
+var Palette        = require('scripts/ui/palette');
+var generateStamps = require('scripts/ui/generate-stamps');
+var uiDefinition   = require('scripts/ui/ui-definition');
 
 function UIManager(drawingTool) {
   this.drawingTool = drawingTool;
@@ -2889,6 +3445,11 @@ function UIManager(drawingTool) {
   this._palettes = {};
   this._buttons = {};
   this._paletteActiveButton = {};
+  // Copy ui definition so custom modifications won't affect globally available object.
+  var uiDef = $.extend(true, {}, uiDefinition);
+  if (this.drawingTool.options.stamps) {
+    generateStamps(uiDefinition, this.drawingTool.options.stamps);
+  }
   this._processUIDefinition(uiDefinition);
 
   for (var name in this._buttons) {
@@ -2917,20 +3478,26 @@ UIManager.prototype.togglePalette = function (name) {
   this._palettes[name].toggle();
 };
 
+UIManager.prototype.getMainContainer = function () {
+  return this.drawingTool.$element;
+};
+
 UIManager.prototype.getPaletteActiveButton = function (name) {
   return this._paletteActiveButton[name];
 };
 
 UIManager.prototype._createPalette = function (paletteOptions) {
   var palette = new Palette(paletteOptions, this);
+  var paletteName = palette.name || getUniqueName();
   palette.$element.appendTo(this.$tools);
-  this._palettes[palette.name] = palette;
+  this._palettes[paletteName] = palette;
 };
 
 UIManager.prototype._createButton = function (buttonOptions) {
   var BtnClass = buttonOptions.buttonClass || BasicButton;
   var button = new BtnClass(buttonOptions, this, this.drawingTool);
-  this._buttons[button.name] = button;
+  var buttonName = button.name || getUniqueName();
+  this._buttons[buttonName] = button;
 
   this._setupPaletteActiveButton(button);
 };
@@ -2946,6 +3513,11 @@ UIManager.prototype._setupPaletteActiveButton = function (button) {
   }.bind(this));
 };
 
+var _idx = 0;
+function getUniqueName() {
+  return _idx++;
+}
+
 module.exports = UIManager;
 
 });
@@ -2960,6 +3532,16 @@ function UndoRedo(drawTool) {
 
   this.reset();
   this._saveStateOnUserInteraction();
+
+  this.dt.$element.on('keydown', function (e) {
+    if (e.keyCode === 90 /* Z */ && (e.ctrlKey || e.metaKey)) {
+      this.undo();
+      e.preventDefault();
+    } else if (e.keyCode === 89 /* V */ && (e.ctrlKey || e.metaKey)) {
+      this.redo();
+      e.preventDefault();
+    }
+  }.bind(this));
 }
 
 UndoRedo.prototype.undo = function () {

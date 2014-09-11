@@ -46,6 +46,20 @@
     .dt-container .dt-btn.dt-locked {
       background: #839CB1;
       cursor: default; }
+    .dt-container .dt-btn.dt-text-btn {
+      font-size: 12px;
+      font-family: Arial, sans-serif;
+      width: auto;
+      padding: 0 5px; }
+    .dt-container .dt-btn.dt-img-btn {
+      line-height: normal; }
+      .dt-container .dt-btn.dt-img-btn span {
+        display: inline-block; }
+      .dt-container .dt-btn.dt-img-btn img {
+        display: inline-block;
+        max-width: 85%;
+        max-height: 85%;
+        vertical-align: middle; }
     .dt-container .dt-btn.dt-stroke-color:before, .dt-container .dt-btn.dt-fill-color:before {
       content: '';
       background: #fff;
@@ -113,6 +127,7 @@
     position: relative; }
     .dt-container .dt-expand:after {
       content: 't';
+      font-family: 'Draw Tool Icons', Arial, sans-serif;
       font-size: 32px;
       position: absolute;
       bottom: -21px;
@@ -122,4 +137,25 @@
     vertical-align: middle; }
   .dt-container .dt-palette.dt-vertical .dt-btn {
     display: block; }
+  .dt-container .dt-spin {
+    -webkit-animation: dt-spin 2s infinite linear;
+    animation: dt-spin 2s infinite linear; }
+
+@-webkit-keyframes dt-spin {
+  0% {
+    -webkit-transform: rotate(0deg);
+    transform: rotate(0deg); }
+
+  100% {
+    -webkit-transform: rotate(359deg);
+    transform: rotate(359deg); } }
+
+@keyframes dt-spin {
+  0% {
+    -webkit-transform: rotate(0deg);
+    transform: rotate(0deg); }
+
+  100% {
+    -webkit-transform: rotate(359deg);
+    transform: rotate(359deg); } }
 

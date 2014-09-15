@@ -83,7 +83,7 @@ var ui = {
     },
     {
       name: 'linesPalette',
-      tooltip: 'Lines tool (click and hold to show available line types)',
+      tooltip: 'Line tool (click and hold to show available line types)',
       classes: 'dt-expand',
       reflectsTools: ['line', 'arrow', 'doubleArrow'],
       palette: 'main',
@@ -99,7 +99,7 @@ var ui = {
     },
     {
       name: 'shapesPalette',
-      tooltip: 'Basic shapes tool (click and hold to show available shapes)',
+      tooltip: 'Basic shape tool (click and hold to show available shapes)',
       classes: 'dt-expand',
       reflectsTools: ['rect', 'ellipse', 'square', 'circle'],
       palette: 'main',

@@ -1,4 +1,4 @@
-var MAX_HISTORY_LENGTH = 100;
+var MAX_HISTORY_LENGTH = 20;
 
 function UndoRedo(drawTool) {
   this.dt = drawTool;

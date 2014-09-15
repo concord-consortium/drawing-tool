@@ -2,7 +2,7 @@
   "name": "drawing-tool",
   "description": "HTML5 Drawing Tool",
   "author": "",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "repository": {
     "type": "git",
     "url": "https://github.com/concord-consortium/drawing-tool"

@@ -13,17 +13,14 @@ function StampImageButton(options, ui, drawingTool) {
   this.$element.addClass('dt-img-btn');
 
   this._startWaiting();
-  // TODO: REMOVE setTimeout, it's only for demo reasons.
-  setTimeout(function () {
-    this.dt.tools.stamp.loadImage(this._imageSrc, function (fabricObj, img) {
-      this._stamp = fabricObj;
-      this.$image = $(img).appendTo(this.$element);
-      this._stopWaiting();
-      if (options.setStampOnImgLoad) {
-        this.dt.tools.stamp.setStampObject(this._stamp);
-      }
-    }.bind(this), null, 'anonymous');
-  }.bind(this), 3000);
+  this.dt.tools.stamp.loadImage(this._imageSrc, function (fabricObj, img) {
+    this._stamp = fabricObj;
+    this.$image = $(img).appendTo(this.$element);
+    this._stopWaiting();
+    if (options.setStampOnImgLoad) {
+      this.dt.tools.stamp.setStampObject(this._stamp);
+    }
+  }.bind(this), null, 'anonymous');
 
   // Note that we should have some other event like 'stampToolImage:changed'.
   // However 'tool:changed' is good enough for now to handle all cases.

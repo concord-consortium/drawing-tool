@@ -31,7 +31,29 @@
   <script src="../vendor.js"></script>
   <script src="../drawing-tool.js"></script>
   <script>
-  	var drawingTool = new DrawingTool("#drawing-tool");
+    var drawingTool = new DrawingTool("#drawing-tool", {
+      proxy: function (url) {
+        return 'https://cors-anywhere.herokuapp.com/' + url;
+      },
+      stamps: {
+        'Molecules': [
+          'http://interactions-resources.s3.amazonaws.com/stamps/simple-atom.svg',
+          'http://interactions-resources.s3.amazonaws.com/stamps/diatomic.svg',
+          'http://interactions-resources.s3.amazonaws.com/stamps/triatomic.svg',
+          'http://interactions-resources.s3.amazonaws.com/stamps/positive-charge-symbol.svg',
+          'http://interactions-resources.s3.amazonaws.com/stamps/negative-charge-symbol.svg',
+          'http://interactions-resources.s3.amazonaws.com/stamps/positive-atom.svg',
+          'http://interactions-resources.s3.amazonaws.com/stamps/negative-atom.svg',
+          'http://interactions-resources.s3.amazonaws.com/stamps/slow-particle.svg',
+          'http://interactions-resources.s3.amazonaws.com/stamps/medium-particle.svg',
+          'http://interactions-resources.s3.amazonaws.com/stamps/fast-particle.svg',
+          'http://interactions-resources.s3.amazonaws.com/stamps/low-density-particles.svg',
+          'http://interactions-resources.s3.amazonaws.com/stamps/medium-density-particles.svg',
+          'http://interactions-resources.s3.amazonaws.com/stamps/high-density-particles.svg'
+        ]
+      },
+      parseSVG: true
+    });
     var state = null;
     $("#set-background").on("click", function () {
       drawingTool.setBackgroundImage($("#background-src").val());

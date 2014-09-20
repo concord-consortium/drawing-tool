@@ -135,11 +135,18 @@ DrawingTool.prototype.clearSelection = function () {
  */
 DrawingTool.prototype.save = function () {
   var selection = this.getSelection();
-  // It ensures that all custom control points will be removed before serialization!
-  // Note that there is a convention that control points should be removed
-  // when selection is cleared.
+  // There are two cases when we do want to remove selection before saving sate:
+  // 1. Custom control points are present. Obviously we don't want to serialize them.
+  //    At the moment we assume that custom control points live only when
+  //    the source object is selected and they are destroyed when selection is cleared.
+  // 2. There is a group selection (so selection is an array). Note that #toJSON method
+  //    of canvas will discard group selection (and recreate it later) to ensure that all
+  //    transformations applied to group will be applied to particular objects. However
+  //    this happens without firing "before:selection:cleared" event that is used by
+  //    our custom rescale-2-resize behavior. So remove and recreate selection manually
+  //    to and make sure that this even will be dispatched (#clearSelection does that).
   var selectionCleared = false;
-  if (selection && selection.hasCustomControlPoints) {
+  if (selection && (selection.hasCustomControlPoints || selection.length > 0)) {
     this.clearSelection();
     selectionCleared = true;
   }

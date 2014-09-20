@@ -1555,7 +1555,7 @@ fabric.Collection = {
 
   /* Adapted from http://dxr.mozilla.org/mozilla-central/source/content/svg/content/src/nsSVGPathDataParser.cpp
    * by Andrea Bogazzi code is under MPL. if you don't have a copy of the license you can take it here
-   * http://mozilla.org/MPL/2.0/
+   * http://mozilla.org/MPL/2.0/ 
    */
   function arcToSegments(toX, toY, rx, ry, large, sweep, rotateX) {
     var argsString = _join.call(arguments);
@@ -1621,7 +1621,7 @@ fabric.Collection = {
     if (segmentToBezierCache[argsString2]) {
       return segmentToBezierCache[argsString2];
     }
-
+    
     var costh2 = Math.cos(th2),
         sinth2 = Math.sin(th2),
         costh3 = Math.cos(th3),
@@ -1677,7 +1677,7 @@ fabric.Collection = {
       segs[i][2] = segs_norm[i][2] + fx;
       segs[i][3] = segs_norm[i][3] + fy;
       segs[i][4] = segs_norm[i][4] + fx;
-      segs[i][5] = segs_norm[i][5] + fy;
+      segs[i][5] = segs_norm[i][5] + fy; 
       ctx.bezierCurveTo.apply(ctx, segs[i]);
     }
   };
@@ -4365,7 +4365,7 @@ fabric.ElementsParser.prototype._createObject = function(klass, el, index) {
   else {
     var obj = klass.fromElement(el, this.options);
     this.resolveGradient(obj, 'fill');
-    this.resolveGradient(obj, 'stroke');
+    this.resolveGradient(obj, 'stroke');    
     this.reviver && this.reviver(el, obj);
     this.instances[index] = obj;
     this.checkIfDone();
@@ -4376,7 +4376,7 @@ fabric.ElementsParser.prototype.createCallback = function(index, el) {
   var _this = this;
   return function(obj) {
     _this.resolveGradient(obj, 'fill');
-    _this.resolveGradient(obj, 'stroke');
+    _this.resolveGradient(obj, 'stroke');    
     _this.reviver && _this.reviver(el, obj);
     _this.instances[index] = obj;
     _this.checkIfDone();
@@ -4384,7 +4384,7 @@ fabric.ElementsParser.prototype.createCallback = function(index, el) {
 };
 
 fabric.ElementsParser.prototype.resolveGradient = function(obj, property) {
-
+  
     var instanceFillValue = obj.get(property);
     if (!(/^url\(/).test(instanceFillValue)) {
       return;
@@ -5529,10 +5529,10 @@ fabric.ElementsParser.prototype.checkIfDone = function() {
       else if (this.gradientUnits === 'objectBoundingBox') {
         _convertValuesToPercentUnits(object, coords);
       }
-      commonAttributes = 'id="SVGID_' + this.id +
+      commonAttributes = 'id="SVGID_' + this.id + 
                      '" gradientUnits="' + this.gradientUnits + '"';
       if (this.gradientTransform) {
-        commonAttributes += ' gradientTransform="matrix(' + this.gradientTransform.join(' ') + ')" ';
+        commonAttributes += ' gradientTransform="matrix(' + this.gradientTransform.join(' ') + ')" '; 
       }
       if (this.type === 'linear') {
         markup = [
@@ -11953,7 +11953,7 @@ fabric.util.object.extend(fabric.StaticCanvas.prototype, /** @lends fabric.Stati
       if (this.fill.gradientTransform) {
         var g = this.fill.gradientTransform;
         ctx.transform.apply(ctx, g);
-      }
+      }   
       if (this.fillRule === 'destination-over') {
         ctx.fill('evenodd');
       }
@@ -11995,7 +11995,7 @@ fabric.util.object.extend(fabric.StaticCanvas.prototype, /** @lends fabric.Stati
         if (this.stroke.gradientTransform) {
           var g = this.stroke.gradientTransform;
           ctx.transform.apply(ctx, g);
-        }
+        }        
         this._stroke ? this._stroke(ctx) : ctx.stroke();
       }
       this._removeShadow(ctx);
@@ -14851,7 +14851,7 @@ fabric.util.object.extend(fabric.Object.prototype, /** @lends fabric.Object.prot
 
     parsedAttributes.left = parsedAttributes.left || 0;
     parsedAttributes.top = parsedAttributes.top || 0;
-
+    
     var ellipse = new fabric.Ellipse(extend(parsedAttributes, options));
 
     ellipse.top -= ellipse.ry;
@@ -15097,12 +15097,12 @@ fabric.util.object.extend(fabric.Object.prototype, /** @lends fabric.Object.prot
       return null;
     }
     options = options || { };
-
+    
     var parsedAttributes = fabric.parseAttributes(element, fabric.Rect.ATTRIBUTE_NAMES);
-
+    
     parsedAttributes.left = parsedAttributes.left || 0;
     parsedAttributes.top  = parsedAttributes.top  || 0;
-
+    
     return new fabric.Rect(extend((options ? fabric.util.object.clone(options) : { }), parsedAttributes));
   };
   /* _FROM_SVG_END_ */
@@ -15296,7 +15296,7 @@ fabric.util.object.extend(fabric.Object.prototype, /** @lends fabric.Object.prot
     if (points === null) {
       return null;
     }
-
+    
     return new fabric.Polyline(points, fabric.util.object.extend(parsedAttributes, options), true);
   };
   /* _FROM_SVG_END_ */
@@ -16077,7 +16077,7 @@ fabric.util.object.extend(fabric.Object.prototype, /** @lends fabric.Object.prot
       var path = chunks.join(' ');
 
       markup.push(
-        //jscs:disable validateIndentation
+        //jscs:disable validateIndentation  
         '<path ',
           'd="', path,
           '" style="', this.getSvgStyles(),

@@ -3452,9 +3452,9 @@ function UIManager(drawingTool) {
   // Copy ui definition so custom modifications won't affect globally available object.
   var uiDef = $.extend(true, {}, uiDefinition);
   if (this.drawingTool.options.stamps) {
-    generateStamps(uiDefinition, this.drawingTool.options.stamps);
+    generateStamps(uiDef, this.drawingTool.options.stamps);
   }
-  this._processUIDefinition(uiDefinition);
+  this._processUIDefinition(uiDef);
 
   for (var name in this._buttons) {
     var btn = this._buttons[name];

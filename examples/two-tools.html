@@ -22,8 +22,28 @@
   <script src="../vendor.js"></script>
   <script src="../drawing-tool.js"></script>
   <script>
-    var drawingTool = new DrawingTool("#drawing-tool-1", { width: 500, height: 600 });
-    var drawingTool2 = new DrawingTool("#drawing-tool-2", { width: 500, height: 600 });
+    var drawingTool = new DrawingTool("#drawing-tool-1", {
+      width: 500,
+      height: 600,
+      stamps: {
+        'Molecules': [
+          'http://resources.interactions.concord.org/stamps/simple-atom-ng.svg',
+          'http://resources.interactions.concord.org/stamps/diatomic-ng.svg',
+          'http://resources.interactions.concord.org/stamps/triatomic-ng.svg'
+        ]
+      }
+    });
+    var drawingTool2 = new DrawingTool("#drawing-tool-2", {
+      width: 500,
+      height: 600,
+      stamps: {
+        'Molecules': [
+          'http://resources.interactions.concord.org/stamps/simple-atom-ng.svg',
+          'http://resources.interactions.concord.org/stamps/diatomic-ng.svg',
+          'http://resources.interactions.concord.org/stamps/triatomic-ng.svg'
+        ]
+      }
+    });
   </script>
   </body>
 </html>

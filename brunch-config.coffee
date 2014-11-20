@@ -21,6 +21,22 @@ exports.config =
 
   sourceMaps: false
 
+  modules:
+    nameCleaner: (path) ->
+      path.replace /^app\//, ''
+    wrapper: (path, data) ->
+      path = path.replace(/^app\//, '').replace(/\.js$/, '')
+      if path is 'initialize'
+        """
+#{data}
+        """
+      else
+        """
+  require.register("#{path}", function(exports, require, module) {
+  var $ = jQuery;
+  #{data}});\n\n
+        """
+
   overrides:
     dist:
       optimize: false

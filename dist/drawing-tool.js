@@ -91,6 +91,7 @@
   globals.require.brunch = true;
 })();
 require.register("scripts/drawing-tool", function(exports, require, module) {
+var $ = jQuery;
 var SelectionTool     = require('scripts/tools/select-tool');
 var LineTool          = require('scripts/tools/shape-tools/line-tool');
 var BasicShapeTool    = require('scripts/tools/shape-tools/basic-shape-tool');
@@ -805,6 +806,7 @@ module.exports = DrawingTool;
 });
 
 require.register("scripts/fabric-extensions/arrow", function(exports, require, module) {
+var $ = jQuery;
 (function(global) {
 
   'use strict';
@@ -1012,6 +1014,7 @@ require.register("scripts/fabric-extensions/arrow", function(exports, require, m
 });
 
 require.register("scripts/fabric-extensions/line-custom-control-points", function(exports, require, module) {
+var $ = jQuery;
 var SUPPORTED_TYPES = ["line", "arrow"];
 
 function lineCustomControlPoints(canvas) {
@@ -1208,6 +1211,7 @@ module.exports = lineCustomControlPoints;
 });
 
 require.register("scripts/fabric-extensions/multi-touch-support", function(exports, require, module) {
+var $ = jQuery;
 module.exports = function addMultiTouchSupport(canvas) {
   if (typeof Hammer === 'undefined' || !fabric.isTouchSupported) {
     return;
@@ -1325,6 +1329,7 @@ module.exports = function addMultiTouchSupport(canvas) {
 });
 
 require.register("scripts/fabric-extensions/rescale-2-resize", function(exports, require, module) {
+var $ = jQuery;
 var LineTool = require('scripts/tools/shape-tools/line-tool');
 
 function basicWidthHeightTransform(s) {
@@ -1460,6 +1465,7 @@ module.exports = function rescale2resize(canvas) {
 });
 
 require.register("scripts/inherit", function(exports, require, module) {
+var $ = jQuery;
 /**
  * Inherit the prototype methods from one constructor into another.
  *
@@ -1496,6 +1502,7 @@ module.exports = function inherit(Child, Parent) {
 });
 
 require.register("scripts/jquery-longpress", function(exports, require, module) {
+var $ = jQuery;
 (function ($) {
 
   $.fn.longPress = function(listener, timeout) {
@@ -1515,6 +1522,7 @@ require.register("scripts/jquery-longpress", function(exports, require, module) 
 });
 
 require.register("scripts/tool", function(exports, require, module) {
+var $ = jQuery;
 /**
  * Tool "Class"
  *
@@ -1604,6 +1612,7 @@ module.exports = Tool;
 });
 
 require.register("scripts/tools/clone-tool", function(exports, require, module) {
+var $ = jQuery;
 var inherit = require('scripts/inherit');
 var Tool    = require('scripts/tool');
 
@@ -1721,6 +1730,7 @@ module.exports = CloneTool;
 });
 
 require.register("scripts/tools/delete-tool", function(exports, require, module) {
+var $ = jQuery;
 var inherit  = require('scripts/inherit');
 var Tool     = require('scripts/tool');
 
@@ -1766,6 +1776,7 @@ module.exports = DeleteTool;
 });
 
 require.register("scripts/tools/select-tool", function(exports, require, module) {
+var $ = jQuery;
 var inherit                 = require('scripts/inherit');
 var Tool                    = require('scripts/tool');
 var lineCustomControlPoints = require('scripts/fabric-extensions/line-custom-control-points');
@@ -1864,6 +1875,7 @@ module.exports = SelectionTool;
 });
 
 require.register("scripts/tools/shape-tool", function(exports, require, module) {
+var $ = jQuery;
 var inherit = require('scripts/inherit');
 var Tool    = require('scripts/tool');
 var Util    = require('scripts/util');
@@ -2007,6 +2019,7 @@ module.exports = ShapeTool;
 });
 
 require.register("scripts/tools/shape-tools/basic-shape-tool", function(exports, require, module) {
+var $ = jQuery;
 var inherit   = require('scripts/inherit');
 var ShapeTool = require('scripts/tools/shape-tool');
 var Util      = require('scripts/util');
@@ -2128,6 +2141,7 @@ module.exports = BasicShapeTool;
 });
 
 require.register("scripts/tools/shape-tools/free-draw", function(exports, require, module) {
+var $ = jQuery;
 var inherit   = require('scripts/inherit');
 var ShapeTool = require('scripts/tools/shape-tool');
 
@@ -2192,6 +2206,7 @@ module.exports = FreeDrawTool;
 });
 
 require.register("scripts/tools/shape-tools/line-tool", function(exports, require, module) {
+var $ = jQuery;
 var inherit                 = require('scripts/inherit');
 var ShapeTool               = require('scripts/tools/shape-tool');
 var SelectTool              = require('scripts/tools/select-tool');
@@ -2275,6 +2290,7 @@ module.exports = LineTool;
 });
 
 require.register("scripts/tools/shape-tools/stamp-tool", function(exports, require, module) {
+var $ = jQuery;
 var inherit   = require('scripts/inherit');
 var ShapeTool = require('scripts/tools/shape-tool');
 
@@ -2425,6 +2441,7 @@ module.exports = StampTool;
 });
 
 require.register("scripts/tools/shape-tools/text-tool", function(exports, require, module) {
+var $ = jQuery;
 var inherit   = require('scripts/inherit');
 var ShapeTool = require('scripts/tools/shape-tool');
 
@@ -2562,6 +2579,7 @@ module.exports = TextTool;
 });
 
 require.register("scripts/ui/basic-button", function(exports, require, module) {
+var $ = jQuery;
 require('scripts/jquery-longpress');
 
 // Note that we use 'mousedown touchstart' everywhere. It's pretty important,
@@ -2684,6 +2702,7 @@ module.exports = BasicButton;
 });
 
 require.register("scripts/ui/color-button", function(exports, require, module) {
+var $ = jQuery;
 var inherit     = require('scripts/inherit');
 var BasicButton = require('scripts/ui/basic-button');
 
@@ -2721,6 +2740,7 @@ module.exports = ColorButton;
 });
 
 require.register("scripts/ui/fill-button", function(exports, require, module) {
+var $ = jQuery;
 var inherit     = require('scripts/inherit');
 var BasicButton = require('scripts/ui/basic-button');
 
@@ -2752,6 +2772,7 @@ module.exports = FillButton;
 });
 
 require.register("scripts/ui/generate-stamps", function(exports, require, module) {
+var $ = jQuery;
 var StampImageButton = require('scripts/ui/stamp-image-button');
 
 var INSERT_STAMP_AFTER = 'text';
@@ -2846,6 +2867,7 @@ module.exports = generateStamps;
 });
 
 require.register("scripts/ui/line-width-button", function(exports, require, module) {
+var $ = jQuery;
 var inherit     = require('scripts/inherit');
 var BasicButton = require('scripts/ui/basic-button');
 
@@ -2884,6 +2906,7 @@ module.exports = LineWidthButton;
 });
 
 require.register("scripts/ui/palette", function(exports, require, module) {
+var $ = jQuery;
 function Palette(options, ui) {
   this.ui          = ui;
   this.name        = options.name;
@@ -2960,6 +2983,7 @@ module.exports = Palette;
 });
 
 require.register("scripts/ui/stamp-image-button", function(exports, require, module) {
+var $ = jQuery;
 var inherit     = require('scripts/inherit');
 var BasicButton = require('scripts/ui/basic-button');
 
@@ -3018,6 +3042,7 @@ module.exports = StampImageButton;
 });
 
 require.register("scripts/ui/stroke-button", function(exports, require, module) {
+var $ = jQuery;
 var inherit     = require('scripts/inherit');
 var BasicButton = require('scripts/ui/basic-button');
 
@@ -3055,6 +3080,7 @@ module.exports = StrokeButton;
 });
 
 require.register("scripts/ui/ui-definition", function(exports, require, module) {
+var $ = jQuery;
 var StrokeButton    = require('scripts/ui/stroke-button');
 var FillButton      = require('scripts/ui/fill-button');
 var ColorButton     = require('scripts/ui/color-button');
@@ -3434,6 +3460,7 @@ module.exports = ui;
 });
 
 require.register("scripts/ui/ui-manager", function(exports, require, module) {
+var $ = jQuery;
 var BasicButton    = require('scripts/ui/basic-button');
 var Palette        = require('scripts/ui/palette');
 var generateStamps = require('scripts/ui/generate-stamps');
@@ -3527,6 +3554,7 @@ module.exports = UIManager;
 });
 
 require.register("scripts/undo-redo", function(exports, require, module) {
+var $ = jQuery;
 var MAX_HISTORY_LENGTH = 20;
 
 function UndoRedo(drawTool) {
@@ -3620,6 +3648,7 @@ module.exports = UndoRedo;
 });
 
 require.register("scripts/util", function(exports, require, module) {
+var $ = jQuery;
 module.exports = {
   dist: function dist(dx, dy){
     var dx2 = Math.pow(dx, 2);

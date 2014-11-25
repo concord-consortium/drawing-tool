@@ -3,14 +3,14 @@ exports.config =
   files:
     javascripts:
       joinTo:
-      	'drawing-tool.js': /^app/
-      	'vendor.js': /^(bower_components|vendor)/
+        'drawing-tool.js': /^app/
+        'vendor.js': /^(bower_components|vendor)/
       order:
-      	after: ['app/initialize.js']
+        after: ['app/initialize.js']
     stylesheets:
       joinTo:
-      	'drawing-tool.css': /^app/
-      	'vendor.css': /^(bower_components|vendor)/
+        'drawing-tool.css': /^app/
+        'vendor.css': /^(bower_components|vendor)/
     #templates:
     #  joinTo: 'app.js'
 
@@ -22,19 +22,17 @@ exports.config =
   sourceMaps: false
 
   modules:
-    nameCleaner: (path) ->
-      path.replace /^app\//, ''
-    wrapper: (path, data) ->
-      path = path.replace(/^app\//, '').replace(/\.js$/, '')
-      if path is 'initialize'
+    wrapper: (path, data, isVendor) ->
+      if isVendor
         """
-#{data}
+        #{data}
         """
       else
+        path = path.replace(/^app\//, '').replace(/\.js$/, '')
         """
-  require.register("#{path}", function(exports, require, module) {
-  var $ = jQuery;
-  #{data}});\n\n
+        require.register("#{path}", function(exports, require, module) {
+        var $ = jQuery;
+        #{data}});\n\n
         """
 
   overrides:

@@ -32,9 +32,6 @@
   <script src="../drawing-tool.js"></script>
   <script>
     var drawingTool = new DrawingTool("#drawing-tool", {
-      proxy: function (url) {
-        return 'https://cors-anywhere.herokuapp.com/' + url;
-      },
       stamps: {
         'Molecules': [
           'https://interactions-resources.concord.org/stamps/simple-atom-ng.svg',

@@ -90,6 +90,60 @@
   globals.require.list = list;
   globals.require.brunch = true;
 })();
+require.register("scripts/convert-state", function(exports, require, module) {
+var $ = jQuery;
+// Converts drawing tool state JSON created using old version to the most recent one.
+// Ensures that Drawing Tool is backward compatible.
+
+var stateConverter = {
+  0: convertVer0toVer1
+  // In the future (in case of need):
+  // 2: convertVer1toVer2
+  // etc.
+};
+
+// Version 0 is using FabricJS 1.4.11
+// Version 1 is using FabricJS 1.5.0
+// New FabricJS version serializes paths in a different way, see:
+// https://github.com/kangax/fabric.js/issues/2139
+function convertVer0toVer1(state) {
+  state.canvas.objects.forEach(function (obj) {
+    if (obj.type === 'path') {
+      obj.pathOffset.x = obj.left;
+      obj.pathOffset.y = obj.top;
+      var offsetX = obj.left - obj.width * 0.5;
+      var offsetY = obj.top - obj.height * 0.5;
+      var path = obj.path;
+      for (var i = 0; i < path.length; i++) {
+        var def = path[i];
+        for (var j = 1; j < def.length; j++) {
+          if (j % 2 === 1) {
+            def[j] += offsetX;
+          } else {
+            def[j] += offsetY;
+          }
+        }
+      }
+    }
+  });
+  state.version = 1;
+  return state;
+}
+
+function convertState(state) {
+  if (typeof state.version === 'undefined') {
+    state.version = 0;
+  }
+  while (stateConverter[state.version]) {
+    state = stateConverter[state.version](state);
+  }
+  return state;
+}
+
+module.exports = convertState;
+
+});
+
 require.register("scripts/drawing-tool", function(exports, require, module) {
 var $ = jQuery;
 var SelectionTool     = require('scripts/tools/select-tool');
@@ -102,6 +156,7 @@ var DeleteTool        = require('scripts/tools/delete-tool');
 var CloneTool         = require('scripts/tools/clone-tool');
 var UIManager         = require('scripts/ui/ui-manager');
 var UndoRedo          = require('scripts/undo-redo');
+var convertState      = require('scripts/convert-state');
 var rescale2resize    = require('scripts/fabric-extensions/rescale-2-resize');
 var multitouchSupport = require('scripts/fabric-extensions/multi-touch-support');
 
@@ -245,6 +300,7 @@ DrawingTool.prototype.save = function () {
     selectionCleared = true;
   }
   var result = JSON.stringify({
+    version: 1,
     dt: {
       // Drawing Tool specific options.
       width: this.canvas.getWidth(),
@@ -278,6 +334,8 @@ DrawingTool.prototype.load = function (jsonString, callback, noHistoryUpdate) {
   }
 
   var state = JSON.parse(jsonString);
+  // Support JSONs saved by older Drawing Tool versions.
+  state = convertState(state);
 
   // Process Drawing Tool specific options.
   var dtState = state.dt;
@@ -1372,20 +1430,15 @@ var duringResize = {
     this.line(s);
   },
   path: function (s) {
+    var offsetX = s.pathOffset.x;
+    var offsetY = s.pathOffset.y;
     for (var i = 0; i < s.path.length; i++) {
-      s.path[i][1] *= s.scaleX;
-      s.path[i][2] *= s.scaleY;
-      s.path[i][3] *= s.scaleX;
-      s.path[i][4] *= s.scaleY;
+      s.path[i][1] = (s.path[i][1] - offsetX) * s.scaleX + offsetX;
+      s.path[i][2] = (s.path[i][2] - offsetY) * s.scaleY + offsetY;
+      s.path[i][3] = (s.path[i][3] - offsetX) * s.scaleX + offsetX;
+      s.path[i][4] = (s.path[i][4] - offsetY) * s.scaleY + offsetY;
     }
-    // We have two options to adjust width/height:
-    // 1) this makes inaccurate bounding box dimensions but
-    //    eliminates "floating" or weird behavior at edges
     basicWidthHeightTransform(s);
-    // 2) this approach "floats" and has strange bugs but
-    //    generates accurate bounding boxes
-    // s.width = s.width * s.scaleX;
-    // s.height = s.height * s.scaleY;
   }
 };
 

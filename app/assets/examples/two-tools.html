@@ -27,20 +27,23 @@
       height: 600,
       stamps: {
         'Molecules': [
-          'http://resources.interactions.concord.org/stamps/simple-atom-ng.svg',
-          'http://resources.interactions.concord.org/stamps/diatomic-ng.svg',
-          'http://resources.interactions.concord.org/stamps/triatomic-ng.svg'
+          'https://interactions-resources.concord.org/stamps/simple-atom.svg',
+          'https://interactions-resources.concord.org/stamps/diatomic.svg',
+          'https://interactions-resources.concord.org/stamps/triatomic.svg'
         ]
       }
     });
     var drawingTool2 = new DrawingTool("#drawing-tool-2", {
       width: 500,
       height: 600,
+      proxy: function (url) {
+        return 'https://cors-anywhere.herokuapp.com/' + url;
+      },
       stamps: {
         'Molecules': [
-          'http://resources.interactions.concord.org/stamps/simple-atom-ng.svg',
-          'http://resources.interactions.concord.org/stamps/diatomic-ng.svg',
-          'http://resources.interactions.concord.org/stamps/triatomic-ng.svg'
+          'https://interactions-resources.concord.org/stamps/simple-atom.svg',
+          'https://interactions-resources.concord.org/stamps/diatomic.svg',
+          'https://interactions-resources.concord.org/stamps/triatomic.svg'
         ]
       }
     });

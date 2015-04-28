@@ -40,20 +40,15 @@ var duringResize = {
     this.line(s);
   },
   path: function (s) {
+    var offsetX = s.pathOffset.x;
+    var offsetY = s.pathOffset.y;
     for (var i = 0; i < s.path.length; i++) {
-      s.path[i][1] *= s.scaleX;
-      s.path[i][2] *= s.scaleY;
-      s.path[i][3] *= s.scaleX;
-      s.path[i][4] *= s.scaleY;
+      s.path[i][1] = (s.path[i][1] - offsetX) * s.scaleX + offsetX;
+      s.path[i][2] = (s.path[i][2] - offsetY) * s.scaleY + offsetY;
+      s.path[i][3] = (s.path[i][3] - offsetX) * s.scaleX + offsetX;
+      s.path[i][4] = (s.path[i][4] - offsetY) * s.scaleY + offsetY;
     }
-    // We have two options to adjust width/height:
-    // 1) this makes inaccurate bounding box dimensions but
-    //    eliminates "floating" or weird behavior at edges
     basicWidthHeightTransform(s);
-    // 2) this approach "floats" and has strange bugs but
-    //    generates accurate bounding boxes
-    // s.width = s.width * s.scaleX;
-    // s.height = s.height * s.scaleY;
   }
 };
 

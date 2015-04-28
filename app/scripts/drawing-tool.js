@@ -8,6 +8,7 @@ var DeleteTool        = require('scripts/tools/delete-tool');
 var CloneTool         = require('scripts/tools/clone-tool');
 var UIManager         = require('scripts/ui/ui-manager');
 var UndoRedo          = require('scripts/undo-redo');
+var convertState      = require('scripts/convert-state');
 var rescale2resize    = require('scripts/fabric-extensions/rescale-2-resize');
 var multitouchSupport = require('scripts/fabric-extensions/multi-touch-support');
 
@@ -151,6 +152,7 @@ DrawingTool.prototype.save = function () {
     selectionCleared = true;
   }
   var result = JSON.stringify({
+    version: 1,
     dt: {
       // Drawing Tool specific options.
       width: this.canvas.getWidth(),
@@ -184,6 +186,8 @@ DrawingTool.prototype.load = function (jsonString, callback, noHistoryUpdate) {
   }
 
   var state = JSON.parse(jsonString);
+  // Support JSONs saved by older Drawing Tool versions.
+  state = convertState(state);
 
   // Process Drawing Tool specific options.
   var dtState = state.dt;

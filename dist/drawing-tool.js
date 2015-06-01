@@ -2581,6 +2581,13 @@ TextTool.prototype.editText = function (text, e) {
   // (at least in FabricJS v1.4.11).
   if (text.hiddenTextarea && text.canvas) {
     text.canvas.wrapperEl.appendChild(text.hiddenTextarea);
+    if (fabric.isTouchSupported) {
+      // Mobile devices seem to automatically zoom and scroll to input when it gets focus. Set a big font size to
+      // avoid zooming. Also, set correct 'top' value so page scrolls to the correct position. Note that this solution
+      // isn't perfect, as still page might scroll to the left (due to -1000px val). Unfortunately we can't keep
+      // hidden text input in the right place, as the input caret seems to ignore z-index and its always visible (iOS).
+      $(text.hiddenTextarea).css({left: '-1000px', top: e.pageY || 0, 'font-size': '50px'});
+    }
     text.hiddenTextarea.focus();
   }
   this._exitTextEditingOnFirstClick();

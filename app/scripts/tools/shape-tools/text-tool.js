@@ -49,6 +49,7 @@ TextTool.prototype.mouseDown = function (opt) {
   this.actionComplete(text);
   this.canvas.add(text);
   this.editText(text, opt.e);
+  opt.e.preventDefault();
 };
 
 TextTool.prototype.activate = function () {
@@ -83,6 +84,7 @@ TextTool.prototype.editText = function (text, e) {
   // (at least in FabricJS v1.4.11).
   if (text.hiddenTextarea && text.canvas) {
     text.canvas.wrapperEl.appendChild(text.hiddenTextarea);
+    text.hiddenTextarea.focus();
   }
   this._exitTextEditingOnFirstClick();
 };

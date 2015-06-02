@@ -34,6 +34,11 @@ var DEF_STATE = {
 };
 
 var EVENTS = {
+  // 'drawing:changed' is fired when the drawing (canvas) is updated by the user,
+  // for example new shape is added or existing one edited and so on.
+  DRAWING_CHANGED: 'drawing:changed',
+  // 'state:changed' is fired when the internal state of the drawing tool is updated,
+  // for example selected stroke color, fill color, font size and so on.
   STATE_CHANGED:   'state:changed',
   TOOL_CHANGED:    'tool:changed',
   UNDO_POSSIBLE:   'undo:possible',
@@ -73,8 +78,7 @@ function DrawingTool(selector, options, settings) {
   this._initFabricJS();
   this._setDimensions(this.options.width, this.options.height);
   this._initTools();
-
-  this._history = new UndoRedo(this);
+  this._initStateHistory();
 
   new UIManager(this);
 
@@ -84,7 +88,7 @@ function DrawingTool(selector, options, settings) {
   multitouchSupport(this.canvas);
 
   // Note that at the beginning we will emmit two events - state:changed and tool:changed.
-  this._fireStateChange();
+  this._fireStateChanged();
   this.chooseTool('select');
   this.pushToHistory();
 }
@@ -230,22 +234,27 @@ DrawingTool.prototype.load = function (jsonString, callback, noHistoryUpdate) {
 DrawingTool.prototype.pushToHistory = function () {
   this._history.saveState();
   this._fireHistoryEvents();
+  this._fireDrawingChanged();
 };
 
 DrawingTool.prototype.undo = function () {
   this._history.undo();
   this._fireHistoryEvents();
+  this._fireDrawingChanged();
 };
 
 DrawingTool.prototype.redo = function () {
   this._history.redo();
   this._fireHistoryEvents();
+  this._fireDrawingChanged();
 };
 
 DrawingTool.prototype.resetHistory = function () {
   this._history.reset();
   // Push the "initial" state.
-  this.pushToHistory();
+  // We can't use public 'pushToHistory', 'drawing:changed' event shouldn't be emitted.
+  this._history.saveState();
+  this._fireHistoryEvents();
 };
 
 DrawingTool.prototype._fireHistoryEvents = function () {
@@ -261,6 +270,10 @@ DrawingTool.prototype._fireHistoryEvents = function () {
   }
 };
 
+DrawingTool.prototype._fireDrawingChanged = function () {
+  this._dispatch.emit(EVENTS.DRAWING_CHANGED);
+};
+
 /**
  * Sets the stroke color for new shapes and fires a `stateEvent` to signal a
  * change in the stroke color.
@@ -271,7 +284,7 @@ DrawingTool.prototype._fireHistoryEvents = function () {
  */
 DrawingTool.prototype.setStrokeColor = function (color) {
   this.state.stroke = color;
-  this._fireStateChange();
+  this._fireStateChanged();
 };
 
 /**
@@ -283,7 +296,7 @@ DrawingTool.prototype.setStrokeColor = function (color) {
  */
 DrawingTool.prototype.setStrokeWidth = function (width) {
   this.state.strokeWidth = width;
-  this._fireStateChange();
+  this._fireStateChanged();
 };
 
 /**
@@ -295,9 +308,8 @@ DrawingTool.prototype.setStrokeWidth = function (width) {
  */
 DrawingTool.prototype.setFontSize = function (fontSize) {
   this.state.fontSize = fontSize;
-  this._fireStateChange();
+  this._fireStateChanged();
 };
-
 
 /**
  * Sets the fill color for new shapes and fires a `stateEvent` to signal a
@@ -309,7 +321,7 @@ DrawingTool.prototype.setFontSize = function (fontSize) {
  */
 DrawingTool.prototype.setFillColor = function (color) {
   this.state.fill = color;
-  this._fireStateChange();
+  this._fireStateChanged();
 };
 
 DrawingTool.prototype.setSelectionStrokeColor = function (color) {
@@ -599,7 +611,7 @@ DrawingTool.prototype.getSelection = function () {
   return actObject && actObject.isControlPoint ? actObject._dt_sourceObj : actObject;
 };
 
-DrawingTool.prototype._fireStateChange = function () {
+DrawingTool.prototype._fireStateChanged = function () {
   this._dispatch.emit(EVENTS.STATE_CHANGED, this.state);
 };
 
@@ -709,6 +721,13 @@ DrawingTool.prototype._setDimensions = function (width, height) {
       .css('height',  height);
     canvEl.getContext('2d').scale(pixelRatio, pixelRatio);
   }
+};
+
+DrawingTool.prototype._initStateHistory = function () {
+  this._history = new UndoRedo(this);
+  this.canvas.on('object:modified', function () {
+    this.pushToHistory();
+  }.bind(this));
 };
 
 module.exports = DrawingTool;

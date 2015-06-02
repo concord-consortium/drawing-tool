@@ -2,11 +2,9 @@ var MAX_HISTORY_LENGTH = 20;
 
 function UndoRedo(drawTool) {
   this.dt = drawTool;
-  this.canvas = drawTool.canvas;
   this._suppressHistoryUpdate = false;
 
   this.reset();
-  this._saveStateOnUserInteraction();
 
   this.dt.$element.on('keydown', function (e) {
     if (e.keyCode === 90 /* Z */ && (e.ctrlKey || e.metaKey)) {
@@ -70,12 +68,6 @@ UndoRedo.prototype._load = function (state) {
   // Note that #load is a normal action that updates history. However when
   // a state is restored from the history, it's definitely unwanted.
   this.dt.load(state, null, true);
-};
-
-UndoRedo.prototype._saveStateOnUserInteraction = function () {
-  this.canvas.on('object:modified', function () {
-    this.saveState();
-  }.bind(this));
 };
 
 UndoRedo.prototype._cutOffOldStates = function () {

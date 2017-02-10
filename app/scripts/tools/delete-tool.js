@@ -1,5 +1,5 @@
-var inherit  = require('scripts/inherit');
-var Tool     = require('scripts/tool');
+var inherit  = require('../inherit');
+var Tool     = require('../tool');
 
 /**
  * Single use tool that deletes the currently selected object(s).

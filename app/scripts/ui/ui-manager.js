@@ -1,7 +1,8 @@
-var BasicButton    = require('scripts/ui/basic-button');
-var Palette        = require('scripts/ui/palette');
-var generateStamps = require('scripts/ui/generate-stamps');
-var uiDefinition   = require('scripts/ui/ui-definition');
+var $              = require('jquery');
+var BasicButton    = require('./basic-button');
+var Palette        = require('./palette');
+var generateStamps = require('./generate-stamps');
+var uiDefinition   = require('./ui-definition');
 
 function UIManager(drawingTool) {
   this.drawingTool = drawingTool;

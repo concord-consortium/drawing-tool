@@ -1,14 +1,14 @@
 #!/bin/sh
 
-echo "- running brunch build -e production"
+echo "- running npm run build"
 rm -rf public
-brunch build -e production
+npm run build
 
 echo "- cloning drawing-tool repo into temporary dir"
 git clone git@github.com:concord-consortium/drawing-tool.git --branch gh-pages __gh-pages-tmp__
 
-echo "- copying /public content into temporary dir"
-rsync -av --delete public/ __gh-pages-tmp__/ --exclude=".git/"
+echo "- copying /dist content into temporary dir"
+rsync -av --delete dist/ __gh-pages-tmp__/ --exclude=".git/"
 cd __gh-pages-tmp__
 
 echo "- committing changes in gh-pages branch"

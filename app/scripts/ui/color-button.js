@@ -1,5 +1,5 @@
-var inherit     = require('scripts/inherit');
-var BasicButton = require('scripts/ui/basic-button');
+var inherit     = require('../inherit');
+var BasicButton = require('./basic-button');
 
 function ColorButton(options, ui, drawingTool) {
   var callback;

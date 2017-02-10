@@ -1,7 +1,7 @@
-var StrokeButton    = require('scripts/ui/stroke-button');
-var FillButton      = require('scripts/ui/fill-button');
-var ColorButton     = require('scripts/ui/color-button');
-var LineWidthButton = require('scripts/ui/line-width-button');
+var StrokeButton    = require('./stroke-button');
+var FillButton      = require('./fill-button');
+var ColorButton     = require('./color-button');
+var LineWidthButton = require('./line-width-button');
 
 var COLORS = [
   '',

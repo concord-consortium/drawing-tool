@@ -1,4 +1,4 @@
-var StampImageButton = require('scripts/ui/stamp-image-button');
+var StampImageButton = require('./stamp-image-button');
 
 var INSERT_STAMP_AFTER = 'text';
 

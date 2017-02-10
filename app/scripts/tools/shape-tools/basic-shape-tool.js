@@ -1,6 +1,7 @@
-var inherit   = require('scripts/inherit');
-var ShapeTool = require('scripts/tools/shape-tool');
-var Util      = require('scripts/util');
+var fabric    = require('fabric');
+var inherit   = require('../../inherit');
+var ShapeTool = require('../shape-tool');
+var Util      = require('../../util');
 
 var SUPPORTED_SHAPES = {
   rect: {

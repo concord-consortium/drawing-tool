@@ -1,5 +1,7 @@
-var inherit   = require('scripts/inherit');
-var ShapeTool = require('scripts/tools/shape-tool');
+var $         = require('jquery');
+var fabric    = require('fabric');
+var inherit   = require('../../inherit');
+var ShapeTool = require('../shape-tool');
 
 function TextTool(name, drawTool) {
   ShapeTool.call(this, name, drawTool);

@@ -1,5 +1,6 @@
-var inherit = require('scripts/inherit');
-var Tool    = require('scripts/tool');
+var fabric  = require('fabric');
+var inherit = require('../inherit');
+var Tool    = require('../tool');
 
 var CLONE_OFFSET = 15;
 

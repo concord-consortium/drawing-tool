@@ -1,5 +1,6 @@
-var inherit   = require('scripts/inherit');
-var ShapeTool = require('scripts/tools/shape-tool');
+var fabric    = require('fabric');
+var inherit   = require('../../inherit');
+var ShapeTool = require('../shape-tool');
 
 function StampTool(name, drawTool, parseSVG) {
   ShapeTool.call(this, name, drawTool);

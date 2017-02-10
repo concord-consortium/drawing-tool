@@ -1,3 +1,5 @@
+var fabric = require('fabric');
+
 module.exports = function addMultiTouchSupport(canvas) {
   if (typeof Hammer === 'undefined' || !fabric.isTouchSupported) {
     return;

@@ -1,16 +1,21 @@
-var SelectionTool     = require('scripts/tools/select-tool');
-var LineTool          = require('scripts/tools/shape-tools/line-tool');
-var BasicShapeTool    = require('scripts/tools/shape-tools/basic-shape-tool');
-var FreeDrawTool      = require('scripts/tools/shape-tools/free-draw');
-var TextTool          = require('scripts/tools/shape-tools/text-tool');
-var StampTool         = require('scripts/tools/shape-tools/stamp-tool');
-var DeleteTool        = require('scripts/tools/delete-tool');
-var CloneTool         = require('scripts/tools/clone-tool');
-var UIManager         = require('scripts/ui/ui-manager');
-var UndoRedo          = require('scripts/undo-redo');
-var convertState      = require('scripts/convert-state');
-var rescale2resize    = require('scripts/fabric-extensions/rescale-2-resize');
-var multitouchSupport = require('scripts/fabric-extensions/multi-touch-support');
+var $                 = require('jquery');
+var fabric            = require('fabric');
+var EventEmitter2     = require('eventemitter2');
+var SelectionTool     = require('./tools/select-tool');
+var LineTool          = require('./tools/shape-tools/line-tool');
+var BasicShapeTool    = require('./tools/shape-tools/basic-shape-tool');
+var FreeDrawTool      = require('./tools/shape-tools/free-draw');
+var TextTool          = require('./tools/shape-tools/text-tool');
+var StampTool         = require('./tools/shape-tools/stamp-tool');
+var DeleteTool        = require('./tools/delete-tool');
+var CloneTool         = require('./tools/clone-tool');
+var UIManager         = require('./ui/ui-manager');
+var UndoRedo          = require('./undo-redo');
+var convertState      = require('./convert-state');
+var rescale2resize    = require('./fabric-extensions/rescale-2-resize');
+var multitouchSupport = require('./fabric-extensions/multi-touch-support');
+
+require('../styles/drawing-tool.scss');
 
 var DEF_OPTIONS = {
   width: 800,

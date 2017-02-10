@@ -1,4 +1,5 @@
-require('scripts/jquery-longpress');
+var $ = require('jquery');
+require('../jquery-longpress');
 
 // Note that we use 'mousedown touchstart' everywhere. It's pretty important,
 // as 'click' could interfere with palette auto-hide feature (as it hides on

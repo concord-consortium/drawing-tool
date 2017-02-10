@@ -1,5 +1,6 @@
-var inherit     = require('scripts/inherit');
-var BasicButton = require('scripts/ui/basic-button');
+var $           = require('jquery');
+var inherit     = require('../inherit');
+var BasicButton = require('./basic-button');
 
 function FillButton(options, ui, drawingTool) {
   BasicButton.call(this, options, ui, drawingTool);

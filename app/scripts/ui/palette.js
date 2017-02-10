@@ -1,3 +1,5 @@
+var $ = require('jquery');
+
 function Palette(options, ui) {
   this.ui          = ui;
   this.name        = options.name;

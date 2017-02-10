@@ -1,10 +1,8 @@
 {
   "name": "drawing-tool",
-  "version": "1.4.0",
+  "version": "1.5.0",
   "main": [
-    "dist/drawing-tool.js",
-    "dist/drawing-tool.css",
-    "dist/fonts/*"
+    "dist/drawing-tool.js"
   ],
   "ignore": [
     "app",
@@ -14,9 +12,7 @@
   ],
   "dependencies": {
     "fabric": "1.5.0",
-    "hammerjs": "~2.0.4",
-    "jquery": "~2.1.3",
-    "eventemitter2": "~0.4.14"
+    "jquery": "~2.1.3"
   },
   "overrides": {
     "fabric": {

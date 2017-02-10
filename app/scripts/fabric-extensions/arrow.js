@@ -1,9 +1,10 @@
-(function(global) {
+var fabric = require('fabric');
+
+(function() {
 
   'use strict';
 
-  var fabric = global.fabric || (global.fabric = { }),
-      extend = fabric.util.object.extend;
+  var extend = fabric.util.object.extend;
 
   if (fabric.Arrow) {
     fabric.warn('fabric.Arrow is already defined');
@@ -200,4 +201,4 @@
     return new fabric.Arrow(points, object);
   };
 
-})(this);
+})();

@@ -3,7 +3,6 @@
   <head>
     <meta charset="utf-8">
     <title>HTML5 Drawing Tool Demo</title>
-  	<link rel="stylesheet" type="text/css" href="../drawing-tool.css">
     <style type="text/css">
       body {
         font-family: Arial;
@@ -28,7 +27,8 @@
           <button id="load" disabled>Load</button>
         <div>
     </div>
-  <script src="../vendor.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.3/jquery.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/1.5.0/fabric.js"></script>
   <script src="../drawing-tool.js"></script>
   <script>
     var drawingTool = new DrawingTool("#drawing-tool", {

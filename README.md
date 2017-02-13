@@ -9,29 +9,23 @@ Demo: http://concord-consortium.github.io/drawing-tool/examples/
 
 ## Development
 * Install (if you don't have them):
-    * [Node.js](http://nodejs.org): `brew install node` on OS X
+    * [Node.js](http://nodejs.org) : `brew install node` on OS X
+    * [Live server](https://www.npmjs.com/package/live-server) :`npm install -g live-server`
+    * [yarn](https://github.com/yarnpkg/yarn) : `npm install -g yarn`
 * Run:
-    * `npm run server` — watches the project with continuous rebuild. 
+    * `yarn` to install dependencies.
+    * `webpack --watch` -- Automatically compiles sources to `./dist`
+    * `live-server .` -- starts a web server on [http://localhost:8080/](http://localhost:8080/)
     * Open [http://localhost:8080/examples/](http://localhost:3333/examples/).
     * Code!
-    * Before you commit, run `npm run build` to update `dist` directory and add it to git index.
-
+    * Before you commit, run `webpack` to update `dist` directory and add it to git index.
+    
 ### Deploying to Github Pages
 
-Use `push-gh-pages.sh` script. It (re)generates `dist` dir using `npm run build`, updates `gh-pages` branch
+Use `push-gh-pages.sh` script. It (re)generates `dist` dir using `webpack`, updates `gh-pages` branch
 and pushes changes to Github.
 
 Note that you may deploy uncommitted changes, as this script uses current working directory state.
-
-### Updating Bower package.
-
-http://bower.io/search/?q=drawing-tool
-
-* Remember that Bower expects [semver](http://semver.org/) tags.
-* Update version in `package.json` and `bower.json`.
-* Make sure that `dist` folder is up to date! Run `npm run build` to double-check that.
-* Commit all changes and then run: `git tag -a v1.2.3 -m "Release version 1.2.3"`.
-* Push changes remembering about `--tags` option: `git push origin master --tags`.
 
 ### Undo / redo feature
 

@@ -15,6 +15,7 @@ var UndoRedo          = require('./undo-redo');
 var convertState      = require('./convert-state');
 var rescale2resize    = require('./fabric-extensions/rescale-2-resize');
 var multitouchSupport = require('./fabric-extensions/multi-touch-support');
+var FireBase          = require('./firebase');
 
 require('../styles/drawing-tool.scss');
 
@@ -84,6 +85,7 @@ function DrawingTool(selector, options, settings) {
   this._initFabricJS();
   this._setDimensions(this.options.width, this.options.height);
   this._initTools();
+  this._initFirebase();
   this._initStateHistory();
 
   new UIManager(this);
@@ -173,6 +175,7 @@ DrawingTool.prototype.save = function () {
   if (selectionCleared) {
     this.select(selection);
   }
+  if(this.firebase) { this.firebase.update(result ); }
   return result;
 };
 
@@ -194,9 +197,7 @@ DrawingTool.prototype.load = function (jsonString, callback, noHistoryUpdate) {
     loadFinished.call(this);
     return;
   }
-
   var state = JSON.parse(jsonString);
-  // Support JSONs saved by older Drawing Tool versions.
   state = convertState(state);
 
   // Process Drawing Tool specific options.
@@ -727,6 +728,20 @@ DrawingTool.prototype._setDimensions = function (width, height) {
       .css('height',  height);
     canvEl.getContext('2d').scale(pixelRatio, pixelRatio);
   }
+};
+
+DrawingTool.prototype._initFirebase = function() {
+  var _loader = this.load.bind(this);
+  var loadFunction = function(data) {
+    if(data.serializedData){
+      // use strings for now...
+      // if(data.serializedData.version ) {
+        var d = data.serializedData;
+        _loader(d);
+      // }
+    }
+  };
+  this.firebase = new FireBase(loadFunction);
 };
 
 DrawingTool.prototype._initStateHistory = function () {

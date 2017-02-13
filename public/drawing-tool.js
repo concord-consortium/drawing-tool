@@ -218,6 +218,271 @@ var rescale2resize    = require('scripts/fabric-extensions/rescale-2-resize');
 var multitouchSupport = require('scripts/fabric-extensions/multi-touch-support');
 var FirebaseImp = require('scripts/firebase');
 
+function rotateLineCoords() {
+  // Set angle to 0 and apply transform to (x1, y1), (x2, y2). We could also
+  // apply this transformation to control points instead. However if we reset
+  // line rotation, conversion will have to be applies only once.
+  if (this.get('angle') === 0) return;
+  var angle = this.get('angle') / 180 * Math.PI;
+  var originX = this.get('left');
+  var originY = this.get('top');
+  var newA = rot(this.get('x1'), this.get('y1'), originX, originY, angle);
+  var newB = rot(this.get('x2'), this.get('y2'), originX, originY, angle);
+  this.set({
+    x1: newA[0],
+    y1: newA[1],
+    x2: newB[0],
+    y2: newB[1],
+    angle: 0
+  });
+
+  function rot(px, py, ox, oy, theta) {
+    var cos = Math.cos(theta);
+    var sin = Math.sin(theta);
+    return [
+      cos * (px - ox) - sin * (py - oy) + ox,
+      sin * (px - ox) + cos * (py - oy) + oy
+    ];
+  }
+}
+
+function makeControlPoint(s, source, i) {
+  var point = new fabric.Rect({
+    width: s,
+    height: s,
+    strokeWidth: 0,
+    stroke: lineCustomControlPoints.controlPointColor,
+    fill: lineCustomControlPoints.controlPointColor,
+    hasControls: false,
+    hasBorders: false,
+    originX: 'center',
+    originY: 'center',
+    // Custom properties:
+    _dt_sourceObj: source,
+    id: i,
+    isControlPoint: true
+  });
+  source.canvas.add(point);
+  point.on("moving", controlPointMoved);
+  point.on("removed", controlPointDeleted);
+  return point;
+}
+
+module.exports = lineCustomControlPoints;
+
+
+/***/ }),
+/* 8 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var fabric                  = __webpack_require__(2);
+var inherit                 = __webpack_require__(0);
+var Tool                    = __webpack_require__(5);
+var lineCustomControlPoints = __webpack_require__(7);
+
+var BASIC_SELECTION_PROPERTIES = {
+  cornerSize: fabric.isTouchSupported ? 22 : 12,
+  transparentCorners: false
+};
+
+/**
+ * Defacto default tool for DrawingTool.
+ * When activated it puts the canvas into a selectable state so objects
+ * can be moved and manipulated.
+ */
+function SelectionTool(name, drawTool) {
+  Tool.call(this, name, drawTool);
+
+  this.canvas.on("object:selected", function (opt) {
+    opt.target.set(BASIC_SELECTION_PROPERTIES);
+    this.canvas.renderAll();
+    this._setLastObject(opt.target);
+  }.bind(this));
+
+  this._lastObject = null;
+  this.canvas.on("object:added", function (opt) {
+    this._setLastObject(opt.target);
+  }.bind(this));
+  this.canvas.on("object:removed", function (opt) {
+    this._checkLastObject(opt.target);
+  }.bind(this));
+
+  // Bind Ctrl / Cmd + A to select all action.
+  this.master.$element.on('keydown', function (e) {
+    if (e.keyCode === 65 && (e.ctrlKey || e.metaKey)) {
+      this.selectAll();
+      e.preventDefault();
+    }
+  }.bind(this));
+
+  // Set visual options of custom line control points.
+  lineCustomControlPoints.controlPointColor = '#bcd2ff';
+  lineCustomControlPoints.cornerSize = BASIC_SELECTION_PROPERTIES.cornerSize;
+}
+
+inherit(SelectionTool, Tool);
+
+SelectionTool.BASIC_SELECTION_PROPERTIES = BASIC_SELECTION_PROPERTIES;
+
+SelectionTool.prototype.activate = function () {
+  SelectionTool.super.activate.call(this);
+  this.setSelectable(true);
+  this.selectLastObject();
+};
+
+SelectionTool.prototype.deactivate = function () {
+  SelectionTool.super.deactivate.call(this);
+  this.setSelectable(false);
+};
+
+SelectionTool.prototype.setSelectable = function (selectable) {
+  this.canvas.selection = selectable;
+  var items = this.canvas.getObjects();
+  for (var i = items.length - 1; i >= 0; i--) {
+    items[i].selectable = selectable;
+  }
+};
+
+SelectionTool.prototype.selectAll = function () {
+  this.master.chooseTool('select');
+  this.master.select(this.canvas.getObjects());
+};
+
+SelectionTool.prototype.selectLastObject = function () {
+  if (this._lastObject) {
+    this.canvas.setActiveObject(this._lastObject);
+  }
+};
+
+SelectionTool.prototype._setLastObject = function (obj) {
+  if (obj._dt_sourceObj) {
+    // Ignore custom control points.
+    return;
+  }
+  this._lastObject = obj;
+};
+
+SelectionTool.prototype._checkLastObject = function (removedObj) {
+  if (removedObj === this._lastObject) {
+    var remainingObjects = this.canvas.getObjects();
+    this._lastObject = remainingObjects[remainingObjects.length - 1];
+  }
+};
+
+module.exports = SelectionTool;
+
+
+/***/ }),
+/* 9 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var $                       = __webpack_require__(1);
+var fabric                  = __webpack_require__(2);
+var inherit                 = __webpack_require__(0);
+var ShapeTool               = __webpack_require__(4);
+var SelectTool              = __webpack_require__(8);
+var Util                    = __webpack_require__(6);
+var lineCustomControlPoints = __webpack_require__(7);
+__webpack_require__(12);
+
+// Note that this tool supports fabric.Line and all its subclasses (defined
+// as part of this code base, not FabricJS itself). Pass 'lineType' argument
+// (e.g. "line" or "arrow").
+
+function LineTool(name, drawTool, lineType, lineOptions) {
+  ShapeTool.call(this, name, drawTool);
+
+  lineType = lineType || 'line';
+  this._lineKlass = fabric.util.getKlass(lineType);
+  this._lineOptions = lineOptions;
+
+  lineCustomControlPoints(this.canvas);
+}
+
+inherit(LineTool, ShapeTool);
+
+LineTool.prototype.mouseDown = function (e) {
+  LineTool.super.mouseDown.call(this, e);
+
+  if (!this.active) return;
+
+  var loc = this.canvas.getPointer(e.e);
+  var x = loc.x;
+  var y = loc.y;
+
+  this.curr = new this._lineKlass([x, y, x, y], $.extend(true, {
+    originX: 'center', // important due to custom line control points!
+    originY: 'center',
+    selectable: false,
+    stroke: this.master.state.stroke,
+    strokeWidth: this.master.state.strokeWidth
+  }, this._lineOptions));
+  this.canvas.add(this.curr);
+};
+
+LineTool.prototype.mouseMove = function (e) {
+  LineTool.super.mouseMove.call(this, e);
+  if (this.down === false) { return; }
+
+  var loc = this.canvas.getPointer(e.e);
+  var x = loc.x;
+  var y = loc.y;
+
+  this.curr.set('x2', x);
+  this.curr.set('y2', y);
+  this.canvas.renderAll();
+};
+
+LineTool.prototype.mouseUp = function (e) {
+  LineTool.super.mouseUp.call(this, e);
+  this._processNewShape(this.curr);
+  this.canvas.renderAll();
+  this.actionComplete(this.curr);
+  this.curr = undefined;
+  this.master.pushToHistory();
+};
+
+LineTool.prototype._processNewShape = function (s) {
+  var x1 = s.get('x1');
+  var y1 = s.get('y1');
+  var x2 = s.get('x2');
+  var y2 = s.get('y2');
+  if (Util.dist(x1 - x2, y1 - y2) < this.minSize) {
+    x2 = x1 + this.defSize;
+    y2 = y1 + this.defSize;
+    s.set('x2', x2);
+    s.set('y2', y2);
+  }
+  s.setCoords();
+};
+
+module.exports = LineTool;
+
+
+/***/ }),
+/* 10 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var $                 = __webpack_require__(1);
+var fabric            = __webpack_require__(2);
+var EventEmitter2     = __webpack_require__(34);
+var SelectionTool     = __webpack_require__(8);
+var LineTool          = __webpack_require__(9);
+var BasicShapeTool    = __webpack_require__(18);
+var FreeDrawTool      = __webpack_require__(19);
+var TextTool          = __webpack_require__(21);
+var StampTool         = __webpack_require__(20);
+var DeleteTool        = __webpack_require__(17);
+var CloneTool         = __webpack_require__(16);
+var UIManager         = __webpack_require__(30);
+var UndoRedo          = __webpack_require__(31);
+var convertState      = __webpack_require__(11);
+var rescale2resize    = __webpack_require__(14);
+var multitouchSupport = __webpack_require__(13);
+var FireBase          = __webpack_require__(40);
+
+__webpack_require__(36);
+
 var DEF_OPTIONS = {
   width: 800,
   height: 600,
@@ -284,6 +549,7 @@ function DrawingTool(selector, options, settings) {
   this._initFabricJS();
   this._setDimensions(this.options.width, this.options.height);
   this._initTools();
+  this._initFirebase();
   this._initStateHistory();
 
   new UIManager(this);
@@ -374,6 +640,7 @@ DrawingTool.prototype.save = function () {
   if (selectionCleared) {
     this.select(selection);
   }
+  if(this.firebase) { this.firebase.update(result ); }
   return result;
 };
 
@@ -928,6 +1195,20 @@ DrawingTool.prototype._setDimensions = function (width, height) {
       .css('height',  height);
     canvEl.getContext('2d').scale(pixelRatio, pixelRatio);
   }
+};
+
+DrawingTool.prototype._initFirebase = function() {
+  var _loader = this.load.bind(this);
+  var loadFunction = function(data) {
+    if(data.serializedData){
+      // use strings for now...
+      // if(data.serializedData.version ) {
+        var d = data.serializedData;
+        _loader(d);
+      // }
+    }
+  };
+  this.firebase = new FireBase(loadFunction);
 };
 
 DrawingTool.prototype._initStateHistory = function () {
@@ -3871,3 +4152,967 @@ require.register("___globals___", function(exports, require, module) {
 // code snippet that is used by Browserify when 'standalone' option is enabled).
 window.DrawingTool = require('scripts/drawing-tool');
 
+  function init() {
+    this._events = {};
+    if (this._conf) {
+      configure.call(this, this._conf);
+    }
+  }
+
+  function configure(conf) {
+    if (conf) {
+
+      this._conf = conf;
+
+      conf.delimiter && (this.delimiter = conf.delimiter);
+      conf.maxListeners && (this._events.maxListeners = conf.maxListeners);
+      conf.wildcard && (this.wildcard = conf.wildcard);
+      conf.newListener && (this.newListener = conf.newListener);
+
+      if (this.wildcard) {
+        this.listenerTree = {};
+      }
+    }
+  }
+
+  function EventEmitter(conf) {
+    this._events = {};
+    this.newListener = false;
+    configure.call(this, conf);
+  }
+
+  //
+  // Attention, function return type now is array, always !
+  // It has zero elements if no any matches found and one or more
+  // elements (leafs) if there are matches
+  //
+  function searchListenerTree(handlers, type, tree, i) {
+    if (!tree) {
+      return [];
+    }
+    var listeners=[], leaf, len, branch, xTree, xxTree, isolatedBranch, endReached,
+        typeLength = type.length, currentType = type[i], nextType = type[i+1];
+    if (i === typeLength && tree._listeners) {
+      //
+      // If at the end of the event(s) list and the tree has listeners
+      // invoke those listeners.
+      //
+      if (typeof tree._listeners === 'function') {
+        handlers && handlers.push(tree._listeners);
+        return [tree];
+      } else {
+        for (leaf = 0, len = tree._listeners.length; leaf < len; leaf++) {
+          handlers && handlers.push(tree._listeners[leaf]);
+        }
+        return [tree];
+      }
+    }
+
+    if ((currentType === '*' || currentType === '**') || tree[currentType]) {
+      //
+      // If the event emitted is '*' at this part
+      // or there is a concrete match at this patch
+      //
+      if (currentType === '*') {
+        for (branch in tree) {
+          if (branch !== '_listeners' && tree.hasOwnProperty(branch)) {
+            listeners = listeners.concat(searchListenerTree(handlers, type, tree[branch], i+1));
+          }
+        }
+        return listeners;
+      } else if(currentType === '**') {
+        endReached = (i+1 === typeLength || (i+2 === typeLength && nextType === '*'));
+        if(endReached && tree._listeners) {
+          // The next element has a _listeners, add it to the handlers.
+          listeners = listeners.concat(searchListenerTree(handlers, type, tree, typeLength));
+        }
+
+        for (branch in tree) {
+          if (branch !== '_listeners' && tree.hasOwnProperty(branch)) {
+            if(branch === '*' || branch === '**') {
+              if(tree[branch]._listeners && !endReached) {
+                listeners = listeners.concat(searchListenerTree(handlers, type, tree[branch], typeLength));
+              }
+              listeners = listeners.concat(searchListenerTree(handlers, type, tree[branch], i));
+            } else if(branch === nextType) {
+              listeners = listeners.concat(searchListenerTree(handlers, type, tree[branch], i+2));
+            } else {
+              // No match on this one, shift into the tree but not in the type array.
+              listeners = listeners.concat(searchListenerTree(handlers, type, tree[branch], i));
+            }
+          }
+        }
+        return listeners;
+      }
+
+      listeners = listeners.concat(searchListenerTree(handlers, type, tree[currentType], i+1));
+    }
+
+    xTree = tree['*'];
+    if (xTree) {
+      //
+      // If the listener tree will allow any match for this part,
+      // then recursively explore all branches of the tree
+      //
+      searchListenerTree(handlers, type, xTree, i+1);
+    }
+
+    xxTree = tree['**'];
+    if(xxTree) {
+      if(i < typeLength) {
+        if(xxTree._listeners) {
+          // If we have a listener on a '**', it will catch all, so add its handler.
+          searchListenerTree(handlers, type, xxTree, typeLength);
+        }
+
+        // Build arrays of matching next branches and others.
+        for(branch in xxTree) {
+          if(branch !== '_listeners' && xxTree.hasOwnProperty(branch)) {
+            if(branch === nextType) {
+              // We know the next element will match, so jump twice.
+              searchListenerTree(handlers, type, xxTree[branch], i+2);
+            } else if(branch === currentType) {
+              // Current node matches, move into the tree.
+              searchListenerTree(handlers, type, xxTree[branch], i+1);
+            } else {
+              isolatedBranch = {};
+              isolatedBranch[branch] = xxTree[branch];
+              searchListenerTree(handlers, type, { '**': isolatedBranch }, i+1);
+            }
+          }
+        }
+      } else if(xxTree._listeners) {
+        // We have reached the end and still on a '**'
+        searchListenerTree(handlers, type, xxTree, typeLength);
+      } else if(xxTree['*'] && xxTree['*']._listeners) {
+        searchListenerTree(handlers, type, xxTree['*'], typeLength);
+      }
+    }
+
+    return listeners;
+  }
+
+  function growListenerTree(type, listener) {
+
+    type = typeof type === 'string' ? type.split(this.delimiter) : type.slice();
+
+    //
+    // Looks for two consecutive '**', if so, don't add the event at all.
+    //
+    for(var i = 0, len = type.length; i+1 < len; i++) {
+      if(type[i] === '**' && type[i+1] === '**') {
+        return;
+      }
+    }
+
+    var tree = this.listenerTree;
+    var name = type.shift();
+
+    while (name) {
+
+      if (!tree[name]) {
+        tree[name] = {};
+      }
+
+      tree = tree[name];
+
+      if (type.length === 0) {
+
+        if (!tree._listeners) {
+          tree._listeners = listener;
+        }
+        else if(typeof tree._listeners === 'function') {
+          tree._listeners = [tree._listeners, listener];
+        }
+        else if (isArray(tree._listeners)) {
+
+          tree._listeners.push(listener);
+
+          if (!tree._listeners.warned) {
+
+            var m = defaultMaxListeners;
+
+            if (typeof this._events.maxListeners !== 'undefined') {
+              m = this._events.maxListeners;
+            }
+
+            if (m > 0 && tree._listeners.length > m) {
+
+              tree._listeners.warned = true;
+              console.error('(node) warning: possible EventEmitter memory ' +
+                            'leak detected. %d listeners added. ' +
+                            'Use emitter.setMaxListeners() to increase limit.',
+                            tree._listeners.length);
+              console.trace();
+            }
+          }
+        }
+        return true;
+      }
+      name = type.shift();
+    }
+    return true;
+  }
+
+  // By default EventEmitters will print a warning if more than
+  // 10 listeners are added to it. This is a useful default which
+  // helps finding memory leaks.
+  //
+  // Obviously not all Emitters should be limited to 10. This function allows
+  // that to be increased. Set to zero for unlimited.
+
+  EventEmitter.prototype.delimiter = '.';
+
+  EventEmitter.prototype.setMaxListeners = function(n) {
+    this._events || init.call(this);
+    this._events.maxListeners = n;
+    if (!this._conf) this._conf = {};
+    this._conf.maxListeners = n;
+  };
+
+  EventEmitter.prototype.event = '';
+
+  EventEmitter.prototype.once = function(event, fn) {
+    this.many(event, 1, fn);
+    return this;
+  };
+
+  EventEmitter.prototype.many = function(event, ttl, fn) {
+    var self = this;
+
+    if (typeof fn !== 'function') {
+      throw new Error('many only accepts instances of Function');
+    }
+
+    function listener() {
+      if (--ttl === 0) {
+        self.off(event, listener);
+      }
+      fn.apply(this, arguments);
+    }
+
+    listener._origin = fn;
+
+    this.on(event, listener);
+
+    return self;
+  };
+
+  EventEmitter.prototype.emit = function() {
+
+    this._events || init.call(this);
+
+    var type = arguments[0];
+
+    if (type === 'newListener' && !this.newListener) {
+      if (!this._events.newListener) { return false; }
+    }
+
+    // Loop through the *_all* functions and invoke them.
+    if (this._all) {
+      var l = arguments.length;
+      var args = new Array(l - 1);
+      for (var i = 1; i < l; i++) args[i - 1] = arguments[i];
+      for (i = 0, l = this._all.length; i < l; i++) {
+        this.event = type;
+        this._all[i].apply(this, args);
+      }
+    }
+
+    // If there is no 'error' event listener then throw.
+    if (type === 'error') {
+
+      if (!this._all &&
+        !this._events.error &&
+        !(this.wildcard && this.listenerTree.error)) {
+
+        if (arguments[1] instanceof Error) {
+          throw arguments[1]; // Unhandled 'error' event
+        } else {
+          throw new Error("Uncaught, unspecified 'error' event.");
+        }
+        return false;
+      }
+    }
+
+    var handler;
+
+    if(this.wildcard) {
+      handler = [];
+      var ns = typeof type === 'string' ? type.split(this.delimiter) : type.slice();
+      searchListenerTree.call(this, handler, ns, this.listenerTree, 0);
+    }
+    else {
+      handler = this._events[type];
+    }
+
+    if (typeof handler === 'function') {
+      this.event = type;
+      if (arguments.length === 1) {
+        handler.call(this);
+      }
+      else if (arguments.length > 1)
+        switch (arguments.length) {
+          case 2:
+            handler.call(this, arguments[1]);
+            break;
+          case 3:
+            handler.call(this, arguments[1], arguments[2]);
+            break;
+          // slower
+          default:
+            var l = arguments.length;
+            var args = new Array(l - 1);
+            for (var i = 1; i < l; i++) args[i - 1] = arguments[i];
+            handler.apply(this, args);
+        }
+      return true;
+    }
+    else if (handler) {
+      var l = arguments.length;
+      var args = new Array(l - 1);
+      for (var i = 1; i < l; i++) args[i - 1] = arguments[i];
+
+      var listeners = handler.slice();
+      for (var i = 0, l = listeners.length; i < l; i++) {
+        this.event = type;
+        listeners[i].apply(this, args);
+      }
+      return (listeners.length > 0) || !!this._all;
+    }
+    else {
+      return !!this._all;
+    }
+
+  };
+
+  EventEmitter.prototype.on = function(type, listener) {
+
+    if (typeof type === 'function') {
+      this.onAny(type);
+      return this;
+    }
+
+    if (typeof listener !== 'function') {
+      throw new Error('on only accepts instances of Function');
+    }
+    this._events || init.call(this);
+
+    // To avoid recursion in the case that type == "newListeners"! Before
+    // adding it to the listeners, first emit "newListeners".
+    this.emit('newListener', type, listener);
+
+    if(this.wildcard) {
+      growListenerTree.call(this, type, listener);
+      return this;
+    }
+
+    if (!this._events[type]) {
+      // Optimize the case of one listener. Don't need the extra array object.
+      this._events[type] = listener;
+    }
+    else if(typeof this._events[type] === 'function') {
+      // Adding the second element, need to change to array.
+      this._events[type] = [this._events[type], listener];
+    }
+    else if (isArray(this._events[type])) {
+      // If we've already got an array, just append.
+      this._events[type].push(listener);
+
+      // Check for listener leak
+      if (!this._events[type].warned) {
+
+        var m = defaultMaxListeners;
+
+        if (typeof this._events.maxListeners !== 'undefined') {
+          m = this._events.maxListeners;
+        }
+
+        if (m > 0 && this._events[type].length > m) {
+
+          this._events[type].warned = true;
+          console.error('(node) warning: possible EventEmitter memory ' +
+                        'leak detected. %d listeners added. ' +
+                        'Use emitter.setMaxListeners() to increase limit.',
+                        this._events[type].length);
+          console.trace();
+        }
+      }
+    }
+    return this;
+  };
+
+  EventEmitter.prototype.onAny = function(fn) {
+
+    if (typeof fn !== 'function') {
+      throw new Error('onAny only accepts instances of Function');
+    }
+
+    if(!this._all) {
+      this._all = [];
+    }
+
+    // Add the function to the event listener collection.
+    this._all.push(fn);
+    return this;
+  };
+
+  EventEmitter.prototype.addListener = EventEmitter.prototype.on;
+
+  EventEmitter.prototype.off = function(type, listener) {
+    if (typeof listener !== 'function') {
+      throw new Error('removeListener only takes instances of Function');
+    }
+
+    var handlers,leafs=[];
+
+    if(this.wildcard) {
+      var ns = typeof type === 'string' ? type.split(this.delimiter) : type.slice();
+      leafs = searchListenerTree.call(this, null, ns, this.listenerTree, 0);
+    }
+    else {
+      // does not use listeners(), so no side effect of creating _events[type]
+      if (!this._events[type]) return this;
+      handlers = this._events[type];
+      leafs.push({_listeners:handlers});
+    }
+
+    for (var iLeaf=0; iLeaf<leafs.length; iLeaf++) {
+      var leaf = leafs[iLeaf];
+      handlers = leaf._listeners;
+      if (isArray(handlers)) {
+
+        var position = -1;
+
+        for (var i = 0, length = handlers.length; i < length; i++) {
+          if (handlers[i] === listener ||
+            (handlers[i].listener && handlers[i].listener === listener) ||
+            (handlers[i]._origin && handlers[i]._origin === listener)) {
+            position = i;
+            break;
+          }
+        }
+
+        if (position < 0) {
+          continue;
+        }
+
+        if(this.wildcard) {
+          leaf._listeners.splice(position, 1);
+        }
+        else {
+          this._events[type].splice(position, 1);
+        }
+
+        if (handlers.length === 0) {
+          if(this.wildcard) {
+            delete leaf._listeners;
+          }
+          else {
+            delete this._events[type];
+          }
+        }
+        return this;
+      }
+      else if (handlers === listener ||
+        (handlers.listener && handlers.listener === listener) ||
+        (handlers._origin && handlers._origin === listener)) {
+        if(this.wildcard) {
+          delete leaf._listeners;
+        }
+        else {
+          delete this._events[type];
+        }
+      }
+    }
+
+    return this;
+  };
+
+  EventEmitter.prototype.offAny = function(fn) {
+    var i = 0, l = 0, fns;
+    if (fn && this._all && this._all.length > 0) {
+      fns = this._all;
+      for(i = 0, l = fns.length; i < l; i++) {
+        if(fn === fns[i]) {
+          fns.splice(i, 1);
+          return this;
+        }
+      }
+    } else {
+      this._all = [];
+    }
+    return this;
+  };
+
+  EventEmitter.prototype.removeListener = EventEmitter.prototype.off;
+
+  EventEmitter.prototype.removeAllListeners = function(type) {
+    if (arguments.length === 0) {
+      !this._events || init.call(this);
+      return this;
+    }
+
+    if(this.wildcard) {
+      var ns = typeof type === 'string' ? type.split(this.delimiter) : type.slice();
+      var leafs = searchListenerTree.call(this, null, ns, this.listenerTree, 0);
+
+      for (var iLeaf=0; iLeaf<leafs.length; iLeaf++) {
+        var leaf = leafs[iLeaf];
+        leaf._listeners = null;
+      }
+    }
+    else {
+      if (!this._events[type]) return this;
+      this._events[type] = null;
+    }
+    return this;
+  };
+
+  EventEmitter.prototype.listeners = function(type) {
+    if(this.wildcard) {
+      var handlers = [];
+      var ns = typeof type === 'string' ? type.split(this.delimiter) : type.slice();
+      searchListenerTree.call(this, handlers, ns, this.listenerTree, 0);
+      return handlers;
+    }
+
+    this._events || init.call(this);
+
+    if (!this._events[type]) this._events[type] = [];
+    if (!isArray(this._events[type])) {
+      this._events[type] = [this._events[type]];
+    }
+    return this._events[type];
+  };
+
+  EventEmitter.prototype.listenersAny = function() {
+
+    if(this._all) {
+      return this._all;
+    }
+    else {
+      return [];
+    }
+
+  };
+
+  if (true) {
+     // AMD. Register as an anonymous module.
+    !(__WEBPACK_AMD_DEFINE_RESULT__ = function() {
+      return EventEmitter;
+    }.call(exports, __webpack_require__, exports, module),
+				__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+  } else if (typeof exports === 'object') {
+    // CommonJS
+    exports.EventEmitter2 = EventEmitter;
+  }
+  else {
+    // Browser global.
+    window.EventEmitter2 = EventEmitter;
+  }
+}();
+
+
+/***/ }),
+/* 35 */
+/***/ (function(module, exports) {
+
+/*
+	MIT License http://www.opensource.org/licenses/mit-license.php
+	Author Tobias Koppers @sokra
+*/
+var stylesInDom = {},
+	memoize = function(fn) {
+		var memo;
+		return function () {
+			if (typeof memo === "undefined") memo = fn.apply(this, arguments);
+			return memo;
+		};
+	},
+	isOldIE = memoize(function() {
+		return /msie [6-9]\b/.test(window.navigator.userAgent.toLowerCase());
+	}),
+	getHeadElement = memoize(function () {
+		return document.head || document.getElementsByTagName("head")[0];
+	}),
+	singletonElement = null,
+	singletonCounter = 0,
+	styleElementsInsertedAtTop = [];
+
+module.exports = function(list, options) {
+	if(typeof DEBUG !== "undefined" && DEBUG) {
+		if(typeof document !== "object") throw new Error("The style-loader cannot be used in a non-browser environment");
+	}
+
+	options = options || {};
+	// Force single-tag solution on IE6-9, which has a hard limit on the # of <style>
+	// tags it will allow on a page
+	if (typeof options.singleton === "undefined") options.singleton = isOldIE();
+
+	// By default, add <style> tags to the bottom of <head>.
+	if (typeof options.insertAt === "undefined") options.insertAt = "bottom";
+
+	var styles = listToStyles(list);
+	addStylesToDom(styles, options);
+
+	return function update(newList) {
+		var mayRemove = [];
+		for(var i = 0; i < styles.length; i++) {
+			var item = styles[i];
+			var domStyle = stylesInDom[item.id];
+			domStyle.refs--;
+			mayRemove.push(domStyle);
+		}
+		if(newList) {
+			var newStyles = listToStyles(newList);
+			addStylesToDom(newStyles, options);
+		}
+		for(var i = 0; i < mayRemove.length; i++) {
+			var domStyle = mayRemove[i];
+			if(domStyle.refs === 0) {
+				for(var j = 0; j < domStyle.parts.length; j++)
+					domStyle.parts[j]();
+				delete stylesInDom[domStyle.id];
+			}
+		}
+	};
+}
+
+function addStylesToDom(styles, options) {
+	for(var i = 0; i < styles.length; i++) {
+		var item = styles[i];
+		var domStyle = stylesInDom[item.id];
+		if(domStyle) {
+			domStyle.refs++;
+			for(var j = 0; j < domStyle.parts.length; j++) {
+				domStyle.parts[j](item.parts[j]);
+			}
+			for(; j < item.parts.length; j++) {
+				domStyle.parts.push(addStyle(item.parts[j], options));
+			}
+		} else {
+			var parts = [];
+			for(var j = 0; j < item.parts.length; j++) {
+				parts.push(addStyle(item.parts[j], options));
+			}
+			stylesInDom[item.id] = {id: item.id, refs: 1, parts: parts};
+		}
+	}
+}
+
+function listToStyles(list) {
+	var styles = [];
+	var newStyles = {};
+	for(var i = 0; i < list.length; i++) {
+		var item = list[i];
+		var id = item[0];
+		var css = item[1];
+		var media = item[2];
+		var sourceMap = item[3];
+		var part = {css: css, media: media, sourceMap: sourceMap};
+		if(!newStyles[id])
+			styles.push(newStyles[id] = {id: id, parts: [part]});
+		else
+			newStyles[id].parts.push(part);
+	}
+	return styles;
+}
+
+function insertStyleElement(options, styleElement) {
+	var head = getHeadElement();
+	var lastStyleElementInsertedAtTop = styleElementsInsertedAtTop[styleElementsInsertedAtTop.length - 1];
+	if (options.insertAt === "top") {
+		if(!lastStyleElementInsertedAtTop) {
+			head.insertBefore(styleElement, head.firstChild);
+		} else if(lastStyleElementInsertedAtTop.nextSibling) {
+			head.insertBefore(styleElement, lastStyleElementInsertedAtTop.nextSibling);
+		} else {
+			head.appendChild(styleElement);
+		}
+		styleElementsInsertedAtTop.push(styleElement);
+	} else if (options.insertAt === "bottom") {
+		head.appendChild(styleElement);
+	} else {
+		throw new Error("Invalid value for parameter 'insertAt'. Must be 'top' or 'bottom'.");
+	}
+}
+
+function removeStyleElement(styleElement) {
+	styleElement.parentNode.removeChild(styleElement);
+	var idx = styleElementsInsertedAtTop.indexOf(styleElement);
+	if(idx >= 0) {
+		styleElementsInsertedAtTop.splice(idx, 1);
+	}
+}
+
+function createStyleElement(options) {
+	var styleElement = document.createElement("style");
+	styleElement.type = "text/css";
+	insertStyleElement(options, styleElement);
+	return styleElement;
+}
+
+function createLinkElement(options) {
+	var linkElement = document.createElement("link");
+	linkElement.rel = "stylesheet";
+	insertStyleElement(options, linkElement);
+	return linkElement;
+}
+
+function addStyle(obj, options) {
+	var styleElement, update, remove;
+
+	if (options.singleton) {
+		var styleIndex = singletonCounter++;
+		styleElement = singletonElement || (singletonElement = createStyleElement(options));
+		update = applyToSingletonTag.bind(null, styleElement, styleIndex, false);
+		remove = applyToSingletonTag.bind(null, styleElement, styleIndex, true);
+	} else if(obj.sourceMap &&
+		typeof URL === "function" &&
+		typeof URL.createObjectURL === "function" &&
+		typeof URL.revokeObjectURL === "function" &&
+		typeof Blob === "function" &&
+		typeof btoa === "function") {
+		styleElement = createLinkElement(options);
+		update = updateLink.bind(null, styleElement);
+		remove = function() {
+			removeStyleElement(styleElement);
+			if(styleElement.href)
+				URL.revokeObjectURL(styleElement.href);
+		};
+	} else {
+		styleElement = createStyleElement(options);
+		update = applyToTag.bind(null, styleElement);
+		remove = function() {
+			removeStyleElement(styleElement);
+		};
+	}
+
+	update(obj);
+
+	return function updateStyle(newObj) {
+		if(newObj) {
+			if(newObj.css === obj.css && newObj.media === obj.media && newObj.sourceMap === obj.sourceMap)
+				return;
+			update(obj = newObj);
+		} else {
+			remove();
+		}
+	};
+}
+
+var replaceText = (function () {
+	var textStore = [];
+
+	return function (index, replacement) {
+		textStore[index] = replacement;
+		return textStore.filter(Boolean).join('\n');
+	};
+})();
+
+function applyToSingletonTag(styleElement, index, remove, obj) {
+	var css = remove ? "" : obj.css;
+
+	if (styleElement.styleSheet) {
+		styleElement.styleSheet.cssText = replaceText(index, css);
+	} else {
+		var cssNode = document.createTextNode(css);
+		var childNodes = styleElement.childNodes;
+		if (childNodes[index]) styleElement.removeChild(childNodes[index]);
+		if (childNodes.length) {
+			styleElement.insertBefore(cssNode, childNodes[index]);
+		} else {
+			styleElement.appendChild(cssNode);
+		}
+	}
+}
+
+function applyToTag(styleElement, obj) {
+	var css = obj.css;
+	var media = obj.media;
+
+	if(media) {
+		styleElement.setAttribute("media", media)
+	}
+
+	if(styleElement.styleSheet) {
+		styleElement.styleSheet.cssText = css;
+	} else {
+		while(styleElement.firstChild) {
+			styleElement.removeChild(styleElement.firstChild);
+		}
+		styleElement.appendChild(document.createTextNode(css));
+	}
+}
+
+function updateLink(linkElement, obj) {
+	var css = obj.css;
+	var sourceMap = obj.sourceMap;
+
+	if(sourceMap) {
+		// http://stackoverflow.com/a/26603875
+		css += "\n/*# sourceMappingURL=data:application/json;base64," + btoa(unescape(encodeURIComponent(JSON.stringify(sourceMap)))) + " */";
+	}
+
+	var blob = new Blob([css], { type: "text/css" });
+
+	var oldSrc = linkElement.href;
+
+	linkElement.href = URL.createObjectURL(blob);
+
+	if(oldSrc)
+		URL.revokeObjectURL(oldSrc);
+}
+
+
+/***/ }),
+/* 36 */
+/***/ (function(module, exports, __webpack_require__) {
+
+// style-loader: Adds some css to the DOM by adding a <style> tag
+
+// load the styles
+var content = __webpack_require__(32);
+if(typeof content === 'string') content = [[module.i, content, '']];
+// add the styles to the DOM
+var update = __webpack_require__(35)(content, {});
+if(content.locals) module.exports = content.locals;
+// Hot Module Replacement
+if(false) {
+	// When the styles change, update the <style> tags
+	if(!content.locals) {
+		module.hot.accept("!!./../../node_modules/css-loader/index.js!./../../node_modules/sass-loader/lib/loader.js!./drawing-tool.scss", function() {
+			var newContent = require("!!./../../node_modules/css-loader/index.js!./../../node_modules/sass-loader/lib/loader.js!./drawing-tool.scss");
+			if(typeof newContent === 'string') newContent = [[module.id, newContent, '']];
+			update(newContent);
+		});
+	}
+	// When the module is disposed, remove the <style> tags
+	module.hot.dispose(function() { update(); });
+}
+
+/***/ }),
+/* 37 */
+/***/ (function(module, exports) {
+
+module.exports = "data:application/x-font-ttf;base64,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"
+
+/***/ }),
+/* 38 */
+/***/ (function(module, exports) {
+
+module.exports = "data:application/font-woff;base64,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"
+
+/***/ }),
+/* 39 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var DrawingTool = __webpack_require__(10);
+
+module.exports = DrawingTool;
+
+
+/***/ }),
+/* 40 */
+/***/ (function(module, exports) {
+
+
+function FirebaseImp(setDataMethod) {
+  this.user = null;
+  this.token = null;
+  this.clientSetDataMethod = setDataMethod;
+  this.refName = 'drawToolSerialData';
+  this.config = {
+    apiKey: "AIzaSyDUm2l464Cw7IVtBef4o55key6sp5JYgDk",
+    authDomain: "colabdraw.firebaseapp.com",
+    databaseURL: "https://colabdraw.firebaseio.com",
+    storageBucket: "colabdraw.appspot.com",
+    messagingSenderId: "432582594397"
+  };
+  this.initFirebase();
+}
+
+FirebaseImp.prototype.log = function(mesg) {
+  console.log(mesg);
+};
+
+FirebaseImp.prototype.error = function(error) {
+  this.log(error);
+};
+
+FirebaseImp.prototype.reqAuth = function() {
+  var provider = new firebase.auth.GoogleAuthProvider();
+  firebase.auth().signInWithRedirect  (provider)
+  .then(this.finishAuth.bind(this))
+  .catch(this.failAuth.bind(this));
+};
+
+FirebaseImp.prototype.failAuth = function(error) {
+  var errorCode = error.code;
+  var errorMessage = error.message;
+  var email = error.email;
+  var credential = error.credential;
+  this.error(
+  ["couldn't authenticate", errorMessage, error.email]
+  .join(" ")
+  );
+};
+
+FirebaseImp.prototype.finishAuth = function(result) {
+  this.user = result.user;
+  this.dataRef = firebase.database().ref(this.refName);
+  this.registerListeners();
+  this.log('logged in');
+};
+
+FirebaseImp.prototype.registerListeners = function() {
+  console.log("registering listeners");
+  var ref = this.dataRef;
+  var setData = this.clientSetDataMethod.bind(this);
+
+  ref.on('value', function(data){
+    console.log(data.val());
+    console.log('value');
+    setData(data.val());
+  });
+
+  ref.on('child_changed', function(data){
+    console.log(data);
+    console.log('child_changed');
+  });
+    ref.on('child_added', function(data){
+    console.log(data);
+    console.log('child added');
+  });
+
+  ref.on('child_removed', function(data){
+    console.log(data);
+    console.log('child removed');
+  });
+};
+
+FirebaseImp.prototype.update = function(data) {
+  this.log(this.dataRef.update({'serializedData': data}));
+};
+
+FirebaseImp.prototype.initFirebase = function() {
+  firebase.initializeApp(this.config);
+  var finishAuth = this.finishAuth.bind(this);
+  var reqAuth    = this.reqAuth.bind(this);
+  firebase.auth().onAuthStateChanged(function(user) {
+    if (user) {
+      console.log(user.displayName + " authenticated");
+      finishAuth({result: {user: user}});
+    } else {
+      reqAuth();
+    }
+  });
+};
+
+module.exports = FirebaseImp;
+
+
+/***/ })
+/******/ ]);
+});

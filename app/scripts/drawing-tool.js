@@ -2,6 +2,8 @@
 var $                 = require('jquery');
 var fabric            = require('fabric');
 var EventEmitter2     = require('eventemitter2');
+var queryString       = require('query-string');
+
 var SelectionTool     = require('./tools/select-tool');
 var LineTool          = require('./tools/shape-tools/line-tool');
 var BasicShapeTool    = require('./tools/shape-tools/basic-shape-tool');
@@ -15,7 +17,7 @@ var UndoRedo          = require('./undo-redo');
 var convertState      = require('./convert-state');
 var rescale2resize    = require('./fabric-extensions/rescale-2-resize');
 var multitouchSupport = require('./fabric-extensions/multi-touch-support');
-var FireBase          = require('./firebase');
+var FireBaseStorage   = require('./storage/firebase');
 
 require('../styles/drawing-tool.scss');
 
@@ -84,8 +86,8 @@ function DrawingTool(selector, options, settings) {
   this._initDOM();
   this._initFabricJS();
   this._setDimensions(this.options.width, this.options.height);
+  this._initStores();
   this._initTools();
-  this._initFirebase();
   this._initStateHistory();
 
   new UIManager(this);
@@ -175,7 +177,7 @@ DrawingTool.prototype.save = function () {
   if (selectionCleared) {
     this.select(selection);
   }
-  if(this.firebase) { this.firebase.update(result ); }
+  this.notifySave(result);
   return result;
 };
 
@@ -575,7 +577,8 @@ DrawingTool.prototype.on = function () {
   this._dispatch.on.apply(this._dispatch, arguments);
 };
 
-DrawingTool.prototype.off = function (name, handler) {
+// off (name, handler)
+DrawingTool.prototype.off = function () {
   this._dispatch.off.apply(this._dispatch, arguments);
 };
 
@@ -709,7 +712,7 @@ DrawingTool.prototype._initFabricJS = function () {
     this.canvas.perPixelTargetFind = true;
     this.canvas.targetFindTolerance = 12;
   }
-  this.canvas.setBackgroundColor("#fff");
+  this.canvas.setBackgroundColor('#fff');
 };
 
 DrawingTool.prototype._setDimensions = function (width, height) {
@@ -730,25 +733,50 @@ DrawingTool.prototype._setDimensions = function (width, height) {
   }
 };
 
-DrawingTool.prototype._initFirebase = function() {
-  var _loader = this.load.bind(this);
-  var loadFunction = function(data) {
-    if(data.serializedData){
-      // use strings for now...
-      // if(data.serializedData.version ) {
-        var d = data.serializedData;
-        _loader(d);
-      // }
-    }
-  };
-  this.firebase = new FireBase(loadFunction);
-};
-
 DrawingTool.prototype._initStateHistory = function () {
   this._history = new UndoRedo(this);
   this.canvas.on('object:modified', function () {
     this.pushToHistory();
   }.bind(this));
+};
+
+DrawingTool.prototype._initStores = function() {
+  this.stores = [];
+  var params = queryString.parse(location.search);
+  var firebaseKey = params.firebaseKey || this.options.firebaseKey;
+  if(firebaseKey) {
+    var fireBaseimp = new FireBaseStorage(firebaseKey);
+    this.addStore(fireBaseimp);
+  }
+};
+
+DrawingTool.prototype.addStore = function(storeImp) {
+  var loadFunction = this.load.bind(this);
+  var stores = this.stores;
+  if(stores.indexOf(storeImp) == -1) {
+    storeImp.setLoadFunction(loadFunction);
+    this.stores.push(storeImp);
+  }
+};
+
+DrawingTool.prototype.notifySave = function(serializedJson) {
+  var store = null;
+  var stores = this.stores || [];
+  for(var i=0; i < stores.length; i++) {
+    store = stores[i];
+    if(typeof store.save === 'function'){
+      try {
+        store.save(serializedJson);
+      }
+      catch (problem) {
+        console.error('unable to call `save(serializedJson)` on store');
+        console.error(problem);
+      }
+    }
+    else {
+      console.error('store does not implement required `save(serializedJson)` function!');
+    }
+  }
 };
 
 module.exports = DrawingTool;

@@ -26,5 +26,6 @@ node_modules/
 # Brunch folder for temporary files.
 tmp/
 
-# Bower stuff.
-bower_components/
+# dist folders
+dist/*
+__gh-pages-tmp__/

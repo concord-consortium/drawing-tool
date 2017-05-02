@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>HTML5 Drawing Tool Demo</title>
+    <script
+      src="https://www.gstatic.com/firebasejs/3.6.9/firebase.js">
+    </script>
+
+
+  	<link rel="stylesheet" type="text/css" href="drawing-tool.css">
+    <style type="text/css">
+      body {
+        font-family: Arial;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+        <div id="drawing-tool"></div>
+    </div>
+  <script src="vendor.js"></script>
+  <script src="drawing-tool.js"></script>
+  <script>
+    var drawingTool = new DrawingTool("#drawing-tool", {
+      firebaseKey: 'drawing-tool-demo',
+      backgroundImage: 'big.jpg',
+      stamps: {
+        'Molecules': [
+          'https://interactions-resources.concord.org/stamps/simple-atom.svg',
+          'https://interactions-resources.concord.org/stamps/diatomic.svg',
+          'https://interactions-resources.concord.org/stamps/diatomic-red.svg',
+          'https://interactions-resources.concord.org/stamps/triatomic.svg',
+          'https://interactions-resources.concord.org/stamps/positive-charge-symbol.svg',
+          'https://interactions-resources.concord.org/stamps/negative-charge-symbol.svg',
+          'https://interactions-resources.concord.org/stamps/positive-atom.svg',
+          'https://interactions-resources.concord.org/stamps/negative-atom.svg',
+          'https://interactions-resources.concord.org/stamps/slow-particle.svg',
+          'https://interactions-resources.concord.org/stamps/medium-particle.svg',
+          'https://interactions-resources.concord.org/stamps/fast-particle.svg',
+          'https://interactions-resources.concord.org/stamps/low-density-particles.svg'
+        ]
+      },
+      parseSVG: true
+    });
+    // call this method to set background image one time.
+  </script>
+  </body>
+</html>

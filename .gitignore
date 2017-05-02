@@ -27,5 +27,4 @@ node_modules/
 tmp/
 
 # dist folders
-dist/*
 __gh-pages-tmp__/

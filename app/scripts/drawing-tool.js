@@ -755,9 +755,8 @@ DrawingTool.prototype._initStateHistory = function () {
 DrawingTool.prototype._initStores = function() {
   this.stores = [];
   var params = queryString.parse(location.search);
-  var firebaseKey = params.firebaseKey || this.options.firebaseKey;
-  if(firebaseKey) {
-    var fireBaseimp = new FireBaseStorage(firebaseKey);
+  if(params.firebaseKey) {
+    var fireBaseimp = new FireBaseStorage(params);
     this.addStore(fireBaseimp);
   }
 };

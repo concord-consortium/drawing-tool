@@ -1649,9 +1649,8 @@ DrawingTool.prototype._initStateHistory = function () {
 DrawingTool.prototype._initStores = function() {
   this.stores = [];
   var params = queryString.parse(location.search);
-  var firebaseKey = params.firebaseKey || this.options.firebaseKey;
-  if(firebaseKey) {
-    var fireBaseimp = new FireBaseStorage(firebaseKey);
+  if(params.firebaseKey) {
+    var fireBaseimp = new FireBaseStorage(params);
     this.addStore(fireBaseimp);
   }
 };
@@ -2228,14 +2227,16 @@ $.fn.longPress = function(listener, timeout) {
 
 /***/ }),
 /* 16 */
-/***/ (function(module, exports) {
+/***/ (function(module, exports, __webpack_require__) {
 
-/* global firebase module */
+/* global firebase require module */
+var queryString = __webpack_require__(37);
 
-function FirebaseImp(firebaseKey) {
+function FirebaseImp(params) {
   this.user = null;
   this.token = null;
-  this.refName = firebaseKey;
+  this.refName = params.firebaseKey;
+  this.newRefName = params.newKey;
   this.config = {
     apiKey: 'AIzaSyDUm2l464Cw7IVtBef4o55key6sp5JYgDk',
     authDomain: 'colabdraw.firebaseapp.com',
@@ -2252,6 +2253,14 @@ FirebaseImp.prototype.log = function(mesg) {
 
 FirebaseImp.prototype.error = function(error) {
   console.error(error);
+};
+
+FirebaseImp.prototype.rewriteParams = function() {
+  var params = queryString.parse(location.search);
+  params.firebaseKey = params.newKey;
+  delete params.newKey;
+  var stringifiedParams = queryString.stringify(params);
+  location.search = stringifiedParams;
 };
 
 FirebaseImp.prototype.reqAuth = function() {
@@ -2280,8 +2289,13 @@ FirebaseImp.prototype.registerListeners = function() {
   var setData = this.loadCallback;
   var log = this.log.bind(this);
   ref.on('value', function(data){
-    setData(data.val().rawData || {});
-  });
+    var d = data.val().rawData;
+    setData(d || {});
+    if(this.newRefName && d) {
+      this.swapRefs();
+      this.update(d);
+    }
+  }.bind(this));
 
   // The following methods are here to document other or
   // better ways of syncing records with firebases API:
@@ -2295,6 +2309,25 @@ FirebaseImp.prototype.update = function(data) {
   if(this.dataRef && this.dataRef.update){
     this.dataRef.update({'rawData': rawData});
   }
+};
+
+FirebaseImp.prototype.swapRefs = function() {
+  this.log('registering listeners');
+  if(this.dataRef) {
+    try {
+      this.dataRef.off();
+    }
+    catch(e) {
+      this.log('couldn\'t disable previous data handler');
+    }
+  }
+  this.dataRef = firebase.database().ref(this.newRefName);
+  // This is the copy operation:
+  if(this.lastData) {
+    this.update(this.lastData);
+  }
+  this.registerListeners();
+  this.rewriteParams();
 };
 
 
@@ -2317,6 +2350,7 @@ FirebaseImp.prototype.initFirebase = function() {
 FirebaseImp.prototype.save = function(data) {
   this.update(data);
 };
+
 FirebaseImp.prototype.setLoadFunction = function(_loadCallback) {
   this.loadCallback = _loadCallback;
 };

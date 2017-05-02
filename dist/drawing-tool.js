@@ -491,6 +491,7 @@ module.exports = Tool;
 /* 6 */
 /***/ (function(module, exports) {
 
+/* global module */
 module.exports = {
   dist: function dist(dx, dy){
     var dx2 = Math.pow(dx, 2);
@@ -895,6 +896,8 @@ module.exports = LineTool;
 var $                 = __webpack_require__(1);
 var fabric            = __webpack_require__(2);
 var EventEmitter2     = __webpack_require__(35);
+var queryString       = __webpack_require__(37);
+
 var SelectionTool     = __webpack_require__(8);
 var LineTool          = __webpack_require__(9);
 var BasicShapeTool    = __webpack_require__(19);
@@ -908,6 +911,7 @@ var UndoRedo          = __webpack_require__(32);
 var convertState      = __webpack_require__(11);
 var rescale2resize    = __webpack_require__(14);
 var multitouchSupport = __webpack_require__(13);
+var FireBaseStorage   = __webpack_require__(16);
 
 __webpack_require__(40);
 
@@ -976,6 +980,7 @@ function DrawingTool(selector, options, settings) {
   this._initDOM();
   this._initFabricJS();
   this._setDimensions(this.options.width, this.options.height);
+  this._initStores();
   this._initTools();
   this._initStateHistory();
 
@@ -990,6 +995,11 @@ function DrawingTool(selector, options, settings) {
   this._fireStateChanged();
   this.chooseTool('select');
   this.pushToHistory();
+
+  // Set background image without adding to state data.
+  if(this.options.backgroundImage) {
+    this._setBackgroundImage(this.options.backgroundImage);
+  }
 }
 
 DrawingTool.prototype.ADDITIONAL_PROPS_TO_SERIALIZE = ADDITIONAL_PROPS_TO_SERIALIZE;
@@ -1066,6 +1076,7 @@ DrawingTool.prototype.save = function () {
   if (selectionCleared) {
     this.select(selection);
   }
+  this.notifySave(result);
   return result;
 };
 
@@ -1078,18 +1089,23 @@ DrawingTool.prototype.save = function () {
  *  - callback: function invoked when load is finished
  *  - noHistoryUpdate: if true, this action won't be saved in undo / redo history
  */
-DrawingTool.prototype.load = function (jsonString, callback, noHistoryUpdate) {
+DrawingTool.prototype.load = function (jsonOrObject, callback, noHistoryUpdate) {
   // When JSON string is not provided (or empty) just clear the canvas.
-  if (!jsonString) {
+  if (!jsonOrObject) {
     this.canvas.clear();
     this.canvas.setBackgroundImage(null);
     this.canvas.renderAll();
     loadFinished.call(this);
     return;
   }
-
-  var state = JSON.parse(jsonString);
-  // Support JSONs saved by older Drawing Tool versions.
+  var state = {};
+  if (typeof jsonOrObject === 'string' || jsonOrObject instanceof String){
+    state = JSON.parse(jsonOrObject);
+  }
+  else {
+    state = jsonOrObject;
+  }
+  
   state = convertState(state);
 
   // Process Drawing Tool specific options.
@@ -1467,7 +1483,8 @@ DrawingTool.prototype.on = function () {
   this._dispatch.on.apply(this._dispatch, arguments);
 };
 
-DrawingTool.prototype.off = function (name, handler) {
+// off (name, handler)
+DrawingTool.prototype.off = function () {
   this._dispatch.off.apply(this._dispatch, arguments);
 };
 
@@ -1601,7 +1618,7 @@ DrawingTool.prototype._initFabricJS = function () {
     this.canvas.perPixelTargetFind = true;
     this.canvas.targetFindTolerance = 12;
   }
-  this.canvas.setBackgroundColor("#fff");
+  this.canvas.setBackgroundColor('#fff');
 };
 
 DrawingTool.prototype._setDimensions = function (width, height) {
@@ -1629,8 +1646,46 @@ DrawingTool.prototype._initStateHistory = function () {
   }.bind(this));
 };
 
-module.exports = DrawingTool;
+DrawingTool.prototype._initStores = function() {
+  this.stores = [];
+  var params = queryString.parse(location.search);
+  var firebaseKey = params.firebaseKey || this.options.firebaseKey;
+  if(firebaseKey) {
+    var fireBaseimp = new FireBaseStorage(firebaseKey);
+    this.addStore(fireBaseimp);
+  }
+};
 
+DrawingTool.prototype.addStore = function(storeImp) {
+  var loadFunction = this.load.bind(this);
+  var stores = this.stores;
+  if(stores.indexOf(storeImp) == -1) {
+    storeImp.setLoadFunction(loadFunction);
+    this.stores.push(storeImp);
+  }
+};
+
+DrawingTool.prototype.notifySave = function(serializedJson) {
+  var store = null;
+  var stores = this.stores || [];
+  for(var i=0; i < stores.length; i++) {
+    store = stores[i];
+    if(typeof store.save === 'function'){
+      try {
+        store.save(serializedJson);
+      }
+      catch (problem) {
+        console.error('unable to call `save(serializedJson)` on store');
+        console.error(problem);
+      }
+    }
+    else {
+      console.error('store does not implement required `save(serializedJson)` function!');
+    }
+  }
+};
+
+module.exports = DrawingTool;
 
 /***/ }),
 /* 11 */
@@ -2172,7 +2227,104 @@ $.fn.longPress = function(listener, timeout) {
 
 
 /***/ }),
-/* 16 */,
+/* 16 */
+/***/ (function(module, exports) {
+
+/* global firebase module */
+
+function FirebaseImp(firebaseKey) {
+  this.user = null;
+  this.token = null;
+  this.refName = firebaseKey;
+  this.config = {
+    apiKey: 'AIzaSyDUm2l464Cw7IVtBef4o55key6sp5JYgDk',
+    authDomain: 'colabdraw.firebaseapp.com',
+    databaseURL: 'https://colabdraw.firebaseio.com',
+    storageBucket: 'colabdraw.appspot.com',
+    messagingSenderId: '432582594397'
+  };
+  this.initFirebase();
+}
+
+FirebaseImp.prototype.log = function(mesg) {
+  console.log(mesg);
+};
+
+FirebaseImp.prototype.error = function(error) {
+  console.error(error);
+};
+
+FirebaseImp.prototype.reqAuth = function() {
+  var provider = new firebase.auth.GoogleAuthProvider();
+  firebase.auth().signInWithRedirect  (provider)
+  .then(this.finishAuth.bind(this))
+  .catch(this.failAuth.bind(this));
+};
+
+FirebaseImp.prototype.failAuth = function(error) {
+  var errorMessage = error.message;
+  const email = error.email;
+  this.error(['could not authenticate', errorMessage, email].join(' '));
+};
+
+FirebaseImp.prototype.finishAuth = function(result) {
+  this.user = result.user;
+  this.dataRef = firebase.database().ref(this.refName);
+  this.registerListeners();
+  this.log('logged in');
+};
+
+FirebaseImp.prototype.registerListeners = function() {
+  this.log('registering listeners');
+  var ref = this.dataRef;
+  var setData = this.loadCallback;
+  var log = this.log.bind(this);
+  ref.on('value', function(data){
+    setData(data.val().rawData || {});
+  });
+
+  // The following methods are here to document other or
+  // better ways of syncing records with firebases API:
+  ref.on('child_changed', function(data){ log('child_changed:' + data);});
+  ref.on('child_added', function(data)  { log('child added: ' + data); });
+  ref.on('child_removed', function(data){ log('child removed: ' + data);});
+};
+
+FirebaseImp.prototype.update = function(data) {
+  var rawData = JSON.parse(data);
+  if(this.dataRef && this.dataRef.update){
+    this.dataRef.update({'rawData': rawData});
+  }
+};
+
+
+FirebaseImp.prototype.initFirebase = function() {
+  firebase.initializeApp(this.config);
+  var finishAuth = this.finishAuth.bind(this);
+  var reqAuth    = this.reqAuth.bind(this);
+  var log        = this.log.bind(this);
+  firebase.auth().onAuthStateChanged(function(user) {
+    if (user) {
+      log(user.displayName + ' authenticated');
+      finishAuth({result: {user: user}});
+    } else {
+      reqAuth();
+    }
+  });
+};
+
+// storeImp  {save, setLoadFunction}
+FirebaseImp.prototype.save = function(data) {
+  this.update(data);
+};
+FirebaseImp.prototype.setLoadFunction = function(_loadCallback) {
+  this.loadCallback = _loadCallback;
+};
+
+module.exports = FirebaseImp;
+
+
+/***/ }),
 /* 17 */
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -2512,6 +2664,9 @@ FreeDrawTool.prototype.mouseUp = function (opt) {
   var objects = this.canvas.getObjects();
   var lastObject = objects[objects.length - 1];
   this.curr = lastObject;
+  // Empty string == transparent
+  // Null or missing values for fill default to rbg(0,0,0)
+  this.curr.fill = this.master.state.fill;
   FreeDrawTool.super.mouseUp.call(this, opt);
   if (!this._locked) {
     this.canvas.isDrawingMode = false;
@@ -4438,9 +4593,326 @@ var __WEBPACK_AMD_DEFINE_RESULT__;/*!
 
 
 /***/ }),
-/* 36 */,
-/* 37 */,
-/* 38 */,
+/* 36 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+/*
+object-assign
+(c) Sindre Sorhus
+@license MIT
+*/
+
+
+/* eslint-disable no-unused-vars */
+var getOwnPropertySymbols = Object.getOwnPropertySymbols;
+var hasOwnProperty = Object.prototype.hasOwnProperty;
+var propIsEnumerable = Object.prototype.propertyIsEnumerable;
+
+function toObject(val) {
+	if (val === null || val === undefined) {
+		throw new TypeError('Object.assign cannot be called with null or undefined');
+	}
+
+	return Object(val);
+}
+
+function shouldUseNative() {
+	try {
+		if (!Object.assign) {
+			return false;
+		}
+
+		// Detect buggy property enumeration order in older V8 versions.
+
+		// https://bugs.chromium.org/p/v8/issues/detail?id=4118
+		var test1 = new String('abc');  // eslint-disable-line no-new-wrappers
+		test1[5] = 'de';
+		if (Object.getOwnPropertyNames(test1)[0] === '5') {
+			return false;
+		}
+
+		// https://bugs.chromium.org/p/v8/issues/detail?id=3056
+		var test2 = {};
+		for (var i = 0; i < 10; i++) {
+			test2['_' + String.fromCharCode(i)] = i;
+		}
+		var order2 = Object.getOwnPropertyNames(test2).map(function (n) {
+			return test2[n];
+		});
+		if (order2.join('') !== '0123456789') {
+			return false;
+		}
+
+		// https://bugs.chromium.org/p/v8/issues/detail?id=3056
+		var test3 = {};
+		'abcdefghijklmnopqrst'.split('').forEach(function (letter) {
+			test3[letter] = letter;
+		});
+		if (Object.keys(Object.assign({}, test3)).join('') !==
+				'abcdefghijklmnopqrst') {
+			return false;
+		}
+
+		return true;
+	} catch (err) {
+		// We don't expect any of the above to throw, but better to be safe.
+		return false;
+	}
+}
+
+module.exports = shouldUseNative() ? Object.assign : function (target, source) {
+	var from;
+	var to = toObject(target);
+	var symbols;
+
+	for (var s = 1; s < arguments.length; s++) {
+		from = Object(arguments[s]);
+
+		for (var key in from) {
+			if (hasOwnProperty.call(from, key)) {
+				to[key] = from[key];
+			}
+		}
+
+		if (getOwnPropertySymbols) {
+			symbols = getOwnPropertySymbols(from);
+			for (var i = 0; i < symbols.length; i++) {
+				if (propIsEnumerable.call(from, symbols[i])) {
+					to[symbols[i]] = from[symbols[i]];
+				}
+			}
+		}
+	}
+
+	return to;
+};
+
+
+/***/ }),
+/* 37 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+var strictUriEncode = __webpack_require__(38);
+var objectAssign = __webpack_require__(36);
+
+function encoderForArrayFormat(opts) {
+	switch (opts.arrayFormat) {
+		case 'index':
+			return function (key, value, index) {
+				return value === null ? [
+					encode(key, opts),
+					'[',
+					index,
+					']'
+				].join('') : [
+					encode(key, opts),
+					'[',
+					encode(index, opts),
+					']=',
+					encode(value, opts)
+				].join('');
+			};
+
+		case 'bracket':
+			return function (key, value) {
+				return value === null ? encode(key, opts) : [
+					encode(key, opts),
+					'[]=',
+					encode(value, opts)
+				].join('');
+			};
+
+		default:
+			return function (key, value) {
+				return value === null ? encode(key, opts) : [
+					encode(key, opts),
+					'=',
+					encode(value, opts)
+				].join('');
+			};
+	}
+}
+
+function parserForArrayFormat(opts) {
+	var result;
+
+	switch (opts.arrayFormat) {
+		case 'index':
+			return function (key, value, accumulator) {
+				result = /\[(\d*)\]$/.exec(key);
+
+				key = key.replace(/\[\d*\]$/, '');
+
+				if (!result) {
+					accumulator[key] = value;
+					return;
+				}
+
+				if (accumulator[key] === undefined) {
+					accumulator[key] = {};
+				}
+
+				accumulator[key][result[1]] = value;
+			};
+
+		case 'bracket':
+			return function (key, value, accumulator) {
+				result = /(\[\])$/.exec(key);
+
+				key = key.replace(/\[\]$/, '');
+
+				if (!result || accumulator[key] === undefined) {
+					accumulator[key] = value;
+					return;
+				}
+
+				accumulator[key] = [].concat(accumulator[key], value);
+			};
+
+		default:
+			return function (key, value, accumulator) {
+				if (accumulator[key] === undefined) {
+					accumulator[key] = value;
+					return;
+				}
+
+				accumulator[key] = [].concat(accumulator[key], value);
+			};
+	}
+}
+
+function encode(value, opts) {
+	if (opts.encode) {
+		return opts.strict ? strictUriEncode(value) : encodeURIComponent(value);
+	}
+
+	return value;
+}
+
+function keysSorter(input) {
+	if (Array.isArray(input)) {
+		return input.sort();
+	} else if (typeof input === 'object') {
+		return keysSorter(Object.keys(input)).sort(function (a, b) {
+			return Number(a) - Number(b);
+		}).map(function (key) {
+			return input[key];
+		});
+	}
+
+	return input;
+}
+
+exports.extract = function (str) {
+	return str.split('?')[1] || '';
+};
+
+exports.parse = function (str, opts) {
+	opts = objectAssign({arrayFormat: 'none'}, opts);
+
+	var formatter = parserForArrayFormat(opts);
+
+	// Create an object with no prototype
+	// https://github.com/sindresorhus/query-string/issues/47
+	var ret = Object.create(null);
+
+	if (typeof str !== 'string') {
+		return ret;
+	}
+
+	str = str.trim().replace(/^(\?|#|&)/, '');
+
+	if (!str) {
+		return ret;
+	}
+
+	str.split('&').forEach(function (param) {
+		var parts = param.replace(/\+/g, ' ').split('=');
+		// Firefox (pre 40) decodes `%3D` to `=`
+		// https://github.com/sindresorhus/query-string/pull/37
+		var key = parts.shift();
+		var val = parts.length > 0 ? parts.join('=') : undefined;
+
+		// missing `=` should be `null`:
+		// http://w3.org/TR/2012/WD-url-20120524/#collect-url-parameters
+		val = val === undefined ? null : decodeURIComponent(val);
+
+		formatter(decodeURIComponent(key), val, ret);
+	});
+
+	return Object.keys(ret).sort().reduce(function (result, key) {
+		var val = ret[key];
+		if (Boolean(val) && typeof val === 'object' && !Array.isArray(val)) {
+			// Sort object keys, not values
+			result[key] = keysSorter(val);
+		} else {
+			result[key] = val;
+		}
+
+		return result;
+	}, Object.create(null));
+};
+
+exports.stringify = function (obj, opts) {
+	var defaults = {
+		encode: true,
+		strict: true,
+		arrayFormat: 'none'
+	};
+
+	opts = objectAssign(defaults, opts);
+
+	var formatter = encoderForArrayFormat(opts);
+
+	return obj ? Object.keys(obj).sort().map(function (key) {
+		var val = obj[key];
+
+		if (val === undefined) {
+			return '';
+		}
+
+		if (val === null) {
+			return encode(key, opts);
+		}
+
+		if (Array.isArray(val)) {
+			var result = [];
+
+			val.slice().forEach(function (val2) {
+				if (val2 === undefined) {
+					return;
+				}
+
+				result.push(formatter(key, val2, result.length));
+			});
+
+			return result.join('&');
+		}
+
+		return encode(key, opts) + '=' + encode(val, opts);
+	}).filter(function (x) {
+		return x.length > 0;
+	}).join('&') : '';
+};
+
+
+/***/ }),
+/* 38 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+module.exports = function (str) {
+	return encodeURIComponent(str).replace(/[!'()*]/g, function (c) {
+		return '%' + c.charCodeAt(0).toString(16).toUpperCase();
+	});
+};
+
+
+/***/ }),
 /* 39 */
 /***/ (function(module, exports) {
 

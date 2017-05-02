@@ -48,7 +48,7 @@ FirebaseImp.prototype.registerListeners = function() {
   var setData = this.loadCallback;
   var log = this.log.bind(this);
   ref.on('value', function(data){
-    setData(data.val().serializedData);
+    setData(data.val().rawData || {});
   });
 
   // The following methods are here to document other or
@@ -59,8 +59,9 @@ FirebaseImp.prototype.registerListeners = function() {
 };
 
 FirebaseImp.prototype.update = function(data) {
+  var rawData = JSON.parse(data);
   if(this.dataRef && this.dataRef.update){
-    this.dataRef.update({'serializedData': data});
+    this.dataRef.update({'rawData': rawData});
   }
 };
 

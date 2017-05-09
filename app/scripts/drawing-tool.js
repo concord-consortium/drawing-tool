@@ -2,7 +2,6 @@
 var $                 = require('jquery');
 var fabric            = require('fabric');
 var EventEmitter2     = require('eventemitter2');
-var queryString       = require('query-string');
 
 var SelectionTool     = require('./tools/select-tool');
 var LineTool          = require('./tools/shape-tools/line-tool');
@@ -17,7 +16,6 @@ var UndoRedo          = require('./undo-redo');
 var convertState      = require('./convert-state');
 var rescale2resize    = require('./fabric-extensions/rescale-2-resize');
 var multitouchSupport = require('./fabric-extensions/multi-touch-support');
-var FireBaseStorage   = require('./storage/firebase');
 
 require('../styles/drawing-tool.scss');
 
@@ -754,11 +752,6 @@ DrawingTool.prototype._initStateHistory = function () {
 
 DrawingTool.prototype._initStores = function() {
   this.stores = [];
-  var params = queryString.parse(location.search);
-  if(params.firebaseKey) {
-    var fireBaseimp = new FireBaseStorage(params);
-    this.addStore(fireBaseimp);
-  }
 };
 
 DrawingTool.prototype.addStore = function(storeImp) {

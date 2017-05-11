@@ -43,6 +43,9 @@ FreeDrawTool.prototype.mouseUp = function (opt) {
   var objects = this.canvas.getObjects();
   var lastObject = objects[objects.length - 1];
   this.curr = lastObject;
+  // Empty string == transparent
+  // Null or missing values for fill default to rbg(0,0,0)
+  this.curr.fill = this.master.state.fill;
   FreeDrawTool.super.mouseUp.call(this, opt);
   if (!this._locked) {
     this.canvas.isDrawingMode = false;

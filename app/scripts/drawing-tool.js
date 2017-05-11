@@ -1,3 +1,4 @@
+/* global module require */
 var $                 = require('jquery');
 var fabric            = require('fabric');
 var EventEmitter2     = require('eventemitter2');
@@ -33,7 +34,7 @@ var DEF_OPTIONS = {
 
 var DEF_STATE = {
   stroke: '#333',
-  fill: "",
+  fill: '',
   strokeWidth: 8,
   fontSize: 27
 };
@@ -152,7 +153,7 @@ DrawingTool.prototype.save = function () {
   // 2. There is a group selection (so selection is an array). Note that #toJSON method
   //    of canvas will discard group selection (and recreate it later) to ensure that all
   //    transformations applied to group will be applied to particular objects. However
-  //    this happens without firing "before:selection:cleared" event that is used by
+  //    this happens without firing 'before:selection:cleared' event that is used by
   //    our custom rescale-2-resize behavior. So remove and recreate selection manually
   //    to and make sure that this even will be dispatched (#clearSelection does that).
   var selectionCleared = false;
@@ -256,7 +257,7 @@ DrawingTool.prototype.redo = function () {
 
 DrawingTool.prototype.resetHistory = function () {
   this._history.reset();
-  // Push the "initial" state.
+  // Push the 'initial' state.
   // We can't use public 'pushToHistory', 'drawing:changed' event shouldn't be emitted.
   this._history.saveState();
   this._fireHistoryEvents();
@@ -447,15 +448,15 @@ DrawingTool.prototype._sendSelectionTo = function (where) {
  * parameters:
  *  - imageSrc: string with location of the image
  *  - fit: (string) how to put the image into the canvas
- *        ex: "resizeBackgroundToCanvas" or "resizeCanvasToBackground"
+ *        ex: 'resizeBackgroundToCanvas' or 'resizeCanvasToBackground'
  *  - callback: function which is called when background image is loaded and set.
  */
 DrawingTool.prototype.setBackgroundImage = function (imageSrc, fit, callback) {
   this._setBackgroundImage(imageSrc, null, function () {
     switch (fit) {
-      case "resizeBackgroundToCanvas": this.resizeBackgroundToCanvas(); break;
-      case "resizeCanvasToBackground": this.resizeCanvasToBackground(); break;
-      case "shrinkBackgroundToCanvas": this.shrinkBackgroundToCanvas(); break;
+      case 'resizeBackgroundToCanvas': this.resizeBackgroundToCanvas(); break;
+      case 'resizeCanvasToBackground': this.resizeCanvasToBackground(); break;
+      case 'shrinkBackgroundToCanvas': this.shrinkBackgroundToCanvas(); break;
     }
     this.pushToHistory();
     if (typeof callback === 'function') {
@@ -516,7 +517,7 @@ DrawingTool.prototype.setDimensions = function (width, height) {
 /**
  * Calculates canvas element offset relative to the document.
  * Call this method when Drawing Tool container position is updated.
- * This method is attached as "resize" event handler of window (by FabricJS itself).
+ * This method is attached as 'resize' event handler of window (by FabricJS itself).
  */
 DrawingTool.prototype.calcOffset = function () {
   this.canvas.calcOffset();
@@ -667,19 +668,19 @@ DrawingTool.prototype._setBackgroundImage = function (imageSrc, options, backgro
 DrawingTool.prototype._initTools = function () {
   // Initialize all the tools, they add themselves to the tools hash.
   this.tools = {
-    select:      new SelectionTool("Selection Tool", this),
-    line:        new LineTool("Line Tool", this),
-    arrow:       new LineTool("Arrow Tool", this, "arrow"),
-    doubleArrow: new LineTool("Double Arrow Tool", this, "arrow", {doubleArrowhead: true}),
-    rect:        new BasicShapeTool("Rectangle Tool", this, "rect"),
-    ellipse:     new BasicShapeTool("Ellipse Tool", this, "ellipse"),
-    square:      new BasicShapeTool("Square Tool", this, "square"),
-    circle:      new BasicShapeTool("Circle Tool", this, "circle"),
-    free:        new FreeDrawTool("Free Draw Tool", this),
-    stamp:       new StampTool("Stamp Tool", this, this.options.parseSVG),
-    text:        new TextTool("Text Tool", this),
-    trash:       new DeleteTool("Delete Tool", this),
-    clone:       new CloneTool("Clone Tool", this)
+    select:      new SelectionTool('Selection Tool', this),
+    line:        new LineTool('Line Tool', this),
+    arrow:       new LineTool('Arrow Tool', this, 'arrow'),
+    doubleArrow: new LineTool('Double Arrow Tool', this, 'arrow', {doubleArrowhead: true}),
+    rect:        new BasicShapeTool('Rectangle Tool', this, 'rect'),
+    ellipse:     new BasicShapeTool('Ellipse Tool', this, 'ellipse'),
+    square:      new BasicShapeTool('Square Tool', this, 'square'),
+    circle:      new BasicShapeTool('Circle Tool', this, 'circle'),
+    free:        new FreeDrawTool('Free Draw Tool', this),
+    stamp:       new StampTool('Stamp Tool', this, this.options.parseSVG),
+    text:        new TextTool('Text Tool', this),
+    trash:       new DeleteTool('Delete Tool', this),
+    clone:       new CloneTool('Clone Tool', this)
   };
 };
 

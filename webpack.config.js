@@ -1,3 +1,5 @@
+/* global require module */
+
 var path = require('path');
 var CopyWebpackPlugin = require('copy-webpack-plugin');
 
@@ -14,11 +16,11 @@ module.exports = {
       {
         test: /\.scss$/,
         use: [{
-          loader: "style-loader" // creates style nodes from JS strings
+          loader: 'style-loader' // creates style nodes from JS strings
         }, {
-          loader: "css-loader" // translates CSS into CommonJS
+          loader: 'css-loader' // translates CSS into CommonJS
         }, {
-          loader: "sass-loader" // compiles Sass to CSS
+          loader: 'sass-loader' // compiles Sass to CSS
         }]
       },
       {
@@ -34,8 +36,8 @@ module.exports = {
     ])
   ],
   externals: {
-    // require("jquery") is external and available on the global var jQuery
-    "jquery": "jQuery",
-    "fabric": "fabric"
+    // require('jquery') is external and available on the global var jQuery
+    'jquery': 'jQuery',
+    'fabric': 'fabric'
   }
 };

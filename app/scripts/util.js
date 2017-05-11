@@ -1,3 +1,4 @@
+/* global module */
 module.exports = {
   dist: function dist(dx, dy){
     var dx2 = Math.pow(dx, 2);

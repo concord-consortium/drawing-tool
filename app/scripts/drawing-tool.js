@@ -2,6 +2,7 @@
 var $                 = require('jquery');
 var fabric            = require('fabric');
 var EventEmitter2     = require('eventemitter2');
+
 var SelectionTool     = require('./tools/select-tool');
 var LineTool          = require('./tools/shape-tools/line-tool');
 var BasicShapeTool    = require('./tools/shape-tools/basic-shape-tool');
@@ -83,6 +84,7 @@ function DrawingTool(selector, options, settings) {
   this._initDOM();
   this._initFabricJS();
   this._setDimensions(this.options.width, this.options.height);
+  this._initStores();
   this._initTools();
   this._initStateHistory();
 
@@ -97,6 +99,11 @@ function DrawingTool(selector, options, settings) {
   this._fireStateChanged();
   this.chooseTool('select');
   this.pushToHistory();
+
+  // Set background image without adding to state data.
+  if(this.options.backgroundImage) {
+    this._setBackgroundImage(this.options.backgroundImage);
+  }
 }
 
 DrawingTool.prototype.ADDITIONAL_PROPS_TO_SERIALIZE = ADDITIONAL_PROPS_TO_SERIALIZE;
@@ -173,6 +180,7 @@ DrawingTool.prototype.save = function () {
   if (selectionCleared) {
     this.select(selection);
   }
+  this.notifySave(result);
   return result;
 };
 
@@ -185,18 +193,23 @@ DrawingTool.prototype.save = function () {
  *  - callback: function invoked when load is finished
  *  - noHistoryUpdate: if true, this action won't be saved in undo / redo history
  */
-DrawingTool.prototype.load = function (jsonString, callback, noHistoryUpdate) {
+DrawingTool.prototype.load = function (jsonOrObject, callback, noHistoryUpdate) {
   // When JSON string is not provided (or empty) just clear the canvas.
-  if (!jsonString) {
+  if (!jsonOrObject) {
     this.canvas.clear();
     this.canvas.setBackgroundImage(null);
     this.canvas.renderAll();
     loadFinished.call(this);
     return;
   }
-
-  var state = JSON.parse(jsonString);
-  // Support JSONs saved by older Drawing Tool versions.
+  var state = {};
+  if (typeof jsonOrObject === 'string' || jsonOrObject instanceof String){
+    state = JSON.parse(jsonOrObject);
+  }
+  else {
+    state = jsonOrObject;
+  }
+  
   state = convertState(state);
 
   // Process Drawing Tool specific options.
@@ -574,7 +587,8 @@ DrawingTool.prototype.on = function () {
   this._dispatch.on.apply(this._dispatch, arguments);
 };
 
-DrawingTool.prototype.off = function (name, handler) {
+// off (name, handler)
+DrawingTool.prototype.off = function () {
   this._dispatch.off.apply(this._dispatch, arguments);
 };
 
@@ -708,7 +722,7 @@ DrawingTool.prototype._initFabricJS = function () {
     this.canvas.perPixelTargetFind = true;
     this.canvas.targetFindTolerance = 12;
   }
-  this.canvas.setBackgroundColor("#fff");
+  this.canvas.setBackgroundColor('#fff');
 };
 
 DrawingTool.prototype._setDimensions = function (width, height) {
@@ -734,6 +748,39 @@ DrawingTool.prototype._initStateHistory = function () {
   this.canvas.on('object:modified', function () {
     this.pushToHistory();
   }.bind(this));
+};
+
+DrawingTool.prototype._initStores = function() {
+  this.stores = [];
+};
+
+DrawingTool.prototype.addStore = function(storeImp) {
+  var loadFunction = this.load.bind(this);
+  var stores = this.stores;
+  if(stores.indexOf(storeImp) == -1) {
+    storeImp.setLoadFunction(loadFunction);
+    this.stores.push(storeImp);
+  }
+};
+
+DrawingTool.prototype.notifySave = function(serializedJson) {
+  var store = null;
+  var stores = this.stores || [];
+  for(var i=0; i < stores.length; i++) {
+    store = stores[i];
+    if(typeof store.save === 'function'){
+      try {
+        store.save(serializedJson);
+      }
+      catch (problem) {
+        console.error('unable to call `save(serializedJson)` on store');
+        console.error(problem);
+      }
+    }
+    else {
+      console.error('store does not implement required `save(serializedJson)` function!');
+    }
+  }
 };
 
 module.exports = DrawingTool;

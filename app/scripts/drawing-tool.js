@@ -56,7 +56,7 @@ var EVENTS = {
 
 // Note that some object properties aren't serialized by default by FabricJS.
 // List them here so they can be serialized.
-var ADDITIONAL_PROPS_TO_SERIALIZE = ['lockUniScaling'];
+var ADDITIONAL_PROPS_TO_SERIALIZE = ['lockUniScaling', '_uuid', '_clientId'];
 
 /**
  * DrawingTool Constructor
@@ -83,6 +83,7 @@ function DrawingTool(selector, options, settings) {
 
   this._initDOM();
   this._initFabricJS();
+  this._trackTextChangesAndAddUUID();
   this._setDimensions(this.options.width, this.options.height);
   this._initStores();
   this._initTools();
@@ -209,8 +210,11 @@ DrawingTool.prototype.load = function (jsonOrObject, callback, noHistoryUpdate) 
   else {
     state = jsonOrObject;
   }
-  
+
   state = convertState(state);
+
+  var activeObject = this.canvas.getActiveObject();
+  var activeObjectUUID = activeObject ? activeObject._uuid : undefined;
 
   // Process Drawing Tool specific options.
   var dtState = state.dt;
@@ -238,6 +242,31 @@ DrawingTool.prototype.load = function (jsonOrObject, callback, noHistoryUpdate) 
   $.when(loadDef, bgImgDef).done(loadFinished.bind(this));
 
   function loadFinished() {
+    if (activeObjectUUID) {
+      var activeObject = this.canvas.getObjectByUUID(activeObjectUUID);
+      if (activeObject) {
+        if (activeObject.type === "i-text") {
+          // only reselect text objects if we were the last to update it
+          if (activeObject._clientId === this._clientId) {
+            this._ignoreObjectSelected = true;
+            this.canvas.setActiveObject(activeObject);
+            this._ignoreObjectSelected = false;
+            var textChange = this._textChanges[activeObjectUUID];
+            if (textChange) {
+              activeObject.setText(textChange.text);
+              if (textChange.editing) {
+                activeObject.enterEditing();
+              }
+              activeObject.setSelectionStart(textChange.selectionStart);
+              activeObject.setSelectionEnd(textChange.selectionEnd);
+            }
+          }
+        }
+        else {
+          this.canvas.setActiveObject(activeObject);
+        }
+      }
+    }
     // We don't serialize selectable property which depends on currently selected tool.
     // Currently objects should be selectable only if select tool is active.
     this.tools.select.setSelectable(this.tools.select.active);
@@ -781,6 +810,79 @@ DrawingTool.prototype.notifySave = function(serializedJson) {
       console.error('store does not implement required `save(serializedJson)` function!');
     }
   }
+};
+
+/*
+  This was added to allow text changes in the Firebase
+*/
+DrawingTool.prototype._trackTextChangesAndAddUUID = function() {
+  var self = this;
+
+  this._textChanges = {};
+
+  this._clientId = this._uuidGen();
+
+  var saveTextChanges = function (obj, editing) {
+    obj._uuid = obj._uuid || self._uuidGen();
+    obj._clientId = self._clientId;
+    self._textChanges[obj._uuid] = {
+      selectionEnd: obj.selectionEnd,
+      selectionStart: obj.selectionStart,
+      text: obj.text,
+      editing: editing
+    };
+    self.save();
+  };
+
+  this.canvas.on("text:changed", function (event) {
+    saveTextChanges(event.target, true);
+  });
+
+  this.canvas.on("object:added", function (event) {
+    var obj = event.target;
+    // save mousedown of text so we can reselect it if another user saves before we start typing
+    if (obj && (obj.type === "i-text") && (obj.text.length === 0) && !obj._clientId) {
+      saveTextChanges(obj, true);
+    }
+  });
+
+  // only allow one user to edit a text object - we set the ignore flag when we are loading
+  this._ignoreObjectSelected = false;
+  this.canvas.on("object:selected", function (event) {
+    var obj = event.target;
+    if (obj && (obj.type === "i-text") && !self._ignoreObjectSelected) {
+      setTimeout(function () {
+        saveTextChanges(obj, obj.isEditing);
+      }, 1);
+    }
+  });
+
+  fabric.Object.prototype.setOptions = (function(setOptions) {
+    return function(options) {
+      setOptions.apply(this, [options]);
+      this._uuid = this._uuid || self._uuidGen();
+    };
+  })(fabric.Object.prototype.setOptions);
+
+  fabric.Canvas.prototype.getObjectByUUID = function(uuid) {
+    var object = null;
+    var objects = this.getObjects();
+
+    for (var i = 0, len = this.size(); i < len; i++) {
+      if (objects[i]._uuid && objects[i]._uuid === uuid) {
+        object = objects[i];
+        break;
+      }
+    }
+    return object;
+  };
+};
+
+DrawingTool.prototype._uuidGen = function() {
+  return 'xxxxxxxxxxxx4xxxyxxxxxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    var r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
 };
 
 module.exports = DrawingTool;

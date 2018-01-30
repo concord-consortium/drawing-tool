@@ -215,6 +215,7 @@ DrawingTool.prototype.load = function (jsonOrObject, callback, noHistoryUpdate) 
 
   var activeObject = this.canvas.getActiveObject();
   var activeObjectUUID = activeObject ? activeObject._uuid : undefined;
+  var activeObjectJSON = activeObject ? activeObject.toObject() : undefined;
 
   // Process Drawing Tool specific options.
   var dtState = state.dt;
@@ -244,6 +245,22 @@ DrawingTool.prototype.load = function (jsonOrObject, callback, noHistoryUpdate) 
   function loadFinished() {
     if (activeObjectUUID) {
       var activeObject = this.canvas.getObjectByUUID(activeObjectUUID);
+
+      // if the pre-load active object wasn't found in the restored json and we just didn't remove it add it back
+      // this happens when a object is created but another user saves their state before they get the object in a load
+      // so we need to add the object back to the canvas and force a save
+      if (!activeObject && activeObjectJSON && (this._lastLocallyRemovedUUID !== activeObjectUUID)) {
+        this.canvas.util.enlivenObjects([JSON.parse(activeObjectJSON)]);
+        activeObject = this.canvas.getObjectByUUID(activeObjectUUID);
+        if (activeObject) {
+          // wait so we complete the load before saving again
+          this.setTimeout(function () {
+            this.save();
+          }.bind(this), 1);
+        }
+      }
+      this._lastLocallyRemovedUUID = null;
+
       if (activeObject) {
         if (activeObject.type === "i-text") {
           // only reselect text objects if we were the last to update it
@@ -256,9 +273,9 @@ DrawingTool.prototype.load = function (jsonOrObject, callback, noHistoryUpdate) 
               activeObject.setText(textChange.text);
               if (textChange.editing) {
                 activeObject.enterEditing();
+                activeObject.setSelectionStart(textChange.selectionStart);
+                activeObject.setSelectionEnd(textChange.selectionEnd);
               }
-              activeObject.setSelectionStart(textChange.selectionStart);
-              activeObject.setSelectionEnd(textChange.selectionEnd);
             }
           }
         }
@@ -855,6 +872,11 @@ DrawingTool.prototype._trackTextChangesAndAddUUID = function() {
         saveTextChanges(obj, obj.isEditing);
       }, 1);
     }
+  });
+
+  this._ignoreRemovedUUID = null;
+  this.canvas.on("object:removed", function (event) {
+    self._ignoreRemovedUUID = event.target._uuid;
   });
 
   fabric.Object.prototype.setOptions = (function(setOptions) {

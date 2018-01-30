@@ -268,13 +268,13 @@ DrawingTool.prototype.load = function (jsonOrObject, callback, noHistoryUpdate) 
             this._ignoreObjectSelected = true;
             this.canvas.setActiveObject(activeObject);
             this._ignoreObjectSelected = false;
-            var textChange = this._textChanges[activeObjectUUID];
-            if (textChange) {
-              activeObject.setText(textChange.text);
-              if (textChange.editing) {
+            var localTextChange = this._localTextChanges[activeObjectUUID];
+            if (localTextChange) {
+              activeObject.setText(localTextChange.text);
+              if (localTextChange.editing) {
                 activeObject.enterEditing();
-                activeObject.setSelectionStart(textChange.selectionStart);
-                activeObject.setSelectionEnd(textChange.selectionEnd);
+                activeObject.setSelectionStart(localTextChange.selectionStart);
+                activeObject.setSelectionEnd(localTextChange.selectionEnd);
               }
             }
           }
@@ -835,14 +835,14 @@ DrawingTool.prototype.notifySave = function(serializedJson) {
 DrawingTool.prototype._trackTextChangesAndAddUUID = function() {
   var self = this;
 
-  this._textChanges = {};
+  this._localTextChanges = {};
 
   this._clientId = this._uuidGen();
 
-  var saveTextChanges = function (obj, editing) {
+  var saveLocalTextChanges = function (obj, editing) {
     obj._uuid = obj._uuid || self._uuidGen();
     obj._clientId = self._clientId;
-    self._textChanges[obj._uuid] = {
+    self._localTextChanges[obj._uuid] = {
       selectionEnd: obj.selectionEnd,
       selectionStart: obj.selectionStart,
       text: obj.text,
@@ -852,14 +852,14 @@ DrawingTool.prototype._trackTextChangesAndAddUUID = function() {
   };
 
   this.canvas.on("text:changed", function (event) {
-    saveTextChanges(event.target, true);
+    saveLocalTextChanges(event.target, true);
   });
 
   this.canvas.on("object:added", function (event) {
     var obj = event.target;
     // save mousedown of text so we can reselect it if another user saves before we start typing
     if (obj && (obj.type === "i-text") && (obj.text.length === 0) && !obj._clientId) {
-      saveTextChanges(obj, true);
+      saveLocalTextChanges(obj, true);
     }
   });
 
@@ -869,7 +869,7 @@ DrawingTool.prototype._trackTextChangesAndAddUUID = function() {
     var obj = event.target;
     if (obj && (obj.type === "i-text") && !self._ignoreObjectSelected) {
       setTimeout(function () {
-        saveTextChanges(obj, obj.isEditing);
+        saveLocalTextChanges(obj, obj.isEditing);
       }, 1);
     }
   });

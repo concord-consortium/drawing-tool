@@ -1,3 +1,4 @@
+var UndoRedoKeyListener = require('./undo-redo-key-listener');
 var MAX_HISTORY_LENGTH = 20;
 
 function UndoRedo(drawTool) {
@@ -6,16 +7,12 @@ function UndoRedo(drawTool) {
 
   this.reset();
 
-  this.dt.$element.on('keydown', function (e) {
-    if (e.keyCode === 90 /* Z */ && (e.ctrlKey || e.metaKey)) {
-      this.undo();
-      e.preventDefault();
-    } else if (e.keyCode === 89 /* V */ && (e.ctrlKey || e.metaKey)) {
-      this.redo();
-      e.preventDefault();
-    }
-  }.bind(this));
+  this.keyListener = new UndoRedoKeyListener(this, drawTool);
 }
+
+UndoRedo.prototype.detach = function () {
+  this.keyListener.detach();
+};
 
 UndoRedo.prototype.undo = function () {
   var prevState = this._storage[this._idx - 1];
@@ -35,7 +32,7 @@ UndoRedo.prototype.redo = function () {
   this._idx += 1;
 };
 
-UndoRedo.prototype.saveState = function (opt) {
+UndoRedo.prototype.saveState = function (optionalObj) {
   var newState = this.dt.save();
   if (this._suppressHistoryUpdate || newState === this._lastState()) {
     return;

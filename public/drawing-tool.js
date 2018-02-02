@@ -1908,7 +1908,6 @@ FirebaseImp.prototype.reqAuth = function() {
 };
 
 FirebaseImp.prototype.failAuth = function(error) {
-  debugger;
   var errorCode = error.code;
   var errorMessage = error.message;
   var email = error.email;
@@ -4141,7 +4140,7 @@ module.exports = {
 });
 
 require.register("___globals___", function(exports, require, module) {
-  
+
 });})();require('___globals___');
 
 // See: https://github.com/brunch/brunch/issues/712

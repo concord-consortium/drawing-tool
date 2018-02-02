@@ -13,6 +13,7 @@ var DeleteTool        = require('./tools/delete-tool');
 var CloneTool         = require('./tools/clone-tool');
 var UIManager         = require('./ui/ui-manager');
 var UndoRedo          = require('./undo-redo');
+var FirebaseUndoRedo  = require('./firebase-undo-redo');
 var convertState      = require('./convert-state');
 var rescale2resize    = require('./fabric-extensions/rescale-2-resize');
 var multitouchSupport = require('./fabric-extensions/multi-touch-support');
@@ -130,13 +131,15 @@ DrawingTool.prototype.proxy = function (url) {
  * parameters:
  *  - clearBackground: if true, this function will also remove the background image
  */
-DrawingTool.prototype.clear = function (clearBackground) {
+DrawingTool.prototype.clear = function (clearBackground, skipPushToHistory) {
   this.canvas.clear();
   if (clearBackground) {
     this.canvas.setBackgroundImage(null);
   }
   this.canvas.renderAll();
-  this.pushToHistory();
+  if (!skipPushToHistory) {
+    this.pushToHistory();
+  }
 };
 
 /**
@@ -149,10 +152,9 @@ DrawingTool.prototype.clearSelection = function () {
 };
 
 /**
- * Saves the current state of the fabricjs canvas into a JSON format.
- * (used in conjunction with `load()`)
+ * Gets the current state of the fabricjs canvas into a JSON format.
  */
-DrawingTool.prototype.save = function () {
+DrawingTool.prototype.getJSON = function () {
   var selection = this.getSelection();
   // There are two cases when we do want to remove selection before saving sate:
   // 1. Custom control points are present. Obviously we don't want to serialize them.
@@ -181,6 +183,15 @@ DrawingTool.prototype.save = function () {
   if (selectionCleared) {
     this.select(selection);
   }
+  return result;
+};
+
+/**
+ * Saves the current state of the fabricjs canvas into a JSON format.
+ * (used in conjunction with `load()`)
+ */
+DrawingTool.prototype.save = function () {
+  var result = this.getJSON();
   this.notifySave(result);
   return result;
 };
@@ -255,7 +266,7 @@ DrawingTool.prototype.load = function (jsonOrObject, callback, noHistoryUpdate) 
         if (activeObject) {
           // wait so we complete the load before saving again
           this.setTimeout(function () {
-            this.save();
+            //this.pushToHistory();
           }.bind(this), 1);
         }
       }
@@ -296,8 +307,8 @@ DrawingTool.prototype.load = function (jsonOrObject, callback, noHistoryUpdate) 
   }
 };
 
-DrawingTool.prototype.pushToHistory = function () {
-  this._history.saveState();
+DrawingTool.prototype.pushToHistory = function (optionalObj) {
+  this._history.saveState(optionalObj);
   this._fireHistoryEvents();
   this._fireDrawingChanged();
 };
@@ -848,13 +859,15 @@ DrawingTool.prototype._trackTextChangesAndAddUUID = function() {
       text: obj.text,
       editing: editing
     };
-    self.save();
+    debugger;
+    self.pushToHistory(); // TODO: pass obj to only send object
   };
 
   this.canvas.on("text:changed", function (event) {
     saveLocalTextChanges(event.target, true);
   });
 
+  /*
   this.canvas.on("object:added", function (event) {
     var obj = event.target;
     // save mousedown of text so we can reselect it if another user saves before we start typing
@@ -862,6 +875,7 @@ DrawingTool.prototype._trackTextChangesAndAddUUID = function() {
       saveLocalTextChanges(obj, true);
     }
   });
+  */
 
   // only allow one user to edit a text object - we set the ignore flag when we are loading
   this._ignoreObjectSelected = false;
@@ -905,6 +919,13 @@ DrawingTool.prototype._uuidGen = function() {
     var r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
     return v.toString(16);
   });
+};
+
+DrawingTool.FirebaseUndoRedo = FirebaseUndoRedo;
+
+DrawingTool.prototype.replaceUndoRedo = function (ReplacementUndoRedo, options) {
+  this._history.detach();
+  this._history = new ReplacementUndoRedo(this, options);
 };
 
 module.exports = DrawingTool;

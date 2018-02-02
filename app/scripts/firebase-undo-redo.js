@@ -52,6 +52,7 @@ function FirebaseManager(undoRedo, drawTool, options) {
   this.stack = [];
   this.states = {};
   this.currentStateKey = null;
+  this.currentStateValue = null;
   this.currentStateJSON = null;
 
   this.docRef = this.firebase.database().ref(options.refPath);
@@ -166,6 +167,7 @@ FirebaseManager.prototype.currentStateKeyChanged = function (snapshot) {
   var newStateKey = snapshot.val();
   if (newStateKey === null) {
     this.currentStateJSON = null;
+    this.currentStateValue = null;
     this.currentStateKey = null;
     this.stackIndex = -1;
     this.drawTool.clear(false, true);
@@ -180,20 +182,78 @@ FirebaseManager.prototype.currentStateKeyChanged = function (snapshot) {
   }
 };
 
+FirebaseManager.prototype.computeStateDelta = function (oldState, newState) {
+  var noDelta = {},
+    oldObjects = oldState ? oldState.canvas.objects : null,
+    newObjects = newState.canvas.objects,
+    oldObjectMap = {},
+    added = [], removed = [], changed = [];
+
+  if (!oldObjects || (newObjects.length === 1)) {
+    return noDelta;
+  }
+
+  oldObjects.forEach(function (object) { oldObjectMap[object._uuid] = {object: object, json: JSON.stringify(object)}; });
+  newObjects.forEach(function (newObject) {
+    var oldObject = oldObjectMap[newObject._uuid];
+    if (!oldObject) {
+      added.push(newObject)
+    }
+    else if (JSON.stringify(newObject) !== oldObject.json) {
+      changed.push(newObject);
+    }
+    delete oldObjectMap[newObject._uuid];
+  });
+  Object.keys(oldObjectMap).forEach(function (key) {
+    removed.push(oldObjectMap[key]);
+  });
+
+  if (added.length + removed.length + changed.length > 1) {
+    return noDelta;
+  }
+  if (added.length == 1) {
+    return {objectAdded: added[0]};
+  }
+  if (removed.length == 1) {
+    return {objectRemoved: removed[0]};
+  }
+  if (changed.length == 1) {
+    return {objectChanged: changed[0]};
+  }
+  return noDelta;
+};
+
 FirebaseManager.prototype.moveToNewState = function (newStateKey) {
   var newState = this.states[newStateKey],
       newStackIndex = this.stack.indexOf(newStateKey),
-      activeObject, change, textObject, fullStateStackIndex, keys, singleStateMove, multiStateMove;
+      activeObject, change, textObject, fullStateStackIndex, stateKeys, singleStateMove, multiStateMove;
 
   singleStateMove = function (newStateKey, newState, callback) {
-    var localTextChange;
-
-    this.currentStateJSON = newState.json;
-    this.currentStateKey = newStateKey;
-    this.stackIndex = newStackIndex;
+    var localTextChange, delta, object;
 
     switch (newState.type) {
       case FULL_STATE:
+        // TODO: compare new state and old state values to see if we can just add or modify a single object
+        delta = this.computeStateDelta(this.currentStateValue, newState.value);
+
+        if (delta.objectAdded) {
+          fabric.util.enlivenObjects([delta.objectAdded], function (objects) {
+            objects.forEach(function (object) {
+              this.drawTool.canvas.add(object);
+            }.bind(this));
+          }.bind(this));
+        }
+
+        if (delta.objectRemoved) {
+          object = this.drawTool.canvas.getObjectByUUID(delta.objectRemoved._uuid);
+          if (object) {
+            object.remove();
+          }
+        }
+
+        if (delta.objectChanged) {
+        }
+
         this.loadingFromJSON = true;
         this.drawTool.load(newState.value, function () {
           this.drawTool._fireHistoryEvents();
@@ -224,21 +284,20 @@ FirebaseManager.prototype.moveToNewState = function (newStateKey) {
         }
         break;
     }
+
+    this.currentStateJSON = newState.json;
+    this.currentStateValue = newState.value;
+    this.currentStateKey = newStateKey;
+    this.stackIndex = newStackIndex;
   }.bind(this);
 
-  multiStateMove = function (keys) {
-    var key = keys.shift();
+  multiStateMove = function () {
+    var key = stateKeys.shift();
     if (key) {
-      var state = this.states[key];
-      singleStateMove(key, state, function () {
-        // to avoid stack overflows
-        setTimeout(function () {
-          multiStateMove(keys);
-        }, 1);
-      });
+      singleStateMove(key, this.states[key], multiStateMove);
     }
     else {
-      this.drawTool.canvas.renderAll()
+      this.drawTool.canvas.renderAll();
     }
   }.bind(this);
 
@@ -255,8 +314,8 @@ FirebaseManager.prototype.moveToNewState = function (newStateKey) {
           alert("Unable to find last full state keyframe!");
           return;
         }
-        keys = this.stack.slice(fullStateStackIndex, newStackIndex + 1);
-        multiStateMove(keys);
+        stateKeys = this.stack.slice(fullStateStackIndex, newStackIndex + 1);
+        multiStateMove();
       }
       else {
         if (newStackIndex < this.stackIndex) {
@@ -266,7 +325,9 @@ FirebaseManager.prototype.moveToNewState = function (newStateKey) {
             this.drawTool.canvas.deactivateAll();
           }
         }
-        singleStateMove(newStateKey, newState);
+        singleStateMove(newStateKey, newState, function () {
+          this.drawTool.canvas.renderAll();
+        }.bind(this));
       }
     }
   }

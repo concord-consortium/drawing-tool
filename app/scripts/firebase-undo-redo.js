@@ -161,14 +161,22 @@ FirebaseManager.prototype.currentStateKeyChanged = function (snapshot) {
 
 FirebaseManager.prototype.moveToNewState = function (newStateKey) {
   var newState = this.states[newStateKey],
-      newStackIndex = this.stack.indexOf(newStateKey);
+      newStackIndex = this.stack.indexOf(newStateKey),
+      activeObject;
 
   if (newState && (newStackIndex !== -1)) {
     if (this.currentStateKey !== newStateKey) {
+      this.loadingFromJSON = true;
+      if (newStackIndex < this.stackIndex) {
+        // remove keyboard focus if editing so we don't reapply the text during the load
+        activeObject = this.drawTool.canvas.getActiveObject();
+        if (activeObject && (activeObject.type === "i-text")) {
+          this.drawTool.canvas.deactivateAll();
+        }
+      }
       this.currentStateJSON = JSON.stringify(newState);
       this.currentStateKey = newStateKey;
       this.stackIndex = newStackIndex;
-      this.loadingFromJSON = true;
       this.drawTool.load(newState, function () {
         this.drawTool._fireHistoryEvents();
         this.loadingFromJSON = false;

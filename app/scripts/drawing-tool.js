@@ -866,16 +866,6 @@ DrawingTool.prototype._trackTextChangesAndAddUUID = function() {
     saveLocalTextChanges(event.target, true);
   });
 
-  /*
-  this.canvas.on("object:added", function (event) {
-    var obj = event.target;
-    // save mousedown of text so we can reselect it if another user saves before we start typing
-    if (obj && (obj.type === "i-text") && (obj.text.length === 0) && !obj._clientId) {
-      saveLocalTextChanges(obj, true);
-    }
-  });
-  */
-
   // only allow one user to edit a text object - we set the ignore flag when we are loading
   this._ignoreObjectSelected = false;
   this.canvas.on("object:selected", function (event) {

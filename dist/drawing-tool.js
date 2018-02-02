@@ -1787,16 +1787,6 @@ DrawingTool.prototype._trackTextChangesAndAddUUID = function() {
     saveLocalTextChanges(event.target, true);
   });
 
-  /*
-  this.canvas.on("object:added", function (event) {
-    var obj = event.target;
-    // save mousedown of text so we can reselect it if another user saves before we start typing
-    if (obj && (obj.type === "i-text") && (obj.text.length === 0) && !obj._clientId) {
-      saveLocalTextChanges(obj, true);
-    }
-  });
-  */
-
   // only allow one user to edit a text object - we set the ignore flag when we are loading
   this._ignoreObjectSelected = false;
   this.canvas.on("object:selected", function (event) {
@@ -2537,14 +2527,22 @@ FirebaseManager.prototype.currentStateKeyChanged = function (snapshot) {
 
 FirebaseManager.prototype.moveToNewState = function (newStateKey) {
   var newState = this.states[newStateKey],
-      newStackIndex = this.stack.indexOf(newStateKey);
+      newStackIndex = this.stack.indexOf(newStateKey),
+      activeObject;
 
   if (newState && (newStackIndex !== -1)) {
     if (this.currentStateKey !== newStateKey) {
+      this.loadingFromJSON = true;
+      if (newStackIndex < this.stackIndex) {
+        // remove keyboard focus if editing so we don't reapply the text during the load
+        activeObject = this.drawTool.canvas.getActiveObject();
+        if (activeObject && (activeObject.type === "i-text")) {
+          this.drawTool.canvas.deactivateAll();
+        }
+      }
       this.currentStateJSON = JSON.stringify(newState);
       this.currentStateKey = newStateKey;
       this.stackIndex = newStackIndex;
-      this.loadingFromJSON = true;
       this.drawTool.load(newState, function () {
         this.drawTool._fireHistoryEvents();
         this.loadingFromJSON = false;

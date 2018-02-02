@@ -62,6 +62,8 @@ function FirebaseManager(undoRedo, drawTool, options) {
 
   // create the reference to the undo/redo info, we use a child as existing codraw documents use the rawData child
   this.undoRedoRef.once("value", function (snapshot) {
+    this.undoRedoRef.off();
+
     var val = snapshot.val();
     // if no existing undoRedo data check if this is an older document with rawData
     if (val === null) {
@@ -74,43 +76,16 @@ function FirebaseManager(undoRedo, drawTool, options) {
         else {
           this.startListeners();
         }
-        this.undoRedoRef.off();
       }.bind(this));
     }
     else {
-      var states = val.states || {};
-      Object.keys(states).forEach(function (key) {
-        this.addRemoteState(key, states[key]);
-      }.bind(this));
-      this.sortStack();
       this.startListeners();
-      this.undoRedoRef.off();
     }
   }.bind(this));
 }
 
-FirebaseManager.prototype.addRemoteState = function (key, remoteState) {
-  var value = null;
-  switch (remoteState.type) {
-    case FULL_STATE:
-      value = JSON.parse(remoteState.value);
-      break;
-    case OBJ_STATE:
-      // TODO - lookup this.states[value.stateKey] and if found clone new state with value.obj replaced in it
-      break;
-    case DELTA_STATE:
-      // TODO - use jsonpatch
-      break;
-  }
-  this.states[key] = value;
-  this.stack.push({
-    key: key,
-    createdAt: remoteState.createdAt
-  });
-};
-
 FirebaseManager.prototype.startListeners = function () {
-  this.childAddedToStatesRef = this.statesRef.limitToLast(1).on("child_added", this.stateAdded.bind(this));
+  this.childAddedToStatesRef = this.statesRef.on("child_added", this.stateAdded.bind(this));
   this.childRemovedFromStatesRef = this.statesRef.on("child_removed", this.stateRemoved.bind(this));
   this.currentStateKeyRefChanged = this.currentStateKeyRef.on("value", this.currentStateKeyChanged.bind(this));
 };
@@ -124,34 +99,46 @@ FirebaseManager.prototype.stopListeners = function () {
   }
 };
 
-FirebaseManager.prototype.stateAdded = function (snapshot) {
-  var addedState = snapshot.val(),
-      createdAt = addedState.createdAt,
-      addedStateKey = snapshot.key,
-      value = JSON.parse(addedState.value),
-      normalizedState;
+FirebaseManager.prototype.stateAdded = function (snapshot, prevKey) {
+  var state = snapshot.val(),
+      key = snapshot.key,
+      value = null,
+      index;
 
-  if (!this.states[addedStateKey]) {
-    this.addRemoteState(addedStateKey, addedState);
+  if (!this.states[key]) {
+    switch (state.type) {
+      case FULL_STATE:
+        value = JSON.parse(state.value);
+        break;
+      case OBJ_STATE:
+        // TODO - lookup this.states[value.stateKey] and if found clone new state with value.obj replaced in it
+        break;
+      case DELTA_STATE:
+        // TODO - use jsonpatch
+        break;
+    }
+    this.states[key] = value;
 
-    // see if we can just push the state on top of the stack or if we need to insert it somewhere within
-    if (this.stack.length > 1 && (this.stack[this.stack.length - 2].createdAt > createdAt)) {
-      this.sortStack();
+    index = this.stack.indexOf(prevKey);
+    if (index !== -1) {
+      this.stack.splice(index + 1, 0, key);
+    }
+    else {
+      this.stack.push(key);
     }
   }
 
-  if (this.pendingStateKey === addedStateKey) {
+  if (this.pendingStateKey === key) {
     this.moveToNewState(this.pendingStateKey);
   }
 };
 
 FirebaseManager.prototype.stateRemoved = function (snapshot) {
-  var removedStateKey = snapshot.key;
-  if (this.states[removedStateKey]) {
-    delete this.states[removedStateKey];
-    this.stack.splice(this.findStackIndex(removedStateKey), 1);
-    this.stackIndex = this.findStackIndex(this.currentStateKey);
-  }
+  var removedStateKey = snapshot.key,
+      index = this.stack.indexOf(removedStateKey);
+  delete this.states[removedStateKey];
+  this.stack.splice(index, 1);
+  this.stackIndex = this.stack.indexOf(this.currentStateKey);
 };
 
 FirebaseManager.prototype.currentStateKeyChanged = function (snapshot) {
@@ -172,37 +159,19 @@ FirebaseManager.prototype.currentStateKeyChanged = function (snapshot) {
   }
 };
 
-FirebaseManager.prototype.sortStack = function () {
-  this.stack.sort(function (a, b) {
-    // first sort by the server time
-    if (a.createdAt != b.createdAt) {
-      return a.createdAt - b.createdAt;
-    }
-    // and on ties sort by key
-    if (a.key < b.key) return -1;
-    if (a.key > b.key) return 1;
-    return 0;
-  });
-  this.stackIndex = this.findStackIndex(this.currentStateKey);
-};
-
-FirebaseManager.prototype.findStackIndex = function (stateKey) {
-  return this.stack.findIndex(function (item) {
-    return item.key === stateKey;
-  });
-};
-
 FirebaseManager.prototype.moveToNewState = function (newStateKey) {
   var newState = this.states[newStateKey],
-      newStackIndex = this.findStackIndex(newStateKey);
+      newStackIndex = this.stack.indexOf(newStateKey);
 
   if (newState && (newStackIndex !== -1)) {
     if (this.currentStateKey !== newStateKey) {
       this.currentStateJSON = JSON.stringify(newState);
       this.currentStateKey = newStateKey;
       this.stackIndex = newStackIndex;
+      this.loadingFromJSON = true;
       this.drawTool.load(newState, function () {
         this.drawTool._fireHistoryEvents();
+        this.loadingFromJSON = false;
       }.bind(this), true);
     }
     this.pendingStateKey = null;
@@ -214,7 +183,7 @@ FirebaseManager.prototype.findNextStateKey = function (direction) {
   if ((newStackIndex < 0) || (newStackIndex >= this.stack.length)) {
     return null;
   }
-  return this.stack[newStackIndex].key;
+  return this.stack[newStackIndex];
 };
 
 FirebaseManager.prototype.pushToFirebase = function (type, objectOrString, callback) {
@@ -230,8 +199,7 @@ FirebaseManager.prototype.pushToFirebase = function (type, objectOrString, callb
   pushRef = this.statesRef.push();
   pushRef.set({
     type: type,
-    value: value,
-    createdAt: this.firebase.database.ServerValue.TIMESTAMP
+    value: value
   }, function (error) {
     if (error) {
       alert("Firebase error: " + error.toString());
@@ -254,6 +222,11 @@ FirebaseManager.prototype.redo = function () {
 };
 
 FirebaseManager.prototype.saveState = function (optionalObj) {
+  // to avoid a load loop when text changes - fabric triggers a text change after it calls clear if a text object is currently selected
+  if (this.loadingFromJSON) {
+    return;
+  }
+
   var type = optionalObj ? OBJ_STATE : FULL_STATE;
   var value = optionalObj ? {stateKey: this.currentStateKey, obj: optionalObj.toObject()} : this.drawTool.getJSON();
 

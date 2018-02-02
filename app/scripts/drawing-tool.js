@@ -859,7 +859,6 @@ DrawingTool.prototype._trackTextChangesAndAddUUID = function() {
       text: obj.text,
       editing: editing
     };
-    debugger;
     self.pushToHistory(); // TODO: pass obj to only send object
   };
 

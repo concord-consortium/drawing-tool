@@ -307,8 +307,8 @@ DrawingTool.prototype.load = function (jsonOrObject, callback, noHistoryUpdate) 
   }
 };
 
-DrawingTool.prototype.pushToHistory = function (optionalObj) {
-  this._history.saveState(optionalObj);
+DrawingTool.prototype.pushToHistory = function (optionalObj, optionalEventName) {
+  this._history.saveState(optionalObj, optionalEventName);
   this._fireHistoryEvents();
   this._fireDrawingChanged();
 };
@@ -850,7 +850,7 @@ DrawingTool.prototype._trackTextChangesAndAddUUID = function() {
 
   this._clientId = this._uuidGen();
 
-  var saveLocalTextChanges = function (obj, editing) {
+  var saveLocalTextChanges = function (obj, editing, eventName) {
     obj._uuid = obj._uuid || self._uuidGen();
     obj._clientId = self._clientId;
     self._localTextChanges[obj._uuid] = {
@@ -859,11 +859,11 @@ DrawingTool.prototype._trackTextChangesAndAddUUID = function() {
       text: obj.text,
       editing: editing
     };
-    self.pushToHistory(); // TODO: pass obj to only send object
+    self.pushToHistory(obj, eventName);
   };
 
   this.canvas.on("text:changed", function (event) {
-    saveLocalTextChanges(event.target, true);
+    saveLocalTextChanges(event.target, true, "text:changed");
   });
 
   // only allow one user to edit a text object - we set the ignore flag when we are loading
@@ -872,7 +872,7 @@ DrawingTool.prototype._trackTextChangesAndAddUUID = function() {
     var obj = event.target;
     if (obj && (obj.type === "i-text") && !self._ignoreObjectSelected) {
       setTimeout(function () {
-        saveLocalTextChanges(obj, obj.isEditing);
+        saveLocalTextChanges(obj, obj.isEditing, "object:selected");
       }, 1);
     }
   });

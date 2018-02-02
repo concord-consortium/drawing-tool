@@ -1228,8 +1228,8 @@ DrawingTool.prototype.load = function (jsonOrObject, callback, noHistoryUpdate) 
   }
 };
 
-DrawingTool.prototype.pushToHistory = function (optionalObj) {
-  this._history.saveState(optionalObj);
+DrawingTool.prototype.pushToHistory = function (optionalObj, optionalEventName) {
+  this._history.saveState(optionalObj, optionalEventName);
   this._fireHistoryEvents();
   this._fireDrawingChanged();
 };
@@ -1771,7 +1771,7 @@ DrawingTool.prototype._trackTextChangesAndAddUUID = function() {
 
   this._clientId = this._uuidGen();
 
-  var saveLocalTextChanges = function (obj, editing) {
+  var saveLocalTextChanges = function (obj, editing, eventName) {
     obj._uuid = obj._uuid || self._uuidGen();
     obj._clientId = self._clientId;
     self._localTextChanges[obj._uuid] = {
@@ -1780,11 +1780,11 @@ DrawingTool.prototype._trackTextChangesAndAddUUID = function() {
       text: obj.text,
       editing: editing
     };
-    self.pushToHistory(); // TODO: pass obj to only send object
+    self.pushToHistory(obj, eventName);
   };
 
   this.canvas.on("text:changed", function (event) {
-    saveLocalTextChanges(event.target, true);
+    saveLocalTextChanges(event.target, true, "text:changed");
   });
 
   // only allow one user to edit a text object - we set the ignore flag when we are loading
@@ -1793,7 +1793,7 @@ DrawingTool.prototype._trackTextChangesAndAddUUID = function() {
     var obj = event.target;
     if (obj && (obj.type === "i-text") && !self._ignoreObjectSelected) {
       setTimeout(function () {
-        saveLocalTextChanges(obj, obj.isEditing);
+        saveLocalTextChanges(obj, obj.isEditing, "object:selected");
       }, 1);
     }
   });
@@ -2387,8 +2387,8 @@ FirebaseUndoRedo.prototype.redo = function () {
   this._firebaseManager.redo();
 };
 
-FirebaseUndoRedo.prototype.saveState = function (optionalObj) {
-  this._firebaseManager.saveState(optionalObj);
+FirebaseUndoRedo.prototype.saveState = function (optionalObj, optionalEventName) {
+  this._firebaseManager.saveState(optionalObj, optionalEventName);
 };
 
 FirebaseUndoRedo.prototype.reset = function () {
@@ -2408,8 +2408,7 @@ module.exports = FirebaseUndoRedo;
 // FirebaseManager - this manages the undo/redo system in Firebase, calls are proxied to it from FirebaseUndoRedo
 
 var FULL_STATE = "fullState";
-var DELTA_STATE = "deltaState";
-var OBJ_STATE = "objState";
+var TEXT_CHANGE = "textChange";
 
 function FirebaseManager(undoRedo, drawTool, options) {
   this.drawTool = drawTool;
@@ -2425,6 +2424,8 @@ function FirebaseManager(undoRedo, drawTool, options) {
   this.undoRedoRef = this.docRef.child("undoRedo");
   this.currentStateKeyRef = this.undoRedoRef.child("currentStateKey");
   this.statesRef = this.undoRedoRef.child("states");
+
+  this.initialLoad = true;
 
   // create the reference to the undo/redo info, we use a child as existing codraw documents use the rawData child
   this.undoRedoRef.once("value", function (snapshot) {
@@ -2469,21 +2470,41 @@ FirebaseManager.prototype.stateAdded = function (snapshot, prevKey) {
   var state = snapshot.val(),
       key = snapshot.key,
       value = null,
-      index;
+      index, change, changedState, changedObj;
 
   if (!this.states[key]) {
     switch (state.type) {
       case FULL_STATE:
-        value = JSON.parse(state.value);
+        this.states[key] = {
+          type: state.type,
+          value: JSON.parse(state.value),
+          json: state.value
+        };
         break;
-      case OBJ_STATE:
-        // TODO - lookup this.states[value.stateKey] and if found clone new state with value.obj replaced in it
-        break;
-      case DELTA_STATE:
-        // TODO - use jsonpatch
+
+      case TEXT_CHANGE:
+        change = JSON.parse(state.value);
+        changedStateValue = this.states[change.stateKey] ? JSON.parse(JSON.stringify(this.states[change.stateKey].value)) : null;
+        if (!changedStateValue || !changedStateValue.canvas || !changedStateValue.canvas.objects) {
+          return;
+        }
+        changedObj = changedStateValue.canvas.objects.find(function (obj) {
+          return obj._uuid === change.uuid;
+        });
+        if (!changedObj) {
+          return;
+        }
+        changedObj._uuid = change.uuid;
+        changedObj._clientId = change.clientId;
+        changedObj.text = change.text;
+        this.states[key] = {
+          type: state.type,
+          change: change,
+          value: changedStateValue,
+          json: JSON.stringify(changedStateValue)
+        };
         break;
     }
-    this.states[key] = value;
 
     index = this.stack.indexOf(prevKey);
     if (index !== -1) {
@@ -2528,27 +2549,92 @@ FirebaseManager.prototype.currentStateKeyChanged = function (snapshot) {
 FirebaseManager.prototype.moveToNewState = function (newStateKey) {
   var newState = this.states[newStateKey],
       newStackIndex = this.stack.indexOf(newStateKey),
-      activeObject;
+      activeObject, change, textObject, fullStateStackIndex, keys, singleStateMove, multiStateMove;
 
-  if (newState && (newStackIndex !== -1)) {
-    if (this.currentStateKey !== newStateKey) {
-      this.loadingFromJSON = true;
-      if (newStackIndex < this.stackIndex) {
-        // remove keyboard focus if editing so we don't reapply the text during the load
-        activeObject = this.drawTool.canvas.getActiveObject();
-        if (activeObject && (activeObject.type === "i-text")) {
-          this.drawTool.canvas.deactivateAll();
+  singleStateMove = function (newStateKey, newState, callback) {
+    var localTextChange;
+
+    this.currentStateJSON = newState.json;
+    this.currentStateKey = newStateKey;
+    this.stackIndex = newStackIndex;
+
+    switch (newState.type) {
+      case FULL_STATE:
+        this.loadingFromJSON = true;
+        this.drawTool.load(newState.value, function () {
+          this.drawTool._fireHistoryEvents();
+          this.loadingFromJSON = false;
+          if (callback) {
+            callback();
+          }
+        }.bind(this), true);
+        break;
+
+      case TEXT_CHANGE:
+        change = newState.change;
+        textObject = this.drawTool.canvas.getObjectByUUID(change.uuid);
+        if (textObject) {
+          textObject.clientId = change.clientId;
+          textObject.setText(change.text);
+          if (textObject.isEditing) {
+            localTextChange = this._localTextChanges[textObject._uuid];
+            activeObject.setSelectionStart(localTextChange ? localTextChange.selectionStart : text.length);
+            activeObject.setSelectionEnd(localTextChange ? localTextChange.selectionEnd : text.length);
+          }
         }
-      }
-      this.currentStateJSON = JSON.stringify(newState);
-      this.currentStateKey = newStateKey;
-      this.stackIndex = newStackIndex;
-      this.drawTool.load(newState, function () {
-        this.drawTool._fireHistoryEvents();
-        this.loadingFromJSON = false;
-      }.bind(this), true);
+        if (callback) {
+          callback();
+        }
+        else {
+          this.drawTool.canvas.renderAll();
+        }
+        break;
     }
+  }.bind(this);
+
+  multiStateMove = function (keys) {
+    var key = keys.shift();
+    if (key) {
+      var state = this.states[key];
+      singleStateMove(key, state, function () {
+        // to avoid stack overflows
+        setTimeout(function () {
+          multiStateMove(keys);
+        }, 1);
+      });
+    }
+    else {
+      this.drawTool.canvas.renderAll()
+    }
+  }.bind(this);
+
+  if (newState) {
     this.pendingStateKey = null;
+    if (this.currentStateKey !== newStateKey) {
+
+      if (this.initialLoad) {
+        this.initialLoad = false;
+
+        // go back and reapply the last full state and then all the other state updates up until now
+        for (fullStateStackIndex = newStackIndex; (fullStateStackIndex >= 0) && (this.states[this.stack[fullStateStackIndex]].type !== FULL_STATE); fullStateStackIndex--);
+        if (fullStateStackIndex < 0) {
+          alert("Unable to find last full state keyframe!");
+          return;
+        }
+        keys = this.stack.slice(fullStateStackIndex, newStackIndex + 1);
+        multiStateMove(keys);
+      }
+      else {
+        if (newStackIndex < this.stackIndex) {
+          // remove keyboard focus if editing so we don't reapply the text during the load
+          activeObject = this.drawTool.canvas.getActiveObject();
+          if (activeObject && (activeObject.type === "i-text")) {
+            this.drawTool.canvas.deactivateAll();
+          }
+        }
+        singleStateMove(newStateKey, newState);
+      }
+    }
   }
 };
 
@@ -2595,17 +2681,29 @@ FirebaseManager.prototype.redo = function () {
   this.currentStateKeyRef.set(this.findNextStateKey(+1));
 };
 
-FirebaseManager.prototype.saveState = function (optionalObj) {
+FirebaseManager.prototype.saveState = function (optionalObj, optionalEventName) {
   // to avoid a load loop when text changes - fabric triggers a text change after it calls clear if a text object is currently selected
   if (this.loadingFromJSON) {
     return;
   }
 
-  var type = optionalObj ? OBJ_STATE : FULL_STATE;
-  var value = optionalObj ? {stateKey: this.currentStateKey, obj: optionalObj.toObject()} : this.drawTool.getJSON();
+  var type, value;
 
-  if ((type === FULL_STATE) && (value === this.currentStateJSON)) {
-    return;
+  if (optionalObj && (optionalEventName === "text:changed")) {
+    type = TEXT_CHANGE;
+    value = {
+      uuid: optionalObj._uuid,
+      clientId: optionalObj._clientId,
+      stateKey: this.currentStateKey,
+      text: optionalObj.text
+    };
+  }
+  else {
+    type = FULL_STATE;
+    value = this.drawTool.getJSON();
+    if (value === this.currentStateJSON) {
+      return;
+    }
   }
 
   // gather redo keys to cull (if we are saving after undoing)

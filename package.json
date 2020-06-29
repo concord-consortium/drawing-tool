@@ -20,6 +20,7 @@
   },
   "scripts": {
     "build": "webpack",
+    "start": "webpack-dev-server --inline --hot --content-base dist/",
     "server": "webpack-dev-server"
   },
   "peerDependencies": {

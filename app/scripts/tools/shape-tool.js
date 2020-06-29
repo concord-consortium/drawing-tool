@@ -105,6 +105,7 @@ ShapeTool.prototype.convertToPositiveDimensions = function (object) {
     object.top = object.top + object.height;
     object.height = -object.height;
   }
+  return object;
 };
 
 ShapeTool.prototype.moveObjectLeftTop = function (object) {

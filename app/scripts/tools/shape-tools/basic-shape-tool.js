@@ -41,6 +41,9 @@ BasicShapeTool.prototype.mouseDown = function (e) {
   var x = loc.x;
   var y = loc.y;
 
+  this.originX = x;
+  this.originY = y;
+
   this.curr = new this._shapeKlass({
     top: y,
     left: x,
@@ -60,8 +63,8 @@ BasicShapeTool.prototype.mouseMove = function (e) {
   if (this.down === false) { return; }
 
   var loc = this.canvas.getPointer(e.e);
-  var width = loc.x - this.curr.left;
-  var height = loc.y - this.curr.top;
+  var width = loc.x - this.originX;
+  var height = loc.y - this.originY;
 
   if (this._type.uniform) {
     if (Math.abs(width) < Math.abs(height)) {
@@ -71,15 +74,18 @@ BasicShapeTool.prototype.mouseMove = function (e) {
     }
   }
 
-  this.curr.set({
+  // we have to convert to positive dimensions as we draw, as ellipises cannot handle negative radii.
+  this.curr.set(this.convertToPositiveDimensions({
+    left: this.originX,
+    top: this.originY,
     width: width,
     height: height
-  });
+  }));
 
   if (this._type.radius) {
     this.curr.set({
-      rx: Math.abs(width / 2),
-      ry: Math.abs(height / 2)
+      rx: this.curr.width / 2,
+      ry: this.curr.height / 2
     });
   }
 
@@ -100,7 +106,6 @@ BasicShapeTool.prototype.mouseUp = function (e) {
 };
 
 BasicShapeTool.prototype._processNewShape = function (s) {
-  this.convertToPositiveDimensions(s);
   if (Math.max(s.width, s.height) < this.minSize) {
     s.set('width', this.defSize);
     s.set('height', this.defSize);

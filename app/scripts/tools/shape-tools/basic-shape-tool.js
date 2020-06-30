@@ -74,7 +74,7 @@ BasicShapeTool.prototype.mouseMove = function (e) {
     }
   }
 
-  // we have to convert to positive dimensions as we draw, as ellipises cannot handle negative radii.
+  // we have to convert to positive dimensions as we draw, as ellipses cannot handle negative radii.
   this.curr.set(this.convertToPositiveDimensions({
     left: this.originX,
     top: this.originY,

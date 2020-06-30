@@ -31,13 +31,20 @@ module.exports = {
     ]
   },
   plugins: [
-    new CopyWebpackPlugin([
-      {from: 'public'}
-    ])
+    new CopyWebpackPlugin({
+      patterns: [
+        {from: 'public'}
+      ]
+    })
   ],
   externals: {
     // require('jquery') is external and available on the global var jQuery
     'jquery': 'jQuery',
     'fabric': 'fabric'
+  },
+  devServer: {
+    watchOptions: {
+      ignored: /node_modules/
+    }
   }
 };

@@ -69,7 +69,8 @@ module.exports = function addMultiTouchSupport(canvas) {
   }
 
   function getTarget() {
-    return canvas.getActiveObject() || canvas.getActiveGroup();
+    var objs = canvas.getActiveObjects();
+    if (objs.length) return objs[0];
   }
 
   function setLocked(target, v) {

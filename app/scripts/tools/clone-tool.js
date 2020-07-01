@@ -43,10 +43,11 @@ CloneTool.prototype.use = function () {
 };
 
 CloneTool.prototype.copy = function (callback) {
-  var activeObject = this.canvas.getActiveGroup() || this.canvas.getActiveObject();
+  var activeObject = this.canvas.getActiveObject();
   if (!activeObject) {
     return;
   }
+
   // We don't want to copy control point, but the source object instead.
   // See: line-custom-control-points.js
   if (activeObject._dt_sourceObj) {
@@ -83,7 +84,7 @@ CloneTool.prototype.paste = function () {
   });
   clonedObject.setCoords();
 
-  if (clonedObject.type === 'group') {
+  if (clonedObject.type === 'activeSelection') {
     clonedObject.getObjects().forEach(function (o) {
       this.canvas.add(o);
     }.bind(this));

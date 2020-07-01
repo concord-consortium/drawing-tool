@@ -209,7 +209,7 @@ DrawingTool.prototype.load = function (jsonOrObject, callback, noHistoryUpdate) 
   else {
     state = jsonOrObject;
   }
-  
+
   state = convertState(state);
 
   // Process Drawing Tool specific options.
@@ -394,11 +394,7 @@ DrawingTool.prototype.sendSelectionToBack = function () {
 };
 
 DrawingTool.prototype.forEachSelectedObject = function (callback) {
-  if (this.canvas.getActiveObject()) {
-    callback(this.canvas.getActiveObject());
-  } else if (this.canvas.getActiveGroup()) {
-    this.canvas.getActiveGroup().objects.forEach(callback);
-  }
+  this.canvas.getActiveObjects().forEach(callback);
 };
 
 DrawingTool.prototype._setObjectProp = function (object, type, value) {
@@ -416,18 +412,14 @@ DrawingTool.prototype._setObjectProp = function (object, type, value) {
 };
 
 DrawingTool.prototype._sendSelectionTo = function (where) {
-  if (this.canvas.getActiveObject()) {
-    // Simple case, only a single object is selected.
-    send(this.canvas.getActiveObject());
-  } else if (this.canvas.getActiveGroup()) {
-    // Yes, this is overcomplicated, however FabricJS cannot handle
-    // sending a group to front or back. We need to remove selection,
-    // send particular objects and recreate selection...
-    var objects = this.canvas.getActiveGroup().getObjects();
-    this.clearSelection();
-    objects.forEach(send);
-    this.select(objects);
-  }
+  // Yes, this is overcomplicated, however FabricJS cannot handle
+  // sending a group to front or back. We need to remove selection,
+  // send particular objects and recreate selection...
+  var objects = this.canvas.getActiveObjects();
+  this.clearSelection();
+  objects.forEach(send);
+  this.select(objects);
+
   function send(obj) {
     // Note that this function handles custom control points defined for lines.
     // See: line-custom-control-points.js
@@ -623,12 +615,13 @@ DrawingTool.prototype.select = function (objectOrObjects) {
  * Returns selected object or array of selected objects.
  */
 DrawingTool.prototype.getSelection = function () {
-  var actGroup = this.canvas.getActiveGroup();
-  if (actGroup) {
-    return actGroup.getObjects();
+  var actGroup = this.canvas.getActiveObjects();
+  if (actGroup.length > 1) {
+    return actGroup;
+  } else if (actGroup.length === 1) {
+    var actObject = actGroup[0];
+    return actObject.isControlPoint ? actObject._dt_sourceObj : actObject;
   }
-  var actObject = this.canvas.getActiveObject();
-  return actObject && actObject.isControlPoint ? actObject._dt_sourceObj : actObject;
 };
 
 DrawingTool.prototype._fireStateChanged = function () {

@@ -143,7 +143,7 @@ DrawingTool.prototype.clear = function (clearBackground) {
  */
 DrawingTool.prototype.clearSelection = function () {
   // Important! It will cause that all custom control points will be removed (e.g. for lines).
-  this.canvas.deactivateAllWithDispatch();
+  this.canvas.discardActiveObject();
   this.canvas.renderAll();
 };
 

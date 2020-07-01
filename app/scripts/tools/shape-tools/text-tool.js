@@ -69,7 +69,7 @@ TextTool.prototype.exitTextEditing = function () {
   // If text is in edit mode, deactivate it before changing the tool.
   var activeObj = this.canvas.getActiveObject();
   if (activeObj && activeObj.isEditing) {
-    this.canvas.deactivateAllWithDispatch();
+    this.canvas.discardActiveObject();
   }
 };
 

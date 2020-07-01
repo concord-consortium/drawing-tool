@@ -76,7 +76,7 @@ CloneTool.prototype.paste = function () {
   }
   var clonedObject = this._clipboard;
 
-  this.canvas.deactivateAllWithDispatch();
+  this.canvas.discardActiveObject();
 
   clonedObject.set({
     left: clonedObject.left + CLONE_OFFSET,

@@ -412,13 +412,8 @@ DrawingTool.prototype._setObjectProp = function (object, type, value) {
 };
 
 DrawingTool.prototype._sendSelectionTo = function (where) {
-  // Yes, this is overcomplicated, however FabricJS cannot handle
-  // sending a group to front or back. We need to remove selection,
-  // send particular objects and recreate selection...
   var objects = this.canvas.getActiveObjects();
-  this.clearSelection();
   objects.forEach(send);
-  this.select(objects);
 
   function send(obj) {
     // Note that this function handles custom control points defined for lines.
@@ -601,14 +596,14 @@ DrawingTool.prototype.select = function (objectOrObjects) {
     return;
   }
   // More complex case, create a group and select it.
-  var group = new fabric.Group(objectOrObjects, {
+  var selection = new fabric.ActiveSelection(objectOrObjects, {
     originX: 'center',
     originY: 'center',
     canvas: this.canvas
   });
+  this.canvas.setActiveObject(selection);
   // Important! E.g. ensures that outlines around objects are visible.
-  group.addWithUpdate();
-  this.canvas.setActiveGroup(group);
+  this.canvas.requestRenderAll();
 };
 
 /**

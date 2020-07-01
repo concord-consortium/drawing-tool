@@ -88,7 +88,7 @@ CloneTool.prototype.paste = function () {
     clonedObject.getObjects().forEach(function (o) {
       this.canvas.add(o);
     }.bind(this));
-    this.canvas.setActiveGroup(clonedObject);
+    this.canvas.setActiveObject(clonedObject);
   } else {
     this.canvas.add(clonedObject);
     this.canvas.setActiveObject(clonedObject);

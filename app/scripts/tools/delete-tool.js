@@ -29,7 +29,7 @@ DeleteTool.prototype.use = function () {
   canvas.getActiveObjects().forEach(function (o) {
     canvas.remove(o);
   });
-  canvas.discardActiveGroup().renderAll();
+  canvas.discardActiveObject().renderAll();
   this.master.pushToHistory();
 };
 

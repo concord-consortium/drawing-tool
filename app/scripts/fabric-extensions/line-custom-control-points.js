@@ -1,4 +1,4 @@
-var fabric = require('fabric');
+var fabric = require('fabric').fabric;
 var SUPPORTED_TYPES = ["line", "arrow"];
 
 function lineCustomControlPoints(canvas) {

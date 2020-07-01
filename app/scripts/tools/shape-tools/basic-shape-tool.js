@@ -1,4 +1,4 @@
-var fabric    = require('fabric');
+var fabric    = require('fabric').fabric;
 var inherit   = require('../../inherit');
 var ShapeTool = require('../shape-tool');
 var Util      = require('../../util');

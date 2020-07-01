@@ -1,6 +1,6 @@
 /* global module require */
 var $                 = require('jquery');
-var fabric            = require('fabric');
+var fabric            = require('fabric').fabric;
 var EventEmitter2     = require('eventemitter2');
 
 var SelectionTool     = require('./tools/select-tool');

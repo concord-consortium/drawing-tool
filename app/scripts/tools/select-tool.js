@@ -1,4 +1,4 @@
-var fabric                  = require('fabric');
+var fabric                  = require('fabric').fabric;
 var inherit                 = require('../inherit');
 var Tool                    = require('../tool');
 var lineCustomControlPoints = require('../fabric-extensions/line-custom-control-points');

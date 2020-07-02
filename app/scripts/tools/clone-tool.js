@@ -53,21 +53,13 @@ CloneTool.prototype.copy = function (callback) {
   if (activeObject._dt_sourceObj) {
     activeObject = activeObject._dt_sourceObj;
   }
-  var klass = fabric.util.getKlass(activeObject.type);
   var propsToInclude = this.master.ADDITIONAL_PROPS_TO_SERIALIZE;
-  if (klass.async) {
-    activeObject.clone(function (clonedObject) {
-      this._updateClipboard(clonedObject);
-      if (typeof callback === 'function') {
-        callback();
-      }
-    }.bind(this), propsToInclude);
-  } else {
-    this._updateClipboard(activeObject.clone(null, propsToInclude));
+  activeObject.clone(function (clonedObject) {
+    this._updateClipboard(clonedObject);
     if (typeof callback === 'function') {
       callback();
     }
-  }
+  }.bind(this), propsToInclude);
 };
 
 CloneTool.prototype.paste = function () {

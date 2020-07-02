@@ -698,7 +698,7 @@ DrawingTool.prototype._initDOM = function () {
 };
 
 DrawingTool.prototype._initFabricJS = function () {
-  this.canvas = new fabric.Canvas(this.$canvas[0]);
+  this.canvas = new fabric.Canvas(this.$canvas[0], { preserveObjectStacking: true });
   // Target find would be more tolerant on touch devices.
   // Also SVG images added to canvas will taint it in some browsers, no matter whether
   // it's coming from the same or another domain (e.g. Safari, IE). In such case, we

@@ -849,11 +849,7 @@ DrawingTool.prototype.sendSelectionToBack = function () {
 };
 
 DrawingTool.prototype.forEachSelectedObject = function (callback) {
-  if (this.canvas.getActiveObject()) {
-    callback(this.canvas.getActiveObject());
-  } else if (this.canvas.getActiveGroup()) {
-    this.canvas.getActiveGroup().objects.forEach(callback);
-  }
+  this.canvas.getActiveObjects().forEach(callback);
 };
 
 DrawingTool.prototype._setObjectProp = function (object, type, value) {
@@ -4141,7 +4137,7 @@ module.exports = {
 });
 
 require.register("___globals___", function(exports, require, module) {
-  
+
 });})();require('___globals___');
 
 // See: https://github.com/brunch/brunch/issues/712

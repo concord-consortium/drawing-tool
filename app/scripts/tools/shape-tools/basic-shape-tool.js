@@ -53,7 +53,8 @@ BasicShapeTool.prototype.mouseDown = function (e) {
     lockUniScaling: this._type.uniform,
     fill: this.master.state.fill,
     stroke: this.master.state.stroke,
-    strokeWidth: this.master.state.strokeWidth
+    strokeWidth: this.master.state.strokeWidth,
+    objectCaching: false
   });
   this.canvas.add(this.curr);
 };

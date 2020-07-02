@@ -37,7 +37,8 @@ LineTool.prototype.mouseDown = function (e) {
     originY: 'center',
     selectable: false,
     stroke: this.master.state.stroke,
-    strokeWidth: this.master.state.strokeWidth
+    strokeWidth: this.master.state.strokeWidth,
+    objectCaching: false
   }, this._lineOptions));
   this.canvas.add(this.curr);
 };

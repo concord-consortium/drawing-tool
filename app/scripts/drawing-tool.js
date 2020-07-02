@@ -56,7 +56,7 @@ var EVENTS = {
 
 // Note that some object properties aren't serialized by default by FabricJS.
 // List them here so they can be serialized.
-var ADDITIONAL_PROPS_TO_SERIALIZE = ['lockUniScaling'];
+var ADDITIONAL_PROPS_TO_SERIALIZE = ['lockUniScaling', 'objectCaching'];
 
 /**
  * DrawingTool Constructor

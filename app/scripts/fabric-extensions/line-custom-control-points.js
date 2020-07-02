@@ -1,11 +1,12 @@
 var fabric = require('fabric').fabric;
 var SUPPORTED_TYPES = ["line", "arrow"];
 
+var selectedObject = null;
+
 function lineCustomControlPoints(canvas) {
   // Make sure that listeners aren't added multiple times.
   if (canvas.lineCustomControlPointsEnabled) return;
 
-  var selectedObject = null;
   canvas.on("object:selected", function (e) {
     var newTarget = e.target;
     if (selectedObject && isLine(selectedObject) && !isControlPoint(newTarget, selectedObject)) {
@@ -69,8 +70,8 @@ function lineDeselected() {
   // as otherwise control point will remove line as well!
   this._dt_controlPoints[0]._dt_sourceObj = null;
   this._dt_controlPoints[1]._dt_sourceObj = null;
-  this._dt_controlPoints[0].remove();
-  this._dt_controlPoints[1].remove();
+  this.canvas.remove(this._dt_controlPoints[1]);
+  this.canvas.remove(this._dt_controlPoints[0]);
   this._dt_controlPoints = undefined;
   this.hasCustomControlPoints = false;
   this.off('moving');

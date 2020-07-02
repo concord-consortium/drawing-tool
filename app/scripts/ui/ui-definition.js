@@ -364,7 +364,7 @@ STROKE_WIDTHS.forEach(function (width) {
 // of the button isntance (`this` value).
 function lockWhenNothingIsSelected() {
   this.setLocked(true);
-  this.dt.canvas.on("object:selected", function () {
+  this.dt.canvas.on("selection:created", function () {
     this.setLocked(false);
   }.bind(this));
   this.dt.canvas.on("selection:cleared", function () {

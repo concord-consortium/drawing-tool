@@ -30,7 +30,11 @@ var DEF_OPTIONS = {
   // target find method is used instead of per-pixel one. It's cause by the fact
   // that some browsers always taint canvas when SVG is rendered on it,
   // (Safari, IE). Untainted canvas is necessary for per-pixel method.
-  parseSVG: true
+  parseSVG: true,
+  // if true, no events will be pushed to the undo/redo stack until `unpauseHistory`
+  // is explicitly called. This is useful for allowing public API methods to
+  // be called during initialization without dirtying the history
+  startWithHistoryPaused: false,
 };
 
 var DEF_STATE = {
@@ -89,6 +93,8 @@ function DrawingTool(selector, options, settings) {
   this._initStateHistory();
 
   new UIManager(this);
+
+  this.historyPaused = this.options.startWithHistoryPaused;
 
   // Apply a fix that changes native FabricJS rescaling behavior into resizing.
   rescale2resize(this.canvas);
@@ -250,10 +256,20 @@ DrawingTool.prototype.load = function (jsonOrObject, callback, noHistoryUpdate) 
   }
 };
 
+DrawingTool.prototype.pauseHistory = function () {
+  this.historyPaused = true;
+}
+
+DrawingTool.prototype.unpauseHistory = function () {
+  this.historyPaused = false;
+}
+
 DrawingTool.prototype.pushToHistory = function () {
-  this._history.saveState();
-  this._fireHistoryEvents();
-  this._fireDrawingChanged();
+  if (!this.historyPaused) {
+    this._history.saveState();
+    this._fireHistoryEvents();
+    this._fireDrawingChanged();
+  }
 };
 
 DrawingTool.prototype.undo = function () {

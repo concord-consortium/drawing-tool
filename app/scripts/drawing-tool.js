@@ -462,13 +462,17 @@ DrawingTool.prototype._sendSelectionTo = function (where) {
  * Set the background image for the fabricjs canvas.
  *
  * parameters:
- *  - imageSrc: string with location of the image
+ *  - imageSrcOrOptions: either -
+ *      (a) string with location of the image
+ *      (b) options object, including `src`
  *  - fit: (string) how to put the image into the canvas
  *        ex: 'resizeBackgroundToCanvas' or 'resizeCanvasToBackground'
  *  - callback: function which is called when background image is loaded and set.
  */
-DrawingTool.prototype.setBackgroundImage = function (imageSrc, fit, callback) {
-  this._setBackgroundImage(imageSrc, null, function () {
+DrawingTool.prototype.setBackgroundImage = function (imageSrcOrOptions, fit, callback) {
+  var imageSrc = typeof imageSrcOrOptions === "string" ? imageSrcOrOptions : imageSrcOrOptions.src;
+  var imageOptions = typeof imageSrcOrOptions === "object" ? imageSrcOrOptions : null;
+  this._setBackgroundImage(imageSrc, imageOptions, function () {
     switch (fit) {
       case 'resizeBackgroundToCanvas': this.resizeBackgroundToCanvas(); break;
       case 'resizeCanvasToBackground': this.resizeCanvasToBackground(); break;
@@ -639,14 +643,34 @@ DrawingTool.prototype._fireStateChanged = function () {
   this._dispatch.emit(EVENTS.STATE_CHANGED, this.state);
 };
 
-DrawingTool.prototype._setBackgroundImage = function (imageSrc, options, backgroundLoadedCallback) {
-  options = options || {
-    originX: 'center',
-    originY: 'center',
-    top: this.canvas.height / 2,
-    left: this.canvas.width / 2,
-    crossOrigin: 'anonymous'
-  };
+/**
+ *  * parameters:
+ *    - _options: Either an object specifying how the background is to be placed and loaded, or
+ *                an object with the property "position" that is one of two options:
+ *                "center" (default) or "top-left".
+ */
+DrawingTool.prototype._setBackgroundImage = function (imageSrc, _options, backgroundLoadedCallback) {
+  var options;
+  if (typeof _opions === "object" && !_opions.position) {
+    options = _options;
+  } else if (_options && _options.position === "top-left") {
+    options = {
+      originX: 'left',
+      originY: 'top',
+      top: 0,
+      left: 0,
+      crossOrigin: 'anonymous'
+    };
+  } else {
+    options = {
+      originX: 'center',
+      originY: 'center',
+      top: this.canvas.height / 2,
+      left: this.canvas.width / 2,
+      crossOrigin: 'anonymous'
+    };
+  }
+
   var self = this;
 
   if (!imageSrc) {

@@ -1,5 +1,5 @@
 var $ = require('jquery');
-var fabric = require('fabric');
+var fabric = require('fabric').fabric;
 var LineTool = require('../tools/shape-tools/line-tool');
 
 function basicWidthHeightTransform(s) {

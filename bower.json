@@ -10,10 +10,6 @@
     "brunch-config.coffee",
     "package.json"
   ],
-  "dependencies": {
-    "fabric": "1.5.0",
-    "jquery": "~2.1.3"
-  },
   "overrides": {
     "fabric": {
       "main": "./dist/fabric.js"

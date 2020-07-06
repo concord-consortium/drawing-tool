@@ -1,5 +1,5 @@
 var $                       = require('jquery');
-var fabric                  = require('fabric');
+var fabric                  = require('fabric').fabric;
 var inherit                 = require('../../inherit');
 var ShapeTool               = require('../shape-tool');
 var SelectTool              = require('../select-tool');
@@ -37,7 +37,8 @@ LineTool.prototype.mouseDown = function (e) {
     originY: 'center',
     selectable: false,
     stroke: this.master.state.stroke,
-    strokeWidth: this.master.state.strokeWidth
+    strokeWidth: this.master.state.strokeWidth,
+    objectCaching: false
   }, this._lineOptions));
   this.canvas.add(this.curr);
 };

@@ -2,10 +2,18 @@
 
 Demo: http://concord-consortium.github.io/drawing-tool/examples/
 
-## External dependencies
+## Using as a library
 
-* jQuery
-* FabricJS
+`npm install drawing-tool`
+
+In myComponent.js:
+
+```
+import DrawingTool from "drawing-tool";
+import 'drawing-tool/dist/drawing-tool.css';
+
+const drawingTool = new DrawingTool("#drawing-tool-container");
+```
 
 ## Development
 * Install (if you don't have them):
@@ -19,7 +27,7 @@ Demo: http://concord-consortium.github.io/drawing-tool/examples/
     * Open [http://localhost:8080/examples/](http://localhost:3333/examples/).
     * Code!
     * Before you commit, run `webpack` to update `dist` directory and add it to git index.
-    
+
 ### Deploying to Github Pages
 
 Use `push-gh-pages.sh` script. It (re)generates `dist` dir using `webpack`, updates `gh-pages` branch

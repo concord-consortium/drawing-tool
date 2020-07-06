@@ -37,11 +37,16 @@ module.exports = {
       ]
     })
   ],
-  externals: {
-    // require('jquery') is external and available on the global var jQuery
-    'jquery': 'jQuery',
-    'fabric': 'fabric'
-  },
+  externals: [
+    {
+      'jquery': {
+        root: 'jQuery',
+        commonjs2: 'jquery',
+        commonjs: 'jquery',
+        amd: 'jquery'
+      }
+    }
+  ],
   devServer: {
     watchOptions: {
       ignored: /node_modules/

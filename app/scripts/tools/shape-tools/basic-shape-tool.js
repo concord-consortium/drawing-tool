@@ -1,4 +1,4 @@
-var fabric    = require('fabric');
+var fabric    = require('fabric').fabric;
 var inherit   = require('../../inherit');
 var ShapeTool = require('../shape-tool');
 var Util      = require('../../util');
@@ -53,7 +53,8 @@ BasicShapeTool.prototype.mouseDown = function (e) {
     lockUniScaling: this._type.uniform,
     fill: this.master.state.fill,
     stroke: this.master.state.stroke,
-    strokeWidth: this.master.state.strokeWidth
+    strokeWidth: this.master.state.strokeWidth,
+    objectCaching: false
   });
   this.canvas.add(this.curr);
 };

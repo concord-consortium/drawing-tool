@@ -1,5 +1,5 @@
 var $         = require('jquery');
-var fabric    = require('fabric');
+var fabric    = require('fabric').fabric;
 var inherit   = require('../../inherit');
 var ShapeTool = require('../shape-tool');
 
@@ -69,7 +69,7 @@ TextTool.prototype.exitTextEditing = function () {
   // If text is in edit mode, deactivate it before changing the tool.
   var activeObj = this.canvas.getActiveObject();
   if (activeObj && activeObj.isEditing) {
-    this.canvas.deactivateAllWithDispatch();
+    this.canvas.discardActiveObject();
   }
 };
 

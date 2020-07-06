@@ -1,6 +1,6 @@
 /* global module require */
 var $                 = require('jquery');
-var fabric            = require('fabric');
+var fabric            = require('fabric').fabric;
 var EventEmitter2     = require('eventemitter2');
 
 var SelectionTool     = require('./tools/select-tool');
@@ -56,7 +56,7 @@ var EVENTS = {
 
 // Note that some object properties aren't serialized by default by FabricJS.
 // List them here so they can be serialized.
-var ADDITIONAL_PROPS_TO_SERIALIZE = ['lockUniScaling'];
+var ADDITIONAL_PROPS_TO_SERIALIZE = ['lockUniScaling', 'objectCaching'];
 
 /**
  * DrawingTool Constructor
@@ -143,7 +143,7 @@ DrawingTool.prototype.clear = function (clearBackground) {
  */
 DrawingTool.prototype.clearSelection = function () {
   // Important! It will cause that all custom control points will be removed (e.g. for lines).
-  this.canvas.deactivateAllWithDispatch();
+  this.canvas.discardActiveObject();
   this.canvas.renderAll();
 };
 
@@ -209,7 +209,7 @@ DrawingTool.prototype.load = function (jsonOrObject, callback, noHistoryUpdate) 
   else {
     state = jsonOrObject;
   }
-  
+
   state = convertState(state);
 
   // Process Drawing Tool specific options.
@@ -394,11 +394,7 @@ DrawingTool.prototype.sendSelectionToBack = function () {
 };
 
 DrawingTool.prototype.forEachSelectedObject = function (callback) {
-  if (this.canvas.getActiveObject()) {
-    callback(this.canvas.getActiveObject());
-  } else if (this.canvas.getActiveGroup()) {
-    this.canvas.getActiveGroup().objects.forEach(callback);
-  }
+  this.canvas.getActiveObjects().forEach(callback);
 };
 
 DrawingTool.prototype._setObjectProp = function (object, type, value) {
@@ -416,18 +412,9 @@ DrawingTool.prototype._setObjectProp = function (object, type, value) {
 };
 
 DrawingTool.prototype._sendSelectionTo = function (where) {
-  if (this.canvas.getActiveObject()) {
-    // Simple case, only a single object is selected.
-    send(this.canvas.getActiveObject());
-  } else if (this.canvas.getActiveGroup()) {
-    // Yes, this is overcomplicated, however FabricJS cannot handle
-    // sending a group to front or back. We need to remove selection,
-    // send particular objects and recreate selection...
-    var objects = this.canvas.getActiveGroup().getObjects();
-    this.clearSelection();
-    objects.forEach(send);
-    this.select(objects);
-  }
+  var objects = this.canvas.getActiveObjects();
+  objects.forEach(send);
+
   function send(obj) {
     // Note that this function handles custom control points defined for lines.
     // See: line-custom-control-points.js
@@ -609,26 +596,27 @@ DrawingTool.prototype.select = function (objectOrObjects) {
     return;
   }
   // More complex case, create a group and select it.
-  var group = new fabric.Group(objectOrObjects, {
+  var selection = new fabric.ActiveSelection(objectOrObjects, {
     originX: 'center',
     originY: 'center',
     canvas: this.canvas
   });
+  this.canvas.setActiveObject(selection);
   // Important! E.g. ensures that outlines around objects are visible.
-  group.addWithUpdate();
-  this.canvas.setActiveGroup(group);
+  this.canvas.requestRenderAll();
 };
 
 /**
  * Returns selected object or array of selected objects.
  */
 DrawingTool.prototype.getSelection = function () {
-  var actGroup = this.canvas.getActiveGroup();
-  if (actGroup) {
-    return actGroup.getObjects();
+  var actGroup = this.canvas.getActiveObjects();
+  if (actGroup.length > 1) {
+    return actGroup;
+  } else if (actGroup.length === 1) {
+    var actObject = actGroup[0];
+    return actObject.isControlPoint ? actObject._dt_sourceObj : actObject;
   }
-  var actObject = this.canvas.getActiveObject();
-  return actObject && actObject.isControlPoint ? actObject._dt_sourceObj : actObject;
 };
 
 DrawingTool.prototype._fireStateChanged = function () {
@@ -710,7 +698,7 @@ DrawingTool.prototype._initDOM = function () {
 };
 
 DrawingTool.prototype._initFabricJS = function () {
-  this.canvas = new fabric.Canvas(this.$canvas[0]);
+  this.canvas = new fabric.Canvas(this.$canvas[0], { preserveObjectStacking: true });
   // Target find would be more tolerant on touch devices.
   // Also SVG images added to canvas will taint it in some browsers, no matter whether
   // it's coming from the same or another domain (e.g. Safari, IE). In such case, we

@@ -1,4 +1,4 @@
-var fabric  = require('fabric');
+var fabric  = require('fabric').fabric;
 var inherit = require('../inherit');
 var Tool    = require('../tool');
 
@@ -43,30 +43,23 @@ CloneTool.prototype.use = function () {
 };
 
 CloneTool.prototype.copy = function (callback) {
-  var activeObject = this.canvas.getActiveGroup() || this.canvas.getActiveObject();
+  var activeObject = this.canvas.getActiveObject();
   if (!activeObject) {
     return;
   }
+
   // We don't want to copy control point, but the source object instead.
   // See: line-custom-control-points.js
   if (activeObject._dt_sourceObj) {
     activeObject = activeObject._dt_sourceObj;
   }
-  var klass = fabric.util.getKlass(activeObject.type);
   var propsToInclude = this.master.ADDITIONAL_PROPS_TO_SERIALIZE;
-  if (klass.async) {
-    activeObject.clone(function (clonedObject) {
-      this._updateClipboard(clonedObject);
-      if (typeof callback === 'function') {
-        callback();
-      }
-    }.bind(this), propsToInclude);
-  } else {
-    this._updateClipboard(activeObject.clone(null, propsToInclude));
+  activeObject.clone(function (clonedObject) {
+    this._updateClipboard(clonedObject);
     if (typeof callback === 'function') {
       callback();
     }
-  }
+  }.bind(this), propsToInclude);
 };
 
 CloneTool.prototype.paste = function () {
@@ -75,7 +68,7 @@ CloneTool.prototype.paste = function () {
   }
   var clonedObject = this._clipboard;
 
-  this.canvas.deactivateAllWithDispatch();
+  this.canvas.discardActiveObject();
 
   clonedObject.set({
     left: clonedObject.left + CLONE_OFFSET,
@@ -83,11 +76,11 @@ CloneTool.prototype.paste = function () {
   });
   clonedObject.setCoords();
 
-  if (clonedObject.type === 'group') {
+  if (clonedObject.type === 'activeSelection') {
     clonedObject.getObjects().forEach(function (o) {
       this.canvas.add(o);
     }.bind(this));
-    this.canvas.setActiveGroup(clonedObject);
+    this.canvas.setActiveObject(clonedObject);
   } else {
     this.canvas.add(clonedObject);
     this.canvas.setActiveObject(clonedObject);

@@ -25,7 +25,7 @@ const drawingTool = new DrawingTool("#drawing-tool-container");
     * `webpack --watch` -- Automatically compiles sources to `./dist`
     * `live-server .` -- starts a web server on [http://localhost:8080/](http://localhost:8080/)
     * Open [http://localhost:8080/examples/](http://localhost:3333/examples/).
-    * Code!
+    * Code!!
     * Before you commit, run `webpack` to update `dist` directory and add it to git index.
 
 ### Deploying to Github Pages

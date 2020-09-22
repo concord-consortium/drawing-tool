@@ -11,8 +11,27 @@
   </head>
   <body>
     <div class="container">
-        <div id="drawing-tool"></div>
-    </div>
+      <h1>HTML5 Drawing Tool</h1>
+      <div id="drawing-tool"></div>
+      <h2>API examples:</h2>
+      <div>
+        <button id="set-background">Set background</button>
+        <input type="text" id="background-src" value="https://ccshutterbugtest.s3.amazonaws.com/7a72684bb7e.png" size="70"></input>
+        <button id="set-background-top-left">Set background top left</button>
+        <button id="resize-background">Resize background to canvas</button>
+        <button id="resize-canvas">Resize cavas to background</button>
+        <button id="shrink-background">Shrink background to cavas</button>
+      </div>
+      <div>
+        <button id="clear">Clear</button>
+        <button id="save">Save</button>
+        <button id="load" disabled>Load</button>
+      </div>
+      <div>
+        <button id="pause-history">Pause history</button>
+        <button id="restart-history">Restart history</button>
+      </div>
+  </div>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.3/jquery.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/1.5.0/fabric.js"></script>
   <script src="../drawing-tool.js"></script>
@@ -40,6 +59,13 @@
     $("#set-background").on("click", function () {
       drawingTool.setBackgroundImage($("#background-src").val());
     });
+    $("#set-background-top-left").on("click", function () {
+      const opts = {
+        src: $("#background-src").val(),
+        position: "top-left"
+      };
+      drawingTool.setBackgroundImage(opts);
+    });
     $("#resize-background").on("click", function () {
       drawingTool.resizeBackgroundToCanvas();
     });
@@ -59,6 +85,12 @@
     $("#load").on("click", function () {
       if (state === null) return;
       drawingTool.load(state);
+    });
+    $("#pause-history").on("click", function () {
+      drawingTool.pauseHistory();
+    });
+    $("#restart-history").on("click", function () {
+      drawingTool.unpauseHistory();
     });
   </script>
   </body>

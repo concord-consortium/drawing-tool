@@ -224,24 +224,9 @@ DrawingTool.prototype.load = function (jsonOrObject, callback, noHistoryUpdate) 
 
   // Load FabricJS state.
   var loadDef = $.Deferred();
-  var bgImgDef = $.Deferred();
-  // Note that we remove background definition before we call #loadFromJSON
-  // and then add the same background manually. Otherwise, the background
-  // won't be loaded due to CORS error (FabricJS bug?).
   var canvasState = state.canvas;
-  var backgroundImage = canvasState.backgroundImage;
-  delete canvasState.backgroundImage;
   this.canvas.loadFromJSON(canvasState, loadDef.resolve.bind(loadDef));
-  if (backgroundImage !== undefined) {
-    var imageSrc = backgroundImage.src;
-    delete backgroundImage.src;
-    this._setBackgroundImage(imageSrc, backgroundImage, bgImgDef.resolve.bind(bgImgDef));
-  } else {
-    this._setBackgroundImage(null, null, bgImgDef.resolve.bind(bgImgDef));
-  }
-  // Call load finished callback when both loading from JSON and separate background
-  // loading process are done.
-  $.when(loadDef, bgImgDef).done(loadFinished.bind(this));
+  $.when(loadDef).done(loadFinished.bind(this));
 
   function loadFinished() {
     // We don't serialize selectable property which depends on currently selected tool.
@@ -489,9 +474,10 @@ DrawingTool.prototype.resizeBackgroundToCanvas = function () {
   if (!this.canvas.backgroundImage) {
     return;
   }
-  this.canvas.backgroundImage.set({
-    width: this.canvas.width,
-    height: this.canvas.height
+  var bgImg = this.canvas.backgroundImage;
+  bgImg.set({
+    scaleX: this.canvas.width / bgImg.width,
+    scaleY: this.canvas.height / bgImg.height
   });
   this.canvas.renderAll();
   this.pushToHistory();
@@ -507,10 +493,7 @@ DrawingTool.prototype.shrinkBackgroundToCanvas = function () {
   var heightRatio = this.canvas.height / bgImg.height;
   var minRatio    = Math.min(widthRatio, heightRatio);
   if (minRatio < 1) {
-    bgImg.set({
-      width:  bgImg.width * minRatio,
-      height: bgImg.height * minRatio
-    });
+    bgImg.set({ scaleX: minRatio, scaleY: minRatio });
     this.canvas.renderAll();
     this.pushToHistory();
   }
@@ -520,11 +503,19 @@ DrawingTool.prototype.resizeCanvasToBackground = function () {
   if (!this.canvas.backgroundImage) {
     return;
   }
-  this._setDimensions(this.canvas.backgroundImage.width, this.canvas.backgroundImage.height);
-  this.canvas.backgroundImage.set({
-    top: this.canvas.height / 2,
-    left: this.canvas.width / 2
+  var bgImg = this.canvas.backgroundImage;
+  this._setDimensions(bgImg.width, bgImg.height);
+  bgImg.set({
+    scaleX: 1,
+    scaleY: 1
   });
+  if (bgImg.originX === "center") {
+    // If origin was set to top-left, it means that top and left are equal to 0 and there's nothing to update.
+    bgImg.set({
+      top: this.canvas.height / 2,
+      left: this.canvas.width / 2
+    });
+  }
   this.canvas.renderAll();
   this.pushToHistory();
 };

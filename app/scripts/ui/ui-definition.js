@@ -76,6 +76,7 @@ var ui = {
      * Main tools
      ***/
     {
+      name: 'select',
       label: 's',
       tooltip: 'Select tool',
       activatesTool: 'select',

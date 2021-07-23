@@ -2,9 +2,14 @@ var $         = require('jquery');
 var fabric    = require('fabric').fabric;
 var inherit   = require('../../inherit');
 var ShapeTool = require('../shape-tool');
+require('../../fabric-extensions/annotation');
 
-function TextTool(name, drawTool) {
+function TextTool(name, drawTool, options) {
   ShapeTool.call(this, name, drawTool);
+
+  options = options || {}
+  this._options = options;
+  this._isAnnotation = !!options.isAnnotation;
 
   this.canvas.on('text:editing:exited', function (opt) {
     if (this.active) {
@@ -39,7 +44,8 @@ TextTool.prototype.mouseDown = function (opt) {
   var x = loc.x;
   var y = loc.y;
 
-  var text = new fabric.IText("", {
+  var text;
+  var options = {
     left: x,
     top: y,
     lockUniScaling: true,
@@ -47,7 +53,14 @@ TextTool.prototype.mouseDown = function (opt) {
     fontSize: this.master.state.fontSize,
     // Yes, looks strange, but I guess stroke color should be used (as it would be the "main" one).
     fill: this.master.state.stroke
-  });
+  };
+  if (this._isAnnotation) {
+    options.lockScalingX = true;
+    options.lockScalingY = true;
+    text = new fabric.Annotation("", options);
+  } else {
+    text = new fabric.IText("", options);
+  }
   this.actionComplete(text);
   this.canvas.add(text);
   this.editText(text, opt.e);

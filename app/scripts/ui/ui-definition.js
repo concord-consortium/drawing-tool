@@ -122,6 +122,13 @@ var ui = {
       palette: 'main'
     },
     {
+      name: 'annotation',
+      tooltip: 'Annotation tool',
+      label: 'a',
+      activatesTool: 'annotation',
+      palette: 'main'
+    },
+    {
       name: 'text',
       tooltip: 'Text tool (click and hold to show available font sizes)',
       label: 'T',

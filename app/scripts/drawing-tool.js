@@ -712,6 +712,7 @@ DrawingTool.prototype._initTools = function () {
     free:        new FreeDrawTool('Free Draw Tool', this),
     stamp:       new StampTool('Stamp Tool', this, this.options.parseSVG),
     text:        new TextTool('Text Tool', this),
+    annotation:  new TextTool('Text Tool', this, {isAnnotation: true}),
     trash:       new DeleteTool('Delete Tool', this),
     clone:       new CloneTool('Clone Tool', this)
   };

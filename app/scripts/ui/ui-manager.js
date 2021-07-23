@@ -14,11 +14,35 @@ function UIManager(drawingTool) {
   this._palettes = {};
   this._buttons = {};
   this._paletteActiveButton = {};
+
   // Copy ui definition so custom modifications won't affect globally available object.
   var uiDef = $.extend(true, {}, uiDefinition);
   if (this.drawingTool.options.stamps) {
     generateStamps(uiDef, this.drawingTool.options.stamps);
   }
+
+  // allow user to select buttons shown - the option is an array of button names
+  const buttons = this.drawingTool.options.buttons || [];
+  if (buttons.length > 0) {
+    const customButtonDefs = [];
+    buttons.forEach(button => {
+      // check if we need to add buttons related to the requested buttons
+      const addLineButtons = button === 'linesPalette';
+      const addStampButtons = button === 'stamp';
+      const addShapeButtons = button === 'shapesPalette';
+      uiDef.buttons.forEach(buttonDef => {
+        const addButtonDef = (buttonDef.name === button) ||
+          (addLineButtons && buttonDef.palette === 'lines') ||
+          (addShapeButtons && buttonDef.palette === 'shapes') ||
+          (addStampButtons && ((buttonDef.palette === 'stampCategories') || (buttonDef.palette.indexOf('StampsPalette') >= 0)));
+        if (addButtonDef) {
+          customButtonDefs.push(buttonDef);
+        }
+      });
+    });
+    uiDef.buttons = customButtonDefs;
+  }
+
   this._processUIDefinition(uiDef);
 
   for (var name in this._buttons) {

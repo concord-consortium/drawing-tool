@@ -19,9 +19,8 @@ const drawingTool = new DrawingTool("#drawing-tool-container");
 * Install (if you don't have them):
     * [Node.js](http://nodejs.org) : `brew install node` on OS X
     * [Live server](https://www.npmjs.com/package/live-server) :`npm install -g live-server`
-    * [yarn](https://github.com/yarnpkg/yarn) : `npm install -g yarn`
 * Run:
-    * `yarn` to install dependencies.
+    * `npm install` to install dependencies.
     * `webpack --watch` -- Automatically compiles sources to `./dist`
     * `live-server .` -- starts a web server on [http://localhost:8080/](http://localhost:8080/)
     * Open [http://localhost:8080/examples/](http://localhost:3333/examples/).

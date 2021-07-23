@@ -1,0 +1,29 @@
+s3_bucket: models-resources
+s3_key_prefix: drawing-tool
+s3_endpoint: us-east-1
+gzip: true
+
+cloudfront_distribution_id: E1QHTGVGYD1DWZ
+cloudfront_invalidate_root: false
+cloudfront_wildcard_invalidation: false
+
+<% if ENV['TRAVIS_BRANCH'] == 'master' %>
+# in this case we are going to deploy this branch to the top level of the domain
+# so we need to ignore the version and branch folders
+ignore_on_server: ^drawing-tool/(version/|branch/)
+<% else %>
+# in this case we are going to deploy this code to a subfolder of either the branch
+# or version folder. So ignore everything except this folder.
+# S3_DEPLOY_DIR is set by s3_deploy.sh
+ignore_on_server: ^(?!drawing-tool/<%= Regexp.escape(ENV['S3_DEPLOY_DIR']) %>/)
+<% end %>
+max_age:
+  "drawing-tool/*": 600 # 10 minutes
+  "drawing-tool/version/*": 31536000 # 1 year
+  "drawing-tool/branch/*": 0
+
+cloudfront_distribution_config:
+  aliases:
+    quantity: 1
+    items:
+      - models-resources.concord.org

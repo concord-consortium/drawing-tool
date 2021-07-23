@@ -5,11 +5,6 @@ RESOURCE_DIR='drawing-tool'
 # name of branch to deploy to root of site
 PRODUCTION_BRANCH='master'
 
-if [ "$TRAVIS_PULL_REQUEST" != "false" ]; then
-	echo "skipping deploy to S3: this is a pull request"
-	exit 0
-fi
-
 # extract current TAG if present
 # the 2> is to prevent error messages when no match is found
 CURRENT_TAG=`git describe --tags --exact-match $TRAVIS_COMMIT 2> /dev/null`

@@ -10,11 +10,13 @@ function DeleteTool(name, drawTool) {
 
   this.singleUse = true;
 
-  // Delete the selected object(s) with the backspace key.
+  // Delete the selected object(s) with the backspace and delete key when not using the text tool
   this.master.$element.on('keydown', function(e) {
-    if (e.keyCode === 8) {
-      this.use();
-      e.preventDefault();
+    if ((e.keyCode === 8) || (e.keyCode === 46)) {
+      if (this.master.currentTool !== this.master.tools.text) {
+        this.use();
+        e.preventDefault();
+      }
     }
   }.bind(this));
 }

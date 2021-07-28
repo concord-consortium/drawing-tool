@@ -147,9 +147,14 @@ var fabric = require('fabric').fabric;
      * @return {Object} object representation of an instance
      */
     toObject: function(propertiesToInclude) {
-      return extend(this.callSuper('toObject', propertiesToInclude), {
+      const extraProperties = {
+        x1: this.x1,
+        y1: this.y1,
+        x2: this.x2,
+        y2: this.y2,
         doubleArrowhead: this.get('doubleArrowhead')
-      });
+      }
+      return extend(this.callSuper('toObject', propertiesToInclude), extraProperties);
     }
 
     // WARN:
@@ -196,9 +201,9 @@ var fabric = require('fabric').fabric;
    * @param {Object} object Object to create an instance from
    * @return {fabric.Arrow} instance of fabric.Arrow
    */
-  fabric.Arrow.fromObject = function(object) {
-    var points = [object.x1, object.y1, object.x2, object.y2];
-    return new fabric.Arrow(points, object);
+  fabric.Arrow.fromObject = function(object, callback) {
+    object.points = [object.x1, object.y1, object.x2, object.y2];
+    return fabric.Object._fromObject('Arrow', object, callback, 'points');
   };
 
 })();

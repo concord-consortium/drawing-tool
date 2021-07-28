@@ -51,11 +51,22 @@ SelectionTool.prototype.activate = function () {
   SelectionTool.super.activate.call(this);
   this.setSelectable(true);
   this.selectLastObject();
+
+  // activate all the annotation control points
+  fabric.Annotations.addAllControlPoints(this.canvas);
+};
+
+SelectionTool.prototype.activateAgain = function () {
+  // activate all the annotation control points
+  fabric.Annotations.addAllControlPoints(this.canvas);
 };
 
 SelectionTool.prototype.deactivate = function () {
   SelectionTool.super.deactivate.call(this);
   this.setSelectable(false);
+
+  // deactivate all the annotation control points
+  fabric.Annotations.removeAllControlPoints(this.canvas);
 };
 
 SelectionTool.prototype.setSelectable = function (selectable) {
@@ -78,8 +89,8 @@ SelectionTool.prototype.selectLastObject = function () {
 };
 
 SelectionTool.prototype._setLastObject = function (obj) {
-  if (obj._dt_sourceObj) {
-    // Ignore custom control points.
+  if (obj._dt_sourceObj && obj.annotationId) {
+    // Ignore custom control points and annotations.
     return;
   }
   this._lastObject = obj;

@@ -11,6 +11,7 @@ var TextTool          = require('./tools/shape-tools/text-tool');
 var StampTool         = require('./tools/shape-tools/stamp-tool');
 var DeleteTool        = require('./tools/delete-tool');
 var CloneTool         = require('./tools/clone-tool');
+var AnnotationTool    = require('./tools/shape-tools/annotation-tool');
 var UIManager         = require('./ui/ui-manager');
 var UndoRedo          = require('./undo-redo');
 var convertState      = require('./convert-state');
@@ -174,6 +175,11 @@ DrawingTool.prototype.save = function () {
     this.clearSelection();
     selectionCleared = true;
   }
+  var canvasJSON = this.canvas.toJSON(ADDITIONAL_PROPS_TO_SERIALIZE);
+  // remove the annotation control points from the JSON output
+  if (fabric.Annotations) {
+    canvasJSON = fabric.Annotations.removeControlPointsFromJSON(canvasJSON);
+  }
   var result = JSON.stringify({
     version: 1,
     dt: {
@@ -181,7 +187,7 @@ DrawingTool.prototype.save = function () {
       width: this.canvas.getWidth(),
       height: this.canvas.getHeight()
     },
-    canvas: this.canvas.toJSON(ADDITIONAL_PROPS_TO_SERIALIZE)
+    canvas: canvasJSON
   });
   if (selectionCleared) {
     this.select(selection);
@@ -225,10 +231,16 @@ DrawingTool.prototype.load = function (jsonOrObject, callback, noHistoryUpdate) 
   // Load FabricJS state.
   var loadDef = $.Deferred();
   var canvasState = state.canvas;
+  if (fabric.Annotations) {
+    canvasState = fabric.Annotations.disableControlsInJSON(canvasState);
+  }
   this.canvas.loadFromJSON(canvasState, loadDef.resolve.bind(loadDef));
   $.when(loadDef).done(loadFinished.bind(this));
 
   function loadFinished() {
+    // activate the select tool again to enable the annotation control points
+    this.tools.select.activateAgain();
+
     // We don't serialize selectable property which depends on currently selected tool.
     // Currently objects should be selectable only if select tool is active.
     this.tools.select.setSelectable(this.tools.select.active);
@@ -713,7 +725,8 @@ DrawingTool.prototype._initTools = function () {
     stamp:       new StampTool('Stamp Tool', this, this.options.parseSVG),
     text:        new TextTool('Text Tool', this),
     trash:       new DeleteTool('Delete Tool', this),
-    clone:       new CloneTool('Clone Tool', this)
+    clone:       new CloneTool('Clone Tool', this),
+    annotation:  new AnnotationTool('Annotation Tool', this)
   };
 };
 

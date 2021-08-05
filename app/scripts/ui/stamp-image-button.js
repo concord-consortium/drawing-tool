@@ -4,7 +4,7 @@ var BasicButton = require('./basic-button');
 
 function StampImageButton(options, ui, drawingTool) {
   options.onClick = function () {
-    this.dt.tools.stamp.setStampObject(this._stamp);
+    this.dt.setStampObject(this._stamp, this._imageSrc);
   };
   BasicButton.call(this, options, ui, drawingTool);
 
@@ -19,7 +19,7 @@ function StampImageButton(options, ui, drawingTool) {
     this.$image = $(img).appendTo(this.$element);
     this._stopWaiting();
     if (options.setStampOnImgLoad) {
-      this.dt.tools.stamp.setStampObject(this._stamp);
+      this.dt.setStampObject(this._stamp, this._imageSrc);
     }
   }.bind(this), null, 'anonymous');
 

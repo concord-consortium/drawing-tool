@@ -2,28 +2,29 @@ var StrokeButton    = require('./stroke-button');
 var FillButton      = require('./fill-button');
 var ColorButton     = require('./color-button');
 var LineWidthButton = require('./line-width-button');
+var SelectedLineWidthButton = require('./selected-line-width-button');
 
 var COLORS = [
-  '',
-  '#efefef',
-  '#e66665',
-  '#75b792',
-  '#076bb6',
-  '#ffd605',
-  '#f47d43',
-  '#ae70af',
-  '#a9b2b1',
-  '#333333'
-];
+  {value: '',        icon: require('../../assets/color-none-icon.svg')},
+  {value: '#3f3f3f', icon: require('../../assets/color-black-icon.svg')},
+  {value: '#fff',    icon: require('../../assets/color-white-icon.svg')},
+  {value: '#bfbfbf', icon: require('../../assets/color-gray-icon.svg')},
+  {value: '#eb0000', icon: require('../../assets/color-red-icon.svg')},
+  {value: '#008a00', icon: require('../../assets/color-green-icon.svg')},
+  {value: '#00f',    icon: require('../../assets/color-blue-icon.svg')},
+  {value: '#ff8415', icon: require('../../assets/color-orange-icon.svg')},
+  {value: '#ff0',    icon: require('../../assets/color-yellow-icon.svg')},
+  {value: '#d100d1', icon: require('../../assets/color-purple-icon.svg')},
+ ];
 
 var STROKE_WIDTHS = [
-  1,
-  2,
-  4,
-  8,
-  12,
-  16,
-  20
+  {value: 1, icon:  require('../../assets/line-width-1-px-icon.svg')},
+  {value: 2, icon:  require('../../assets/line-width-2-px-icon.svg')},
+  {value: 4, icon:  require('../../assets/line-width-4-px-icon.svg')},
+  {value: 8, icon:  require('../../assets/line-width-8-px-icon.svg')},
+  {value: 12, icon: require('../../assets/line-width-12-px-icon.svg')},
+  {value: 16, icon: require('../../assets/line-width-16-px-icon.svg')},
+  {value: 20, icon: require('../../assets/line-width-20-px-icon.svg')},
 ];
 
 var FONT_SIZES = [
@@ -35,6 +36,17 @@ var FONT_SIZES = [
   37,
   42
 ];
+
+
+var FONT_ICONS = {
+  12: require('../../assets/text-12-pt-icon.svg'),
+  17: require('../../assets/text-17-pt-icon.svg'),
+  22: require('../../assets/text-22-pt-icon.svg'),
+  27: require('../../assets/text-27-pt-icon.svg'),
+  32: require('../../assets/text-32-pt-icon.svg'),
+  37: require('../../assets/text-37-pt-icon.svg'),
+  42: require('../../assets/text-42-pt-icon.svg')
+};
 
 var ui = {
   /***
@@ -80,7 +92,16 @@ var ui = {
       label: 's',
       tooltip: 'Select tool',
       activatesTool: 'select',
-      palette: 'main'
+      palette: 'main',
+      icon: require('../../assets/select-icon.svg')
+    },
+    {
+      name: 'free',
+      tooltip: 'Free hand drawing tool',
+      label: 'F',
+      activatesTool: 'free',
+      palette: 'main',
+      icon: require('../../assets/freehand-icon.svg')
     },
     {
       name: 'linesPalette',
@@ -89,14 +110,15 @@ var ui = {
       reflectsTools: ['line', 'arrow', 'doubleArrow'],
       palette: 'main',
       onInit: function () {
-        this.setLabel(this.ui.getPaletteActiveButton('lines').getLabel());
+        this.setLabelOrIcon(this.ui.getPaletteActiveButton('lines'));
       },
       onClick: function () {
         this.ui.getPaletteActiveButton('lines').click();
       },
       onLongPress: function () {
         this.ui.togglePalette('lines');
-      }
+      },
+      icon: require('../../assets/line-icon.svg')
     },
     {
       name: 'shapesPalette',
@@ -105,21 +127,15 @@ var ui = {
       reflectsTools: ['rect', 'ellipse', 'square', 'circle'],
       palette: 'main',
       onInit: function () {
-        this.setLabel(this.ui.getPaletteActiveButton('shapes').getLabel());
+        this.setLabelOrIcon(this.ui.getPaletteActiveButton('shapes'));
       },
       onClick: function () {
         this.ui.getPaletteActiveButton('shapes').click();
       },
       onLongPress: function () {
         this.ui.togglePalette('shapes');
-      }
-    },
-    {
-      name: 'free',
-      tooltip: 'Free hand drawing tool',
-      label: 'F',
-      activatesTool: 'free',
-      palette: 'main'
+      },
+      icon: require('../../assets/circle-icon.svg')
     },
     {
       name: 'text',
@@ -131,22 +147,20 @@ var ui = {
       palette: 'main',
       onLongPress: function () {
         this.ui.togglePalette('fontSizes');
-      }
-    },
-    {
-      name: 'clone',
-      tooltip: 'Clone tool',
-      label: 'c',
-      activatesTool: 'clone',
-      palette: 'main',
-      onInit: lockWhenNothingIsSelected
+      },
+      onStateChange: function (state) {
+        if (state.fontSize && FONT_ICONS[state.fontSize]) {
+          this.$icon.attr('src', FONT_ICONS[state.fontSize].default);
+        }
+      },
+      icon: require('../../assets/text-27-pt-icon.svg')
     },
     {
       name: 'strokeColorPalette',
       tooltip: 'Stroke color (click and hold to show available colors)',
       buttonClass: StrokeButton,
       // Do not exit text edit mode on click. See text tool class.
-      classes: 'dt-expand dt-keep-text-edit-mode',
+      classes: 'dt-keep-text-edit-mode',
       palette: 'main',
       onInit: function () {
         this.setColor(this.dt.state.stroke);
@@ -156,13 +170,13 @@ var ui = {
       },
       onClick: function () {
         this.ui.togglePalette('strokeColors');
-      }
+      },
+      icon: require('../../assets/color-stroke-icon.svg')
     },
     {
       name: 'fillColorPalette',
       tooltip: 'Fill color (click and hold to show available colors)',
       buttonClass: FillButton,
-      classes: 'dt-expand',
       palette: 'main',
       onInit: function () {
         this.setColor(this.dt.state.fill);
@@ -172,17 +186,31 @@ var ui = {
       },
       onClick: function () {
         this.ui.togglePalette('fillColors');
-      }
+      },
+      icon: require('../../assets/color-fill-icon.svg')
     },
     {
       name: 'strokeWidthPalette',
       tooltip: 'Stroke width (click and hold to show available options)',
+      buttonClass: SelectedLineWidthButton,
       label: 'w',
-      classes: 'dt-expand',
       palette: 'main',
       onClick: function () {
         this.ui.togglePalette('strokeWidths');
-      }
+      },
+      onStateChange: function (state) {
+        this.setLineWidth(state.strokeWidth);
+      },
+      icon: require('../../assets/line-width-icon.svg')
+    },
+    {
+      name: 'clone',
+      tooltip: 'Clone tool',
+      label: 'c',
+      activatesTool: 'clone',
+      palette: 'main',
+      onInit: lockWhenNothingIsSelected,
+      icon: require('../../assets/clone-icon.svg')
     },
     {
       name: 'sendToBack',
@@ -193,7 +221,8 @@ var ui = {
       onInit: lockWhenNothingIsSelected,
       onClick: function () {
         this.dt.sendSelectionToBack();
-      }
+      },
+      icon: require('../../assets/send-to-back-icon.svg')
     },
     {
       name: 'sendToFront',
@@ -204,7 +233,8 @@ var ui = {
       onInit: lockWhenNothingIsSelected,
       onClick: function () {
         this.dt.sendSelectionToFront();
-      }
+      },
+      icon: require('../../assets/send-to-front-icon.svg')
     },
     {
       name: 'undo',
@@ -223,7 +253,8 @@ var ui = {
         this.dt.on("undo:impossible", function () {
           this.setLocked(true);
         }.bind(this));
-      }
+      },
+      icon: require('../../assets/undo-icon.svg')
     },
     {
       name: 'redo',
@@ -242,7 +273,8 @@ var ui = {
         this.dt.on("redo:impossible", function () {
           this.setLocked(true);
         }.bind(this));
-      }
+      },
+      icon: require('../../assets/redo-icon.svg')
     },
     {
       name: 'trash',
@@ -250,7 +282,8 @@ var ui = {
       label: 'd',
       activatesTool: 'trash',
       palette: 'main',
-      onInit: lockWhenNothingIsSelected
+      onInit: lockWhenNothingIsSelected,
+      icon: require('../../assets/delete-selection-icon.svg')
     },
     /***
      * Line tools
@@ -260,52 +293,59 @@ var ui = {
       tooltip: 'Line',
       label: 'L',
       activatesTool: 'line',
-      palette: 'lines'
+      palette: 'lines',
+      icon: require('../../assets/line-icon.svg')
     },
     {
       name: 'arrow',
       tooltip: 'Arrow',
       label: 'A',
       activatesTool: 'arrow',
-      palette: 'lines'
+      palette: 'lines',
+      icon: require('../../assets/line-w-arrowhead-icon.svg')
     },
     {
       name: 'doubleArrow',
       tooltip: 'Double arrow',
       label: 'D',
       activatesTool: 'doubleArrow',
-      palette: 'lines'
+      palette: 'lines',
+      icon: require('../../assets/line-w-double-arrowhead-icon.svg')
     },
     /***
      * Shape tools
      ***/
-    {
-      name: 'rect',
-      tooltip: 'Rectangle',
-      label: 'R',
-      activatesTool: 'rect',
-      palette: 'shapes'
-    },
-    {
-      name: 'ellipse',
-      tooltip: 'Ellipse',
-      label: 'E',
-      activatesTool: 'ellipse',
-      palette: 'shapes'
+     {
+      name: 'circle',
+      tooltip: 'Circle',
+      label: 'C',
+      activatesTool: 'circle',
+      palette: 'shapes',
+      icon: require('../../assets/circle-icon.svg')
     },
     {
       name: 'square',
       tooltip: 'Square',
       label: 'S',
       activatesTool: 'square',
-      palette: 'shapes'
+      palette: 'shapes',
+      icon: require('../../assets/square-icon.svg')
     },
     {
-      name: 'circle',
-      tooltip: 'Circle',
-      label: 'C',
-      activatesTool: 'circle',
-      palette: 'shapes'
+      name: 'ellipse',
+      tooltip: 'Ellipse',
+      label: 'E',
+      activatesTool: 'ellipse',
+      palette: 'shapes',
+      icon: require('../../assets/ellipse-icon.svg')
+    },
+    {
+      name: 'rect',
+      tooltip: 'Rectangle',
+      label: 'R',
+      activatesTool: 'rect',
+      palette: 'shapes',
+      icon: require('../../assets/rectangle-icon.svg')
     }
   ],
   optionalButtons: [
@@ -316,7 +356,8 @@ var ui = {
       // Do not exit text edit mode on click. See text tool class.
       classes: 'dt-keep-text-edit-mode',
       activatesTool: 'annotation',
-      palette: 'main'
+      palette: 'main',
+      icon: require('../../assets/annotation-icon.svg')
     }
   ]
 };
@@ -327,11 +368,6 @@ FONT_SIZES.forEach(function (fontSize) {
     tooltip: fontSize + 'px',
     // Do not exit text edit mode on click. See text tool class.
     classes: 'dt-keep-text-edit-mode',
-    onInit: function () {
-      this.$element.css('font-size', fontSize);
-      // It just looks better for given set of font sizes.
-      this.$element.css('line-height', '50px');
-    },
     onClick: function () {
       this.dt.setFontSize(fontSize);
       this.dt.setSelectionFontSize(fontSize);
@@ -339,35 +375,39 @@ FONT_SIZES.forEach(function (fontSize) {
     onStateChange: function (state) {
       this.setActive(state.fontSize === fontSize);
     },
-    palette: 'fontSizes'
+    palette: 'fontSizes',
+    icon: FONT_ICONS[fontSize]
   });
 });
 
 COLORS.forEach(function (color) {
   ui.buttons.push({
     buttonClass: ColorButton,
-    tooltip: color,
+    tooltip: color.value,
     // Do not exit text edit mode on click. See text tool class.
     classes: 'dt-keep-text-edit-mode',
-    color: color,
+    color: color.value,
     type: 'stroke',
-    palette: 'strokeColors'
+    palette: 'strokeColors',
+    icon: color.icon
   });
   ui.buttons.push({
     buttonClass: ColorButton,
-    tooltip: color,
-    color: color,
+    tooltip: color.value,
+    color: color.value,
     type: 'fill',
-    palette: 'fillColors'
+    palette: 'fillColors',
+    icon: color.icon
   });
 });
 
 STROKE_WIDTHS.forEach(function (width) {
   ui.buttons.push({
     buttonClass: LineWidthButton,
-    tooltip: width + 'px',
-    width: width,
-    palette: 'strokeWidths'
+    tooltip: width.value + 'px',
+    width: width.value,
+    palette: 'strokeWidths',
+    icon: width.icon
   });
 });
 

@@ -61,9 +61,22 @@ function UIManager(drawingTool) {
 }
 
 UIManager.prototype._processUIDefinition = function (uiDef) {
+  var firstMainButton = -1;
+  var lastMainButton = -1;
+  for (var i = 0; i < uiDef.buttons.length; i++) {
+    if (uiDef.buttons[i].palette === "main") {
+      if (firstMainButton === -1) {
+        firstMainButton = i;
+      }
+      lastMainButton = i;
+    }
+  }
+
   this.$tools.empty();
   uiDef.palettes.forEach(this._createPalette.bind(this));
-  uiDef.buttons.forEach(this._createButton.bind(this));
+  uiDef.buttons.forEach((button, index) => {
+    this._createButton(button, index, firstMainButton, lastMainButton);
+  });
 };
 
 UIManager.prototype.getButton = function (name) {
@@ -93,9 +106,10 @@ UIManager.prototype._createPalette = function (paletteOptions) {
   this._palettes[paletteName] = palette;
 };
 
-UIManager.prototype._createButton = function (buttonOptions) {
+UIManager.prototype._createButton = function (buttonOptions, index, firstMainButton, lastMainButton) {
   var BtnClass = buttonOptions.buttonClass || BasicButton;
-  var button = new BtnClass(buttonOptions, this, this.drawingTool);
+  var extraClasses = index === firstMainButton ? "dt-first" : (index === lastMainButton ? "dt-last" : undefined);
+  var button = new BtnClass(buttonOptions, this, this.drawingTool, extraClasses);
   var buttonName = button.name || getUniqueName();
   this._buttons[buttonName] = button;
 

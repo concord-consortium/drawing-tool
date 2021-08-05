@@ -15,21 +15,8 @@ function LineWidthButton(options, ui, drawingTool) {
     }
   };
   BasicButton.call(this, options, ui, drawingTool);
-
-  $('<div>')
-    .addClass('dt-line-width-icon')
-    .appendTo(this.$element);
-  this.setLineWidth(options.width);
 }
 
 inherit(LineWidthButton, BasicButton);
-
-LineWidthButton.prototype.setLineWidth = function(width) {
-  if (width === 0) {
-    this.$element.find('.dt-line-width-icon').addClass('dt-no-stroke');
-    return;
-  }
-  this.$element.find('.dt-line-width-icon').css('width', width);
-};
 
 module.exports = LineWidthButton;

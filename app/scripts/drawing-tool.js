@@ -53,6 +53,7 @@ var EVENTS = {
   // for example selected stroke color, fill color, font size and so on.
   STATE_CHANGED:   'state:changed',
   TOOL_CHANGED:    'tool:changed',
+  STAMP_CHANGED:    'stamp:changed',
   UNDO_POSSIBLE:   'undo:possible',
   UNDO_IMPOSSIBLE: 'undo:impossible',
   REDO_POSSIBLE:   'redo:possible',
@@ -813,6 +814,11 @@ DrawingTool.prototype.notifySave = function(serializedJson) {
       console.error('store does not implement required `save(serializedJson)` function!');
     }
   }
+};
+
+DrawingTool.prototype.setStampObject = function (stamp, imgSrc) {
+  this.tools.stamp.setStampObject(stamp);
+  this._dispatch.emit(EVENTS.STAMP_CHANGED, {stamp, imgSrc});
 };
 
 module.exports = DrawingTool;

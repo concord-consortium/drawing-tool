@@ -307,6 +307,17 @@ var ui = {
       activatesTool: 'circle',
       palette: 'shapes'
     }
+  ],
+  optionalButtons: [
+    {
+      name: 'annotation',
+      tooltip: 'Annotation tool',
+      label: 'a',
+      // Do not exit text edit mode on click. See text tool class.
+      classes: 'dt-keep-text-edit-mode',
+      activatesTool: 'annotation',
+      palette: 'main'
+    }
   ]
 };
 

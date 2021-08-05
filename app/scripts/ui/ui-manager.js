@@ -39,6 +39,13 @@ function UIManager(drawingTool) {
           customButtonDefs.push(buttonDef);
         }
       });
+
+      // check for optional buttons (like annotations)
+      uiDef.optionalButtons.forEach(buttonDef => {
+        if (buttonDef.name === button) {
+          customButtonDefs.push(buttonDef);
+        }
+      });
     });
     uiDef.buttons = customButtonDefs;
   }

@@ -2,7 +2,7 @@
   "name": "drawing-tool",
   "description": "HTML5 Drawing Tool",
   "author": "",
-  "version": "2.1.0-pre-1",
+  "version": "2.1.0-pre-2",
   "bugs": {
     "url": "https://github.com/concord-consortium/drawing-tool/issues"
   },
@@ -30,7 +30,8 @@
     "eventemitter2": "~0.4.14",
     "fabric": "3.6.3",
     "hammerjs": "~2.0.4",
-    "query-string": "^4.3.2"
+    "query-string": "^4.3.2",
+    "uuid": "^8.3.2"
   },
   "devDependencies": {
     "copy-webpack-plugin": "^6.0.2",

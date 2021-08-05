@@ -14,7 +14,7 @@ function lineCustomControlPoints(canvas) {
     }
     if (!isControlPoint(newTarget, selectedObject)) {
       selectedObject = newTarget;
-      if (isLine(newTarget)) {
+      if (isLine(newTarget) && !newTarget.annotationId) {
         lineSelected.call(newTarget);
       }
     }

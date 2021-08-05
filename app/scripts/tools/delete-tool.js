@@ -13,7 +13,7 @@ function DeleteTool(name, drawTool) {
   // Delete the selected object(s) with the backspace and delete key when not using the text tool
   this.master.$element.on('keydown', function(e) {
     if ((e.keyCode === 8) || (e.keyCode === 46)) {
-      if (this.master.currentTool !== this.master.tools.text) {
+      if ((this.master.currentTool !== this.master.tools.text) && (this.master.currentTool !== this.master.tools.annotation)) {
         this.use();
         e.preventDefault();
       }

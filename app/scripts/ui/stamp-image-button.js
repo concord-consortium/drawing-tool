@@ -18,9 +18,6 @@ function StampImageButton(options, ui, drawingTool) {
     this._stamp = fabricObj;
     this.$image = $(img).appendTo(this.$element);
     this._stopWaiting();
-    if (options.setStampOnImgLoad) {
-      this.dt.setStampObject(this._stamp, this._imageSrc);
-    }
   }.bind(this), null, 'anonymous');
 
   // Note that we should have some other event like 'stampToolImage:changed'.

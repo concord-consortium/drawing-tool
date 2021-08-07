@@ -34,7 +34,6 @@ function generateStamps(uiDefinition, stampsDefition) {
   });
 
   // Generate separate palettes with stamp buttons for each category.
-  var firstStamp = true;
   Object.keys(stampsDefition).forEach(function (category) {
     var categoryBtnName = category + 'StampsCategory';
     var categoryPaletteName = category + 'StampsPalette';
@@ -70,16 +69,9 @@ function generateStamps(uiDefinition, stampsDefition) {
     imagesArray.forEach(function (imgSrc) {
       result.push({
         imageSrc: imgSrc,
-        setStampOnImgLoad: firstStamp,
         buttonClass: StampImageButton,
         palette: paletteName
       });
-      // The first stamp we create will set its image as a default stamp in stamp tool.
-      // So when user select stamp tool, he would be able to draw something even without
-      // entering sub-menus.
-      if (firstStamp) {
-        firstStamp = false;
-      }
     });
     return result;
   }

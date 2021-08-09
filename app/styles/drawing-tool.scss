@@ -188,6 +188,10 @@ $text: Arial, sans-serif;
       border-radius: 0 0 0 $borderRadius;
     }
 
+    &.dt-separator-after {
+      border-bottom: 1.5px solid $cc-charcoal-light-1;
+    }
+
     .dt-color {
       background: #fff;
       // border: solid 1px #1c68aa;

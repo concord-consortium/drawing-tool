@@ -50,6 +50,15 @@ function UIManager(drawingTool) {
     uiDef.buttons = customButtonDefs;
   }
 
+  const separatorsAfter = this.drawingTool.options.separatorsAfter || [];
+  if (separatorsAfter.length > 0) {
+    uiDef.buttons.forEach(button => {
+      if (separatorsAfter.indexOf(button.name) !== -1) {
+        button.separatorAfter = true;
+      }
+    });
+  }
+
   this._processUIDefinition(uiDef);
 
   for (var name in this._buttons) {
@@ -107,9 +116,17 @@ UIManager.prototype._createPalette = function (paletteOptions) {
 };
 
 UIManager.prototype._createButton = function (buttonOptions, index, firstMainButton, lastMainButton) {
+  var extraClasses = [];
+  if (index === firstMainButton) {
+    extraClasses.push("dt-first");
+  } else if (index === lastMainButton) {
+    extraClasses.push("dt-last");
+  }
+  if (buttonOptions.separatorAfter) {
+    extraClasses.push("dt-separator-after");
+  }
   var BtnClass = buttonOptions.buttonClass || BasicButton;
-  var extraClasses = index === firstMainButton ? "dt-first" : (index === lastMainButton ? "dt-last" : undefined);
-  var button = new BtnClass(buttonOptions, this, this.drawingTool, extraClasses);
+  var button = new BtnClass(buttonOptions, this, this.drawingTool, extraClasses.join(" "));
   var buttonName = button.name || getUniqueName();
   this._buttons[buttonName] = button;
 

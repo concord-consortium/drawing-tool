@@ -1,7 +1,7 @@
 var inherit     = require('../inherit');
 var BasicButton = require('./basic-button');
 
-function ColorButton(options, ui, drawingTool) {
+function ColorButton(options, ui, drawingTool, extraClasses) {
   var callback;
   if (options.type === 'stroke') {
     callback = function () {
@@ -15,7 +15,7 @@ function ColorButton(options, ui, drawingTool) {
     };
   }
   options.onClick = callback;
-  BasicButton.call(this, options, ui, drawingTool);
+  BasicButton.call(this, options, ui, drawingTool, extraClasses);
 }
 
 inherit(ColorButton, BasicButton);

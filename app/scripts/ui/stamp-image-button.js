@@ -2,11 +2,11 @@ var $           = require('jquery');
 var inherit     = require('../inherit');
 var BasicButton = require('./basic-button');
 
-function StampImageButton(options, ui, drawingTool) {
+function StampImageButton(options, ui, drawingTool, extraClasses) {
   options.onClick = function () {
     this.dt.setStampObject(this._stamp, this._imageSrc);
   };
-  BasicButton.call(this, options, ui, drawingTool);
+  BasicButton.call(this, options, ui, drawingTool, extraClasses);
 
   this._stamp = null;
   this._imageSrc = drawingTool.proxy(options.imageSrc);

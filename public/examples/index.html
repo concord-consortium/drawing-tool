@@ -48,7 +48,11 @@
           'https://interactions-resources.concord.org/stamps/low-density-particles.svg'
         ]
       },
-      parseSVG: true
+      parseSVG: true,
+      separatorsAfter: [
+        "stamp",
+        "strokeWidthPalette"
+      ]
     });
     var state = null;
     $("#set-background").on("click", function () {

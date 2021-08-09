@@ -6,8 +6,8 @@ var strokeIconParts = require('../../assets/color-stroke-icon.svg').default.spli
 var dataUriPrefix = strokeIconParts[0];
 var strokeIconSVG = window.atob(strokeIconParts[1]);
 
-function StrokeButton(options, ui, drawingTool) {
-  BasicButton.call(this, options, ui, drawingTool);
+function StrokeButton(options, ui, drawingTool, extraClasses) {
+  BasicButton.call(this, options, ui, drawingTool, extraClasses);
 }
 
 inherit(StrokeButton, BasicButton);

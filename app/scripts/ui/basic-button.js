@@ -91,7 +91,7 @@ function BasicButton(options, ui, drawingTool, extraClasses) {
     drawingTool.on('tool:changed', function (toolName) {
       if (options.reflectsTools.indexOf(toolName) !== -1) {
         this.setActive(true);
-        this.setLabelOrIcon(ui.getButton(toolName));
+        this.setIcon(ui.getButton(toolName));
       } else {
         this.setActive(false);
         this.$element.removeClass('dt-active');
@@ -100,16 +100,12 @@ function BasicButton(options, ui, drawingTool, extraClasses) {
   }
 }
 
-BasicButton.prototype.setLabelOrIcon = function (tool) {
+BasicButton.prototype.setIcon = function (tool) {
   if (tool.icon && this.$icon) {
     this.$icon.attr('src', tool.icon);
   } else {
     this.$label.text(tool.label);
   }
-};
-
-BasicButton.prototype.getLabel = function () {
-  // return this.$label.text();
 };
 
 BasicButton.prototype.click = function () {

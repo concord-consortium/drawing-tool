@@ -110,7 +110,7 @@ var ui = {
       reflectsTools: ['line', 'arrow', 'doubleArrow'],
       palette: 'main',
       onInit: function () {
-        this.setLabelOrIcon(this.ui.getPaletteActiveButton('lines'));
+        this.setIcon(this.ui.getPaletteActiveButton('lines'));
       },
       onClick: function () {
         this.ui.getPaletteActiveButton('lines').click();
@@ -127,7 +127,7 @@ var ui = {
       reflectsTools: ['rect', 'ellipse', 'square', 'circle'],
       palette: 'main',
       onInit: function () {
-        this.setLabelOrIcon(this.ui.getPaletteActiveButton('shapes'));
+        this.setIcon(this.ui.getPaletteActiveButton('shapes'));
       },
       onClick: function () {
         this.ui.getPaletteActiveButton('shapes').click();

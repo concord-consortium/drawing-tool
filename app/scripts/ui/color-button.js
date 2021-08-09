@@ -16,8 +16,6 @@ function ColorButton(options, ui, drawingTool) {
   }
   options.onClick = callback;
   BasicButton.call(this, options, ui, drawingTool);
-
-  // this.setBackground(options.color);
 }
 
 inherit(ColorButton, BasicButton);

@@ -185,11 +185,11 @@ $text: Arial, sans-serif;
     }
 
     &.dt-first {
-      border-radius: $borderRadius 0 0 0;
+      border-radius: ($borderRadius * 0.8) 0 0 0;  /* the 0.8 removes the border gap between the button and the container */
     }
 
     &.dt-last {
-      border-radius: 0 0 0 $borderRadius;
+      border-radius: 0 0 0 ($borderRadius * 0.8);  /* the 0.8 removes the border gap between the button and the container */
     }
 
     &.dt-separator-after {

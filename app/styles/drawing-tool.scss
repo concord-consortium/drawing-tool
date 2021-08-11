@@ -131,7 +131,11 @@ $text: Arial, sans-serif;
       border-right: $border;
       border-bottom: $border;
       line-height: $buttonSize;
-      margin-bottom: -2px;
+      margin-top: -1px;
+
+      &.dt-active {
+        border-right: $border-width solid $cc-teal-light-4;
+      }
     }
 
     &.dt-img-btn {
@@ -285,6 +289,13 @@ $text: Arial, sans-serif;
     &.dt-vertical {
       .dt-btn {
         display: block;
+      }
+      .dt-text-btn {
+        border-bottom: none;
+
+        &:last-of-type {
+          border-bottom: $border;
+        }
       }
       border-radius: $borderRadius 0 0 $borderRadius;
     }

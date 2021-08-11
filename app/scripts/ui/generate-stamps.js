@@ -54,7 +54,7 @@ function generateStamps(uiDefinition, stampsDefition) {
       name: categoryPaletteName,
       anchor: categoryBtnName,
       topOffset: -1.5,
-      leftOffset: -1,
+      leftOffset: -1.5,
     };
     uiDefinition.palettes.push(categoryPalette);
 

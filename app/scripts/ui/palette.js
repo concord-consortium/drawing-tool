@@ -10,7 +10,7 @@ function Palette(options, ui) {
     .addClass('dt-palette')
     .addClass(options.vertical ? 'dt-vertical' : 'dt-horizontal');
 
-  this.topOffset = options.hasOwnProperty('topOffset') ? options.topOffset : -1;
+  this.topOffset = options.hasOwnProperty('topOffset') ? options.topOffset : 0;
   this.leftOffset = options.hasOwnProperty('leftOffset') ? options.leftOffset : 0;
 
   this._closeOnClick = function (e) {
@@ -40,6 +40,11 @@ Palette.prototype._show = function () {
   this._position();
   this.$element.show();
 
+  var anchorButton = this.anchor && this.ui.getButton(this.anchor);
+  if (anchorButton) {
+    anchorButton.$element.addClass("dt-active");
+  }
+
   if (this.permanent) {
     return;
   }
@@ -54,6 +59,11 @@ Palette.prototype._show = function () {
 Palette.prototype._hide = function () {
   this.$element.hide();
   this._clearWindowHandlers();
+  var anchorButton = this.anchor && this.ui.getButton(this.anchor);
+  if (anchorButton) {
+    anchorButton.$element.removeClass("dt-active");
+  }
+
 };
 
 Palette.prototype._clearWindowHandlers = function () {

@@ -22,7 +22,7 @@ require('../styles/drawing-tool.scss');
 
 var DEF_OPTIONS = {
   width: 800,
-  height: 600,
+  height: 603,
   // If this flag is set to true, stamp tool will try to parse SVG images
   // using parser provided by FabricJS. It lets us avoid tainting canvas
   // in some browsers which always do that when SVG image is rendered
@@ -39,7 +39,7 @@ var DEF_OPTIONS = {
 };
 
 var DEF_STATE = {
-  stroke: '#333',
+  stroke: '#3f3f3f',
   fill: '',
   strokeWidth: 8,
   fontSize: 27

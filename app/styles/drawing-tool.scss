@@ -1,4 +1,4 @@
-$buttonSize: 36px;
+$buttonSize: 40px;
 $buttonFontSize: 12px;
 $textButtonFontSize: 12px;
 $buttonLineHeight: 45px;
@@ -48,6 +48,8 @@ $activity-purple: #e325af;
 
 $buttonColor: $cc-teal-light-7;
 $borderRadius: 8px;
+$border-width: 1.5px;
+$border: $border-width solid $cc-charcoal-light-1;
 
 $text: Arial, sans-serif;
 
@@ -60,7 +62,7 @@ $text: Arial, sans-serif;
   .dt-canvas-container {
     vertical-align: top; // not needed but why not
     display: inline-block;
-    border: 1.5px solid $cc-charcoal-light-1;
+    border: $border;
     border-radius: 0 $borderRadius $borderRadius 0;
     outline: 0;
 
@@ -76,8 +78,9 @@ $text: Arial, sans-serif;
     margin: 0;
     position: relative;
 
-    border: 1.5px solid $cc-charcoal-light-1;
+    border: $border;
     border-radius: $borderRadius 0 0 $borderRadius;
+    border-right: none;
   }
 
   .dt-btn {
@@ -124,7 +127,9 @@ $text: Arial, sans-serif;
       font-family: $text;
       width: auto;
       padding: 0 3px;
-      border: 1.5px solid $cc-charcoal-light-1;
+      border-top: $border;
+      border-right: $border;
+      border-bottom: $border;
       line-height: $buttonSize;
       margin-bottom: -2px;
     }
@@ -162,7 +167,6 @@ $text: Arial, sans-serif;
     &.dt-stroke-color {
       .dt-inner1 { /* inset/overlay white box with black border */
         background: #fff;
-        // border: solid 1px #1c68aa;
         position: absolute;
         height: 12px;
         width: 12px;
@@ -189,12 +193,11 @@ $text: Arial, sans-serif;
     }
 
     &.dt-separator-after {
-      border-bottom: 1.5px solid $cc-charcoal-light-1;
+      border-bottom: $border;
     }
 
     .dt-color {
       background: #fff;
-      // border: solid 1px #1c68aa;
       overflow: hidden;
       position: absolute;
       top: 9px;
@@ -261,14 +264,14 @@ $text: Arial, sans-serif;
         display: inline-block;
         vertical-align: middle;
 
-        border-top: 1px solid $cc-charcoal-light-1;
-        border-bottom: 1px solid $cc-charcoal-light-1;
+        border-top: $border;
+        border-bottom: $border;
 
         &:first-of-type {
           width: $buttonSize + 2;
         }
         &:last-of-type {
-          border-right: 1px solid $cc-charcoal-light-1;
+          border-right: $border;
           border-radius: 0 $borderRadius $borderRadius 0;
           width: $buttonSize + 2;
         }

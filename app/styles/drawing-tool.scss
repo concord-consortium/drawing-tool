@@ -1,17 +1,59 @@
 $buttonSize: 40px;
-$buttonFontSize: 32px;
+$buttonFontSize: 12px;
 $textButtonFontSize: 12px;
 $buttonLineHeight: 45px;
-$buttonColor: #3e8acc;
 
-$icons: 'Draw Tool Icons', Arial, sans-serif;
+$hi-green-dark-2: #1d8500;
+$hi-green-dark-1: #29ba00;
+$hi-green: #5fff32;
+$hi-green-light-1: #8f6;
+$hi-green-light-2: #afff98;
+$hi-green-light-3: #d7ffcc;
+$white: #fff;
+$cc-charcoal: #3f3f3f;
+$cc-charcoal-hint: #828282;
+$cc-charcoal-light-1: #979797;
+$cc-charcoal-light-2: #dfdfdf;
+$cc-teal-dark-2: #016082;
+$cc-teal-dark-1: #0481a0;
+$cc-teal: #0592af;
+$cc-teal-light-1: #2ba5c1;
+$cc-teal-light-2: #6fc6da;
+$cc-teal-light-3: #93d5e4;
+$cc-teal-light-4: #b7e2ec;
+$cc-teal-light-5: #cdebf2;
+$cc-teal-light5B: #D8EFF5;
+$cc-teal-light-6: #e2f4f8;
+$cc-teal-light-7: #f5fbfc;
+$cc-orange-dark-1: #ea6d2f;
+$cc-orange: #ff8415;
+$cc-orange-light-1: #ffa350;
+$cc-orange-light-2: #ffc18a;
+$cc-orange-light-3: #ffcea1;
+$cc-orange-light-4: #ffe6d0;
+$cc-orange-light-4-b: #ffeddc;
+$cc-orange-light-5: #fff2e7;
+$cc-orange-light-6: #fff9f3;
+$feedback-green-light-4: #dcecde;
+$feedback-green: #4ea15a;
+$hi-yellow-light-3: #fffebf;
+$cc-logo-text: #231f20;
+$facebook-blue: #1877f2;
+$twitter-blue: #1da1f2;
+$activity-blue: #31b6ff;
+$activity-yellow: #edd200;
+$activity-red: #ff234e;
+$activity-green: #1bdf00;
+$activity-purple: #e325af;
+
+$buttonColor: $cc-teal-light-7;
+$borderRadius: 8px;
+$border-width: 1.5px;
+$border: $border-width solid $cc-charcoal-light-1;
+
 $text: Arial, sans-serif;
 
-@font-face {
-  font-family: 'Draw Tool Icons';
-  src: url('./fonts/draw-tool-icons.woff') format('woff'),    /* Chrome 6+, Firefox 3.6+, IE 9+, Safari 5.1+ */
-       url('./fonts/draw-tool-icons.ttf')  format('truetype'); /* Chrome 4+, Firefox 3.5, Opera 10+, Safari 3-5 */
-}
+@import url('https://fonts.googleapis.com/css2?family=Lato&display=swap');
 
 .dt-container {
   white-space: nowrap;
@@ -20,8 +62,13 @@ $text: Arial, sans-serif;
   .dt-canvas-container {
     vertical-align: top; // not needed but why not
     display: inline-block;
-    border: 1px solid rgba(0,0,0,0.2);
+    border: $border;
+    border-radius: 0 $borderRadius $borderRadius 0;
     outline: 0;
+
+    canvas {
+      border-radius: 0 $borderRadius $borderRadius 0;
+    }
   }
 
   .dt-tools {
@@ -30,6 +77,10 @@ $text: Arial, sans-serif;
     width: $buttonSize;
     margin: 0;
     position: relative;
+
+    border: $border;
+    border-radius: $borderRadius 0 0 $borderRadius;
+    border-right: none;
   }
 
   .dt-btn {
@@ -39,12 +90,11 @@ $text: Arial, sans-serif;
     position: relative;
     text-indent: 0;
     white-space: nowrap;
-    font-family: $icons;
     font-size: $buttonFontSize;
     line-height: $buttonLineHeight;
     height: $buttonSize;
     width: $buttonSize;
-    color: #fff;
+    color: $cc-charcoal;
     background: $buttonColor;
     vertical-align: middle;
     text-align: center;
@@ -55,17 +105,20 @@ $text: Arial, sans-serif;
     -ms-user-select: none;
 
     &:hover {
-      background: #3778AF;
+      background: $cc-teal-light5B;
       cursor: pointer;
     }
 
     &.dt-active {
-      background: #245d8e;
+      background: $cc-teal-light-4;
     }
 
     &.dt-locked {
-      background: #839CB1;
       cursor: default;
+
+      img {
+        opacity: 0.35;
+      }
     }
 
     // Text buttons:
@@ -73,20 +126,34 @@ $text: Arial, sans-serif;
       font-size: $textButtonFontSize;
       font-family: $text;
       width: auto;
-      padding: 0 5px;
+      padding: 0 3px;
+      border-top: $border;
+      border-right: $border;
+      border-bottom: $border;
+      line-height: $buttonSize;
+      margin-top: -1px;
+
+      &.dt-active {
+        border-right: $border-width solid $cc-teal-light-4;
+      }
     }
 
     &.dt-img-btn {
+      position: relative;
       line-height: normal;
       span {
         // To make rotation work in all browsers (used during waiting for image load).
         display: inline-block;
       }
       img {
-        display: inline-block;
-        max-width: 85%;
-        max-height: 85%;
-        vertical-align: middle;
+        max-width: $buttonSize * 0.8;
+        max-height: $buttonSize * 0.9;
+        width: initial !important;
+        height: initial !important;
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
       }
     }
 
@@ -104,7 +171,6 @@ $text: Arial, sans-serif;
     &.dt-stroke-color {
       .dt-inner1 { /* inset/overlay white box with black border */
         background: #fff;
-        // border: solid 1px #1c68aa;
         position: absolute;
         height: 12px;
         width: 12px;
@@ -122,9 +188,20 @@ $text: Arial, sans-serif;
       }
     }
 
+    &.dt-first {
+      border-radius: ($borderRadius * 0.8) 0 0 0;  /* the 0.8 removes the border gap between the button and the container */
+    }
+
+    &.dt-last {
+      border-radius: 0 0 0 ($borderRadius * 0.8);  /* the 0.8 removes the border gap between the button and the container */
+    }
+
+    &.dt-separator-after {
+      border-bottom: $border;
+    }
+
     .dt-color {
       background: #fff;
-      // border: solid 1px #1c68aa;
       overflow: hidden;
       position: absolute;
       top: 9px;
@@ -155,24 +232,6 @@ $text: Arial, sans-serif;
       }
     }
 
-    // Stroke width button:
-    .dt-line-width-icon {
-      height: 26px;
-      background: #fff;
-      margin: 6px auto;
-
-      &.dt-no-stroke {
-        width: 1px;
-        &:after {
-          content: 'L';
-          color: #e66665;
-          position: absolute;
-          left: 5px;
-          top: 2px;
-        }
-      }
-    }
-
     // Undo and redo buttons, send to front and back buttons:
     &.dt-send-to, &.dt-undo-redo {
       // These icons are placed somehow lower, modify line-height to move them up.
@@ -183,13 +242,24 @@ $text: Arial, sans-serif;
   .dt-expand {
     position: relative;
     &:after {
-      content: 't';
-      font-family: $icons;
-      font-size: $buttonFontSize;
       position: absolute;
-      bottom: -21px;
-      right: -11px;
+      display: block;
+      content: ' ';
+      background-image: url('../assets/menu-secondary-caret.svg');
+      bottom: -0;
+      right: 0;
+      width: $buttonSize;
+      height: $buttonSize;
     }
+  }
+
+  .dt-selected-line-width {
+    position: absolute;
+    bottom: 0;
+    text-align: center;
+    right: 0;
+    left: 0;
+    height: $buttonSize - 4px;
   }
 
   .dt-palette {
@@ -197,12 +267,37 @@ $text: Arial, sans-serif;
       .dt-btn {
         display: inline-block;
         vertical-align: middle;
+
+        border-top: $border;
+        border-bottom: $border;
+
+        &:first-of-type {
+          width: $buttonSize + 2;
+        }
+        &:last-of-type {
+          border-right: $border;
+          border-radius: 0 $borderRadius $borderRadius 0;
+          width: $buttonSize + 2;
+        }
+
+        img {
+          width: $buttonSize;
+          height: $buttonSize;
+        }
       }
     }
     &.dt-vertical {
       .dt-btn {
         display: block;
       }
+      .dt-text-btn {
+        border-bottom: none;
+
+        &:last-of-type {
+          border-bottom: $border;
+        }
+      }
+      border-radius: $borderRadius 0 0 $borderRadius;
     }
   }
 

@@ -22,7 +22,7 @@ require('../styles/drawing-tool.scss');
 
 var DEF_OPTIONS = {
   width: 800,
-  height: 600,
+  height: 603,
   // If this flag is set to true, stamp tool will try to parse SVG images
   // using parser provided by FabricJS. It lets us avoid tainting canvas
   // in some browsers which always do that when SVG image is rendered
@@ -39,7 +39,7 @@ var DEF_OPTIONS = {
 };
 
 var DEF_STATE = {
-  stroke: '#333',
+  stroke: '#3f3f3f',
   fill: '',
   strokeWidth: 8,
   fontSize: 27
@@ -53,6 +53,7 @@ var EVENTS = {
   // for example selected stroke color, fill color, font size and so on.
   STATE_CHANGED:   'state:changed',
   TOOL_CHANGED:    'tool:changed',
+  STAMP_CHANGED:    'stamp:changed',
   UNDO_POSSIBLE:   'undo:possible',
   UNDO_IMPOSSIBLE: 'undo:impossible',
   REDO_POSSIBLE:   'redo:possible',
@@ -813,6 +814,11 @@ DrawingTool.prototype.notifySave = function(serializedJson) {
       console.error('store does not implement required `save(serializedJson)` function!');
     }
   }
+};
+
+DrawingTool.prototype.setStampObject = function (stamp, imgSrc) {
+  this.tools.stamp.setStampObject(stamp);
+  this._dispatch.emit(EVENTS.STAMP_CHANGED, {stamp, imgSrc});
 };
 
 module.exports = DrawingTool;

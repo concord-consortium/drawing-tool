@@ -43,7 +43,7 @@ TextTool.prototype.mouseDown = function (opt) {
     left: x,
     top: y,
     lockUniScaling: true,
-    fontFamily: 'Arial',
+    fontFamily: 'Lato, Arial, Helvetica, sans-serif',
     fontSize: this.master.state.fontSize,
     // Yes, looks strange, but I guess stroke color should be used (as it would be the "main" one).
     fill: this.master.state.stroke

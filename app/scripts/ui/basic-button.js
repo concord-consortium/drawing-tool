@@ -6,7 +6,7 @@ require('../jquery-longpress');
 // 'mousedown'). Also, it simplifies scenarios for touch devices,
 // as 'mousedown' occurs in the same moment as 'touchstart'.
 
-function BasicButton(options, ui, drawingTool) {
+function BasicButton(options, ui, drawingTool, extraClasses) {
   this.ui = ui;
   this.dt = drawingTool;
 
@@ -17,15 +17,25 @@ function BasicButton(options, ui, drawingTool) {
 
   this._locked = false;
 
+  this.icon = options.icon && options.icon.default;
+
   this.$element = $('<div>')
     .addClass('dt-btn')
     .addClass(options.classes)
+    .addClass(extraClasses)
     .attr('title', options.tooltip)
     .appendTo(ui.getPalette(options.palette).$element);
 
-  this.$label = $('<span>')
-    .text(options.label)
-    .appendTo(this.$element);
+  if (this.icon) {
+    this.$icon = $('<img>')
+      .attr('src', this.icon)
+      .addClass('icon')
+      .appendTo(this.$element);
+  } else {
+    this.$label = $('<span>')
+      .text(options.label)
+      .appendTo(this.$element);
+  }
 
   if (options.onClick) {
     this.$element.on('mousedown touchstart', function (e) {
@@ -55,6 +65,12 @@ function BasicButton(options, ui, drawingTool) {
     }.bind(this));
   }
 
+  if (options.onStampChange) {
+    drawingTool.on('stamp:changed', function (state) {
+      options.onStampChange.call(this, state);
+    }.bind(this));
+  }
+
   if (options.activatesTool) {
     this.$element.on('mousedown touchstart', function (e) {
       if (this._locked) return;
@@ -75,7 +91,7 @@ function BasicButton(options, ui, drawingTool) {
     drawingTool.on('tool:changed', function (toolName) {
       if (options.reflectsTools.indexOf(toolName) !== -1) {
         this.setActive(true);
-        this.setLabel(ui.getButton(toolName).getLabel());
+        this.setIcon(ui.getButton(toolName));
       } else {
         this.setActive(false);
         this.$element.removeClass('dt-active');
@@ -84,12 +100,12 @@ function BasicButton(options, ui, drawingTool) {
   }
 }
 
-BasicButton.prototype.setLabel = function (label) {
-  this.$label.text(label);
-};
-
-BasicButton.prototype.getLabel = function () {
-  return this.$label.text();
+BasicButton.prototype.setIcon = function (tool) {
+  if (tool.icon && this.$icon) {
+    this.$icon.attr('src', tool.icon);
+  } else {
+    this.$label.text(tool.label);
+  }
 };
 
 BasicButton.prototype.click = function () {

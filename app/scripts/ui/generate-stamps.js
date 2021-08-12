@@ -12,13 +12,17 @@ function generateStamps(uiDefinition, stampsDefition) {
   uiDefinition.buttons.splice(prevBtnIdx + 1, 0, {
     name: 'stamp',
     tooltip: 'Stamp tool (click and hold to show available categories)',
-    classes: 'dt-expand',
+    classes: 'dt-expand dt-img-btn',
     label: 'M',
     palette: 'main',
     activatesTool: 'stamp',
     onLongPress: function () {
       this.ui.togglePalette('stampCategories');
-    }
+    },
+    onStampChange: function (newStamp) {
+      this.$icon.attr('src', newStamp.imgSrc);
+    },
+    icon: require('../../assets/stamp-icon.svg')
   });
 
   // Palette with stamp categories.
@@ -30,7 +34,6 @@ function generateStamps(uiDefinition, stampsDefition) {
   });
 
   // Generate separate palettes with stamp buttons for each category.
-  var firstStamp = true;
   Object.keys(stampsDefition).forEach(function (category) {
     var categoryBtnName = category + 'StampsCategory';
     var categoryPaletteName = category + 'StampsPalette';
@@ -49,7 +52,9 @@ function generateStamps(uiDefinition, stampsDefition) {
 
     var categoryPalette = {
       name: categoryPaletteName,
-      anchor: categoryBtnName
+      anchor: categoryBtnName,
+      topOffset: -1.5,
+      leftOffset: -1.5,
     };
     uiDefinition.palettes.push(categoryPalette);
 
@@ -64,16 +69,9 @@ function generateStamps(uiDefinition, stampsDefition) {
     imagesArray.forEach(function (imgSrc) {
       result.push({
         imageSrc: imgSrc,
-        setStampOnImgLoad: firstStamp,
         buttonClass: StampImageButton,
         palette: paletteName
       });
-      // The first stamp we create will set its image as a default stamp in stamp tool.
-      // So when user select stamp tool, he would be able to draw something even without
-      // entering sub-menus.
-      if (firstStamp) {
-        firstStamp = false;
-      }
     });
     return result;
   }

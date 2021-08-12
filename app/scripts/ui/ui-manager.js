@@ -50,6 +50,15 @@ function UIManager(drawingTool) {
     uiDef.buttons = customButtonDefs;
   }
 
+  const separatorsAfter = this.drawingTool.options.separatorsAfter || [];
+  if (separatorsAfter.length > 0) {
+    uiDef.buttons.forEach(button => {
+      if (separatorsAfter.indexOf(button.name) !== -1) {
+        button.separatorAfter = true;
+      }
+    });
+  }
+
   this._processUIDefinition(uiDef);
 
   for (var name in this._buttons) {
@@ -61,9 +70,22 @@ function UIManager(drawingTool) {
 }
 
 UIManager.prototype._processUIDefinition = function (uiDef) {
+  var firstMainButton = -1;
+  var lastMainButton = -1;
+  for (var i = 0; i < uiDef.buttons.length; i++) {
+    if (uiDef.buttons[i].palette === "main") {
+      if (firstMainButton === -1) {
+        firstMainButton = i;
+      }
+      lastMainButton = i;
+    }
+  }
+
   this.$tools.empty();
   uiDef.palettes.forEach(this._createPalette.bind(this));
-  uiDef.buttons.forEach(this._createButton.bind(this));
+  uiDef.buttons.forEach((button, index) => {
+    this._createButton(button, index, firstMainButton, lastMainButton);
+  });
 };
 
 UIManager.prototype.getButton = function (name) {
@@ -93,9 +115,18 @@ UIManager.prototype._createPalette = function (paletteOptions) {
   this._palettes[paletteName] = palette;
 };
 
-UIManager.prototype._createButton = function (buttonOptions) {
+UIManager.prototype._createButton = function (buttonOptions, index, firstMainButton, lastMainButton) {
+  var extraClasses = [];
+  if (index === firstMainButton) {
+    extraClasses.push("dt-first");
+  } else if (index === lastMainButton) {
+    extraClasses.push("dt-last");
+  }
+  if (buttonOptions.separatorAfter) {
+    extraClasses.push("dt-separator-after");
+  }
   var BtnClass = buttonOptions.buttonClass || BasicButton;
-  var button = new BtnClass(buttonOptions, this, this.drawingTool);
+  var button = new BtnClass(buttonOptions, this, this.drawingTool, extraClasses.join(" "));
   var buttonName = button.name || getUniqueName();
   this._buttons[buttonName] = button;
 

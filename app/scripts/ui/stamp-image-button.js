@@ -2,11 +2,11 @@ var $           = require('jquery');
 var inherit     = require('../inherit');
 var BasicButton = require('./basic-button');
 
-function StampImageButton(options, ui, drawingTool) {
+function StampImageButton(options, ui, drawingTool, extraClasses) {
   options.onClick = function () {
-    this.dt.tools.stamp.setStampObject(this._stamp);
+    this.dt.setStampObject(this._stamp, this._imageSrc);
   };
-  BasicButton.call(this, options, ui, drawingTool);
+  BasicButton.call(this, options, ui, drawingTool, extraClasses);
 
   this._stamp = null;
   this._imageSrc = drawingTool.proxy(options.imageSrc);
@@ -18,9 +18,6 @@ function StampImageButton(options, ui, drawingTool) {
     this._stamp = fabricObj;
     this.$image = $(img).appendTo(this.$element);
     this._stopWaiting();
-    if (options.setStampOnImgLoad) {
-      this.dt.tools.stamp.setStampObject(this._stamp);
-    }
   }.bind(this), null, 'anonymous');
 
   // Note that we should have some other event like 'stampToolImage:changed'.

@@ -1,29 +1,25 @@
-s3_bucket: models-resources
-s3_key_prefix: drawing-tool
+s3_bucket: <%= ENV['S3_BUCKET'] %>
+# only add the s3_key_prefix if there is one
+<% if ENV['S3_BUCKET_PREFIX'] != '' %>
+# Everywhere else the s3 prefix needs a trailing slash
+# However s3_website config doesn't need one
+s3_key_prefix: <%= ENV['S3_BUCKET_PREFIX'].sub(/\\/$/, '') %>
+<% end %>
 s3_endpoint: us-east-1
 gzip: true
 
-cloudfront_distribution_id: E1QHTGVGYD1DWZ
-cloudfront_invalidate_root: false
-cloudfront_wildcard_invalidation: false
+cloudfront_distribution_id: <%= ENV['DISTRIBUTION_ID'] %>
+cloudfront_invalidate_root: true
+cloudfront_wildcard_invalidation: true
 
-<% if ENV['TRAVIS_BRANCH'] == 'master' %>
-# in this case we are going to deploy this branch to the top level of the domain
-# so we need to ignore the version and branch folders
-ignore_on_server: ^drawing-tool/(version/|branch/)
-<% else %>
-# in this case we are going to deploy this code to a subfolder of either the branch
-# or version folder. So ignore everything except this folder.
-# S3_DEPLOY_DIR is set by s3_deploy.sh
-ignore_on_server: ^(?!drawing-tool/<%= Regexp.escape(ENV['S3_DEPLOY_DIR']) %>/)
-<% end %>
+ignore_on_server: <%= ENV['IGNORE_ON_SERVER'] %>
 max_age:
-  "drawing-tool/*": 600 # 10 minutes
-  "drawing-tool/version/*": 31536000 # 1 year
-  "drawing-tool/branch/*": 0
+  "<%= ENV['S3_BUCKET_PREFIX'] %>*": 600 # 10 minutes
+  "<%= ENV['S3_BUCKET_PREFIX'] %>version/*": 31536000 # 1 year
+  "<%= ENV['S3_BUCKET_PREFIX'] %>branch/*": 0
 
-cloudfront_distribution_config:
-  aliases:
-    quantity: 1
-    items:
-      - models-resources.concord.org
+# cloudfront_distribution_config:
+#   aliases:
+#     quantity: 1
+#     items:
+#       - <%= ENV['DISTRIBUTION_DOMAIN'] %>

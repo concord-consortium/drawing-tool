@@ -23,6 +23,13 @@ function AnnotationTool(name, drawTool) {
     }.bind(this)
   );
 
+  // handle movement of control point or text box
+  this.canvas.on('object:moved', (e) => {
+    if (e.target.annotationId) {
+      this.master.pushToHistory();
+    }
+  });
+
   handleAnnotations(this);
 }
 

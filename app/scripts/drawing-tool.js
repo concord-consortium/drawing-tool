@@ -112,6 +112,13 @@ function DrawingTool(selector, options, settings) {
   if(this.options.backgroundImage) {
     this._setBackgroundImage(this.options.backgroundImage);
   }
+
+  // Listen for drawing changes if required
+  if (options.onDrawingChanged) {
+    this._dispatch.on(EVENTS.DRAWING_CHANGED, () => {
+      options.onDrawingChanged();
+    })
+  }
 }
 
 DrawingTool.prototype.ADDITIONAL_PROPS_TO_SERIALIZE = ADDITIONAL_PROPS_TO_SERIALIZE;

@@ -42,6 +42,16 @@ AnnotationTool.prototype.mouseDown = function (opt) {
     this.editText(target, opt.e);
     return;
   }
+  // If user clicks on the border, find related text object and edit it.
+  if (target && target.type === fabric.AnnotationBorder.prototype.type) {
+    var text = fabric.Annotations.get(
+      target.annotationId,
+      fabric.AnnotationText.prototype.type
+    );
+    this.editText(text, opt.e);
+    return;
+  }
+
   // See #_exitTextEditingOnFirstClick method.
   if (!this.active || opt.e._dt_doNotCreateNewTextObj) return;
 

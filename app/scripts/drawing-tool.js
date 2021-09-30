@@ -743,17 +743,6 @@ DrawingTool.prototype._initDOM = function () {
 
 DrawingTool.prototype._initFabricJS = function () {
   this.canvas = new fabric.Canvas(this.$canvas[0], { preserveObjectStacking: true });
-  // Target find would be more tolerant on touch devices.
-  // Also SVG images added to canvas will taint it in some browsers, no matter whether
-  // it's coming from the same or another domain (e.g. Safari, IE). In such case, we
-  // have to use bounding box target find, as per pixel tries to read canvas data
-  // (impossible when canvas is tainted).
-  if (fabric.isTouchSupported || !this.options.parseSVG) {
-    this.canvas.perPixelTargetFind = false;
-  } else {
-    this.canvas.perPixelTargetFind = true;
-    this.canvas.targetFindTolerance = 12;
-  }
   this.canvas.setBackgroundColor('#fff');
 };
 

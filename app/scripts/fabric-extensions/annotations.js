@@ -326,6 +326,12 @@ module.exports = handleAnnotations;
         fabric.Annotations.set(options.annotationId, this);
       },
 
+      containsPoint: function (point) {
+        var borderRect = fabric.Annotations.calcBorderRect(this);
+        return point.x >= borderRect.left && point.x <= borderRect.left + borderRect.width &&
+               point.y >= borderRect.top && point.y <= borderRect.top + borderRect.height;
+      },
+
       _renderTextCommon: function (ctx, method) {
         this.callSuper('_renderTextCommon', ctx, method);
 

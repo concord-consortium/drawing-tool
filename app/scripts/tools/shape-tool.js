@@ -71,6 +71,7 @@ ShapeTool.prototype.mouseUp = function (e) {
 ShapeTool.prototype.actionComplete = function (newObject) {
   if (newObject) {
     newObject.selectable = !this._locked;
+    newObject.perPixelTargetFind = this.canvas._isPerPixelTargetFindAllowed;
   }
   if (this._locked) {
     return;

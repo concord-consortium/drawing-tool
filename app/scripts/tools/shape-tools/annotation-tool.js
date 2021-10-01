@@ -101,6 +101,9 @@ AnnotationTool.prototype.mouseDown = function (opt) {
   this.canvas.add(border);
 
   this.actionComplete(text);
+  // Disable perPixelTargetFind for AnnotationText type to help with selection of the empty text. See:
+  // https://www.pivotaltracker.com/story/show/179583551
+  text.perPixelTargetFind = false;
 
   this.canvas.add(text);
   this.editText(text, opt.e);

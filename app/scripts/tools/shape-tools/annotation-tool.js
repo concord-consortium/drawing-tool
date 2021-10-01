@@ -80,7 +80,7 @@ AnnotationTool.prototype.mouseDown = function (opt) {
     fontSize: 16,
     fill: ccCharcoal
   });
-  text.hasControls = text.hasBorders = false;
+  text.hasControls = false;
 
   var arrow = new fabric.AnnotationArrow(
     fabric.Annotations.calcArrowPoints(text),

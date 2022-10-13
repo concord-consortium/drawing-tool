@@ -94,7 +94,9 @@ function DrawingTool(selector, options, settings) {
   this._initTools();
   this._initStateHistory();
 
-  new UIManager(this);
+  if (!this.canvasOnly()) {
+    new UIManager(this);
+  }
 
   this.historyPaused = this.options.startWithHistoryPaused;
 
@@ -260,6 +262,13 @@ DrawingTool.prototype.load = function (jsonOrObject, callback, noHistoryUpdate) 
     }
   }
 };
+
+DrawingTool.prototype.canvasOnly = function () {
+  const buttons = this.options.buttons;
+  // Buttons are explicitly disabled. This means that Drawing Tool can be only used for presenting an existing drawing.
+  // It'll be rendered in the most basic basic way - no space for buttons panel and no styling (like canvas border).
+  return buttons !== undefined && (buttons === null || buttons.length === 0);
+}
 
 DrawingTool.prototype.pauseHistory = function () {
   this.historyPaused = true;
@@ -745,8 +754,18 @@ DrawingTool.prototype._initDOM = function () {
   var $canvasContainer = $('<div class="dt-canvas-container">')
     .attr('tabindex', 0) // makes the canvas focusable for keyboard events
     .appendTo(this.$element);
+  if (!this.canvasOnly()) {
+    $canvasContainer.addClass("with-border");
+  }
+  if (this.options.canvasScale) {
+    $canvasContainer.css({
+      "transform-origin": "top left",
+      "transform": `scale(${this.options.canvasScale})`,
+    })
+  }
   this.$canvas = $('<canvas>')
     .appendTo($canvasContainer);
+
 };
 
 DrawingTool.prototype._initFabricJS = function () {

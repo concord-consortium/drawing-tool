@@ -1,6 +1,6 @@
 # HTML5 Drawing Tool
 
-Demo: http://concord-consortium.github.io/drawing-tool/examples/
+Demo: https://models-resources.concord.org/drawing-tool/branch/master/examples/index.html
 
 ## Using as a library
 
@@ -26,13 +26,6 @@ const drawingTool = new DrawingTool("#drawing-tool-container");
     * Open [http://localhost:8080/examples/](http://localhost:3333/examples/).
     * Code!!
     * Before you commit, run `webpack` to update `dist` directory and add it to git index.
-
-### Deploying to Github Pages
-
-Use `push-gh-pages.sh` script. It (re)generates `dist` dir using `webpack`, updates `gh-pages` branch
-and pushes changes to Github.
-
-Note that you may deploy uncommitted changes, as this script uses current working directory state.
 
 ### Undo / redo feature
 

@@ -62,12 +62,14 @@ $text: Arial, sans-serif;
   .dt-canvas-container {
     vertical-align: top; // not needed but why not
     display: inline-block;
-    border: $border;
-    border-radius: 0 $borderRadius $borderRadius 0;
     outline: 0;
 
-    canvas {
+    &.with-border {
+      border: $border;
       border-radius: 0 $borderRadius $borderRadius 0;
+      canvas {
+        border-radius: 0 $borderRadius $borderRadius 0;
+      }
     }
   }
 

@@ -30,6 +30,7 @@
       <div>
         <button id="pause-history">Pause history</button>
         <button id="restart-history">Restart history</button>
+        <button id="reset-history">Reset history</button>
       </div>
   </div>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.3/jquery.js"></script>
@@ -57,6 +58,12 @@
       parseSVG: true
     });
     var state = null;
+    $("#pause-history").on("click", function () {
+      drawingTool.pauseHistory();
+    });
+    $("#unpause-history").on("click", function () {
+      drawingTool.unpauseHistory();
+    });
     $("#set-background").on("click", function () {
       drawingTool.setBackgroundImage($("#background-src").val());
     });
@@ -92,6 +99,9 @@
     });
     $("#restart-history").on("click", function () {
       drawingTool.unpauseHistory();
+    });
+    $("#reset-history").on("click", function () {
+      drawingTool.resetHistory();
     });
   </script>
   </body>

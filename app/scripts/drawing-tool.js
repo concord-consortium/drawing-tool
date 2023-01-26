@@ -287,15 +287,17 @@ DrawingTool.prototype.pushToHistory = function () {
 };
 
 DrawingTool.prototype.undo = function () {
-  this._history.undo();
+  this._history.undo(() => {
+    this._fireDrawingChanged();
+  });
   this._fireHistoryEvents();
-  this._fireDrawingChanged();
 };
 
 DrawingTool.prototype.redo = function () {
-  this._history.redo();
+  this._history.redo(() => {
+    this._fireDrawingChanged();
+  });
   this._fireHistoryEvents();
-  this._fireDrawingChanged();
 };
 
 DrawingTool.prototype.resetHistory = function () {

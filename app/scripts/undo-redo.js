@@ -17,21 +17,21 @@ function UndoRedo(drawTool) {
   }.bind(this));
 }
 
-UndoRedo.prototype.undo = function () {
+UndoRedo.prototype.undo = function (callback) {
   var prevState = this._storage[this._idx - 1];
   if (!prevState) {
     return;
   }
-  this._load(prevState);
+  this._load(prevState, callback);
   this._idx -= 1;
 };
 
-UndoRedo.prototype.redo = function () {
+UndoRedo.prototype.redo = function (callback) {
   var nextState = this._storage[this._idx + 1];
   if (!nextState) {
     return;
   }
-  this._load(nextState);
+  this._load(nextState, callback);
   this._idx += 1;
 };
 
@@ -64,10 +64,11 @@ UndoRedo.prototype._lastState = function () {
   return this._storage[this._idx];
 };
 
-UndoRedo.prototype._load = function (state) {
+UndoRedo.prototype._load = function (state, callback = null) {
   // Note that #load is a normal action that updates history. However when
   // a state is restored from the history, it's definitely unwanted.
-  this.dt.load(state, null, true);
+  const noHistoryUpdate = true;
+  this.dt.load(state, callback, noHistoryUpdate);
 };
 
 UndoRedo.prototype._cutOffOldStates = function () {

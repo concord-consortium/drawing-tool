@@ -11,11 +11,8 @@ function UIManager(drawingTool) {
     .addClass('dt-tools')
     .prependTo(drawingTool.$element);
 
-  // If a user specificies wider drawing tool layout, toolbar should be the height of the canvas.
-  if (this.drawingTool.options.wideLayout) {
-    this.$tools.css("height", this.drawingTool.options.height);
-    this.$tools.css("background-color", "#f5fbfc");
-  }
+  // Toolbar should be the height of the canvas.
+  this.$tools.css("height", this.drawingTool.options.height);
 
   this._palettes = {};
   this._buttons = {};

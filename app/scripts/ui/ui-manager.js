@@ -11,6 +11,9 @@ function UIManager(drawingTool) {
     .addClass('dt-tools')
     .prependTo(drawingTool.$element);
 
+  // Toolbar should be the height of the canvas.
+  this.$tools.css("height", this.drawingTool.options.height);
+
   this._palettes = {};
   this._buttons = {};
   this._paletteActiveButton = {};

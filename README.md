@@ -1,6 +1,6 @@
 # HTML5 Drawing Tool
 
-Demo: https://models-resources.concord.org/drawing-tool/examples/index.html
+Demo: https://models-resources.concord.org/drawing-tool/branch/master/examples/index.html
 
 ## Using as a library
 

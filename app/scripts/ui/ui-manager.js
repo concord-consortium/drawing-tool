@@ -33,10 +33,18 @@ function UIManager(drawingTool) {
       const addLineButtons = button === 'linesPalette';
       const addStampButtons = button === 'stamp';
       const addShapeButtons = button === 'shapesPalette';
+      const addFontSizeButtons = button === 'text';
+      const addStrokeColorButtons = button === 'strokeColorPalette';
+      const addStrokeWidthButtons = button === 'strokeWidthPalette';
+      const addFillColorButtons = button === 'fillColorPalette';
       uiDef.buttons.forEach(buttonDef => {
         const addButtonDef = (buttonDef.name === button) ||
           (addLineButtons && buttonDef.palette === 'lines') ||
           (addShapeButtons && buttonDef.palette === 'shapes') ||
+          (addFontSizeButtons && buttonDef.palette === 'fontSizes') ||
+          (addStrokeColorButtons && buttonDef.palette === 'strokeColors') ||
+          (addStrokeWidthButtons && buttonDef.palette === 'strokeWidths') ||
+          (addFillColorButtons && buttonDef.palette === 'fillColors') ||
           (addStampButtons && ((buttonDef.palette === 'stampCategories') || (buttonDef.palette.indexOf('StampsPalette') >= 0)));
         if (addButtonDef) {
           customButtonDefs.push(buttonDef);

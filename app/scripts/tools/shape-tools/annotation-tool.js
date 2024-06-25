@@ -115,6 +115,8 @@ AnnotationTool.prototype.mouseDown = function (opt) {
   this.canvas.add(text);
   this.editText(text, opt.e);
   opt.e.preventDefault();
+
+  this.master.pushToHistory();
 };
 
 AnnotationTool.prototype.activate = function () {

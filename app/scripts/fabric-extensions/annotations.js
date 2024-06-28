@@ -90,6 +90,32 @@ function handleAnnotations(annotationTool) {
       });
     }
   });
+
+  canvas.on('text:editing:entered', (e) => {
+    e.target.__annotationTextLastValue = e.target.hiddenTextarea.value;
+    if (e.target.__annotationKeyUpHandler) {
+      e.target.hiddenTextarea.removeEventListener("keyup", e.target.__annotationKeyUpHandler);
+    }
+
+    e.target.__annotationKeyUpHandler = (keyEvent) => {
+      var key = keyEvent.key;
+      var value = e.target.hiddenTextarea.value;
+      if (((key === "Delete") || (key === "Backspace")) && (value === "") && (e.target.__annotationTextLastValue === "")) {
+        e.target.hiddenTextarea.removeEventListener("keyup", e.target.__annotationKeyUpHandler);
+        e.target.__annotationKeyUpHandler = null;
+        canvas.remove(e.target);
+      }
+      e.target.__annotationTextLastValue = value;
+    }
+    e.target.hiddenTextarea.addEventListener("keyup", e.target.__annotationKeyUpHandler);
+  });
+
+  canvas.on('text:editing:exiting', (e) => {
+    if (e.target.__annotationKeyUpHandler) {
+      e.target.hiddenTextarea.removeEventListener("keyup", e.target.__annotationKeyUpHandler);
+      e.target.__annotationKeyUpHandler = null;
+    }
+  });
 }
 
 module.exports = handleAnnotations;
@@ -303,6 +329,15 @@ module.exports = handleAnnotations;
         var borderRect = fabric.Annotations.calcBorderRect(this);
         return point.x >= borderRect.left && point.x <= borderRect.left + borderRect.width &&
                point.y >= borderRect.top && point.y <= borderRect.top + borderRect.height;
+      },
+
+      exitEditing: function() {
+        // fire this before calling into the library so we have access to the hidden textarea
+        // which isn't present when the 'text:editing:exited' event is fired
+        if (this.canvas) {
+          this.canvas.fire('text:editing:exiting', { target: this });
+        }
+        this.callSuper('exitEditing');
       },
 
       _renderTextCommon: function (ctx, method) {

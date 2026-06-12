@@ -469,15 +469,27 @@ doc:
 
 ### Appendix: primary source references
 
-- **Legacy engine:** `app/scripts/drawing-tool.js`, `tool.js`, `undo-redo.js`,
-  `convert-state.js`, `ui/ui-definition.js` (this repo).
-- **question-interactives:** `packages/drawing-tool/src/components/` —
+Paths below are relative to each project's own repository. Only the legacy
+engine lives in **this** repo; the other three are **external repositories** and
+cannot be browsed from here.
+
+- **Legacy engine** *(this repo,
+  [concord-consortium/drawing-tool](https://github.com/concord-consortium/drawing-tool))*:
+  `app/scripts/drawing-tool.js`, `tool.js`, `undo-redo.js`,
+  `convert-state.js`, `ui/ui-definition.js`.
+- **question-interactives** *(external repo,
+  [concord-consortium/question-interactives](https://github.com/concord-consortium/question-interactives))*:
+  `packages/drawing-tool/src/components/` —
   `drawing-tool.tsx`, `types.ts`, `app.tsx`, `take-snapshot.tsx`,
   `upload-background.tsx`, `report-item/static-drawing.tsx`,
   `stamp-collections.tsx`.
-- **codap DrawTool:** `DrawTool/draw-tool-plugin.js`, `DrawTool/index.html`,
+- **codap DrawTool** *(external repo,
+  [concord-consortium/codap-data-interactives](https://github.com/concord-consortium/codap-data-interactives))*:
+  `DrawTool/draw-tool-plugin.js`, `DrawTool/index.html`,
   `DrawTool/lib/drawing-tool.js` (vendored 2.1.1), `DrawTool/package.json`.
-- **CLUE:** `src/plugins/drawing/` — `model/drawing-content.ts`,
+- **CLUE** *(external repo,
+  [concord-consortium/collaborative-learning](https://github.com/concord-consortium/collaborative-learning))*:
+  `src/plugins/drawing/` — `model/drawing-content.ts`,
   `model/drawing-migrator.ts`, `objects/*.tsx`,
   `components/transformable.tsx`, `components/object-list-view.tsx`,
   `components/drawing-object-manager.tsx` (registry), `toolbar-buttons/*`,

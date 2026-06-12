@@ -394,8 +394,15 @@ resolve the two highest-risk unknowns at once.
 
 ### Sources
 
-Excalidraw developer docs (props, `excalidrawAPI`/`updateScene`, export utils,
-element skeleton); Excalidraw GitHub issues #7492 (Deque accessibility audit) and
-#9705 (touch support meta-issue); Excalidraw Libraries directory; npm
-`@excalidraw/excalidraw` (MIT, v0.18.x). Data snapshot June 2026; re-verify
-against current docs before relying on specifics.
+- Excalidraw developer docs — [props](https://docs.excalidraw.com/docs/@excalidraw/excalidraw/api/props),
+  [`excalidrawAPI`/`updateScene`](https://docs.excalidraw.com/docs/@excalidraw/excalidraw/api/props/excalidraw-api),
+  [export utils](https://docs.excalidraw.com/docs/@excalidraw/excalidraw/api/utils/export),
+  [element skeleton](https://docs.excalidraw.com/docs/@excalidraw/excalidraw/api/excalidraw-element-skeleton).
+- Excalidraw GitHub issues — [#7492 (Deque accessibility audit)](https://github.com/excalidraw/excalidraw/issues/7492),
+  [#9705 (touch support meta-issue)](https://github.com/excalidraw/excalidraw/issues/9705).
+- [Excalidraw Libraries directory](https://libraries.excalidraw.com/);
+  [`excalidraw-room`](https://github.com/excalidraw/excalidraw-room) collaboration server;
+  npm [`@excalidraw/excalidraw`](https://www.npmjs.com/package/@excalidraw/excalidraw) (MIT, v0.18.x).
+
+Data snapshot June 2026; re-verify against current docs before relying on
+specifics.

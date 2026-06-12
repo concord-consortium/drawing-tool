@@ -27,5 +27,5 @@ node_modules/
 tmp/
 __gh-pages-tmp__/
 
-# dist folders
-__gh-pages-tmp__/
+# Build output (built in CI, published from there; no longer committed)
+dist/

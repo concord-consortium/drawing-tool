@@ -1,7 +1,7 @@
 # Drawing Tool — Automated npm Publish on Tag (Design)
 
 **Date:** 2026-06-12
-**Status:** Approved design, pending implementation plan
+**Status:** Approved design; implementation plan and implementation landed in the same PR
 
 ## Goal
 

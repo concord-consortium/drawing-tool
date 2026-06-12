@@ -59,9 +59,11 @@ jobs:
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "dist_tag=$DIST_TAG" >> "$GITHUB_OUTPUT"
           echo "Publishing $VERSION under dist-tag $DIST_TAG"
-      - name: Build library
-        run: npm run build
       - name: Stamp version into package.json
         run: npm version --no-git-tag-version "${{ steps.meta.outputs.version }}"
       - name: Publish to npm
+        # The `prepack` script (npm run build) builds dist/ during packing, so
+        # the published tarball always contains a freshly-built dist/ — no
+        # explicit build step needed here, and the same guard protects manual
+        # `npm pack`/`npm publish` runs.
         run: npm publish --tag "${{ steps.meta.outputs.dist_tag }}" --provenance

@@ -24,7 +24,7 @@ const drawingTool = new DrawingTool("#drawing-tool-container");
     * `npm install` to install dependencies.
     * `webpack --watch` -- Automatically compiles sources to `./dist`
     * `live-server .` -- starts a web server on [http://localhost:8080/](http://localhost:8080/)
-    * Open [http://localhost:8080/examples/](http://localhost:3333/examples/).
+    * Open [http://localhost:8080/examples/](http://localhost:8080/examples/).
     * Code!!
     * `dist/` is built output and is **not** committed to git — it is built in CI for both the demo deploy and npm publish. The `webpack --watch` step above builds it locally only for previewing the demo with live-server.
 

@@ -27,8 +27,9 @@
   },
   "scripts": {
     "build": "NODE_OPTIONS=--openssl-legacy-provider webpack",
-    "start": "webpack-dev-server --inline --hot --content-base dist/",
-    "server": "webpack-dev-server"
+    "prepack": "npm run build",
+    "start": "NODE_OPTIONS=--openssl-legacy-provider webpack-dev-server --inline --hot --content-base dist/",
+    "server": "NODE_OPTIONS=--openssl-legacy-provider webpack-dev-server"
   },
   "peerDependencies": {
     "jquery": ">= 2.1.3"

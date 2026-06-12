@@ -19,7 +19,7 @@
     "url": "git+https://github.com/concord-consortium/drawing-tool.git"
   },
   "scripts": {
-    "build": "webpack",
+    "build": "NODE_OPTIONS=--openssl-legacy-provider webpack",
     "start": "webpack-dev-server --inline --hot --content-base dist/",
     "server": "webpack-dev-server"
   },

@@ -44,11 +44,12 @@ jobs:
       - name: Resolve version and dist-tag from git tag
         id: meta
         # The `v*` trigger glob matches any suffix; guard against malformed
-        # tags before stamping or publishing. Allows X.Y.Z and X.Y.Z-prerelease.
+        # tags (empty, non-semver) before stamping anything or attempting to
+        # publish. semver validates X.Y.Z and X.Y.Z-prerelease.
         run: |
           VERSION="${GITHUB_REF_NAME#v}"
-          if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.-]+)?$ ]]; then
-            echo "::error::Tag version '$VERSION' is not valid semver (expected X.Y.Z or X.Y.Z-prerelease)"
+          if ! npx --yes semver -- "$VERSION" >/dev/null; then
+            echo "::error::Tag version '$VERSION' is not valid semver"
             exit 1
           fi
           if [[ "$VERSION" == *-* ]]; then

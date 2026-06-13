@@ -43,6 +43,29 @@ suffix (containing `-`) publish under the `next` dist-tag; plain `X.Y.Z` tags
 publish under `latest`. The committed `package.json` version stays
 `0.0.0-development`; the real version comes from the tag.
 
+### Packaging notes
+
+Consumers import this library two ways at once:
+
+```
+import DrawingTool from "@concord-consortium/drawing-tool";        // → main → app/index.js (SOURCE)
+import "@concord-consortium/drawing-tool/dist/drawing-tool.css";   // → built CSS in dist/
+```
+
+So the published package must ship **both** `app/` (the source, consumed via
+`main`) **and** `dist/` (for the CSS). The UMD bundle `dist/drawing-tool.js` is
+**not** used by consumers. Implications when editing `package.json`:
+
+- Keep `files: ["app", "dist"]`. `dist/` is gitignored, and without this
+  allowlist npm falls back to `.gitignore` and would silently drop `dist/` from
+  the package — breaking the CSS import.
+- Don't repoint `main` away from the source or drop `app/`; consumers bundle the
+  source themselves (this is why we don't ship only `dist/` like some sibling
+  libraries).
+
+A future migration could ship TypeScript types and/or a built entry point to
+simplify this — see [docs/consumer-migration-to-scoped-package.md](docs/consumer-migration-to-scoped-package.md).
+
 ### Undo / redo feature
 
 If you are planning to add new feature that will be exposed in UI or via main API, you should consider whether

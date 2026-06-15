@@ -19,7 +19,7 @@ function BasicButton(options, ui, drawingTool, extraClasses) {
 
   this.icon = options.icon && options.icon.default;
 
-  this.$element = $('<div>')
+  this.$element = $('<button type="button">')
     .addClass('dt-btn')
     .addClass(options.classes)
     .addClass(extraClasses)
@@ -29,6 +29,8 @@ function BasicButton(options, ui, drawingTool, extraClasses) {
   if (this.icon) {
     this.$icon = $('<img>')
       .attr('src', this.icon)
+      // Decorative - the button itself provides the accessible name.
+      .attr('alt', '')
       .addClass('icon')
       .appendTo(this.$element);
   } else {

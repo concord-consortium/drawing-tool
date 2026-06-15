@@ -95,6 +95,14 @@ $text: Arial, sans-serif;
   }
 
   .dt-btn {
+    // .dt-btn elements are native <button>s - reset the user agent styles
+    // so they render exactly like the divs they used to be.
+    appearance: none;
+    -webkit-appearance: none;
+    border: none;
+    margin: 0;
+    font-family: inherit;
+
     z-index: 1000;
     display: block;
     overflow: hidden;
@@ -118,6 +126,13 @@ $text: Arial, sans-serif;
     &:hover {
       background: $cc-teal-light5B;
       cursor: pointer;
+    }
+
+    // Keyboard focus indicator. Inset so it isn't overlapped by adjacent
+    // buttons (the buttons butt up against each other with no gaps).
+    &:focus-visible {
+      outline: 2px solid $cc-teal-dark-2;
+      outline-offset: -2px;
     }
 
     &.dt-active {

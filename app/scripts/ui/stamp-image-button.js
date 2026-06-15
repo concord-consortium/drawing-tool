@@ -16,7 +16,7 @@ function StampImageButton(options, ui, drawingTool, extraClasses) {
   this._startWaiting();
   this.dt.tools.stamp.loadImage(this._imageSrc, function (fabricObj, img) {
     this._stamp = fabricObj;
-    this.$image = $(img).appendTo(this.$element);
+    this.$image = $(img).attr('alt', '').appendTo(this.$element);
     this._stopWaiting();
   }.bind(this), null, 'anonymous');
 

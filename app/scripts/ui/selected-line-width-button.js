@@ -5,7 +5,7 @@ var BasicButton = require('./basic-button');
 function SelectedLineWidthButton(options, ui, drawingTool, extraClasses) {
   BasicButton.call(this, options, ui, drawingTool, extraClasses);
 
-  this.$width = $('<div>')
+  this.$width = $('<span>')
     .addClass('dt-selected-line-width')
     .html(8)
     .appendTo(this.$element);

@@ -31,7 +31,8 @@ function generateStamps(uiDefinition, stampsDefition) {
     name: 'stampCategories',
     anchor: 'stamp',
     vertical: true,
-    hideOnClick: false
+    hideOnClick: false,
+    label: 'Stamp categories'
   });
 
   // Generate separate palettes with stamp buttons for each category.
@@ -56,6 +57,7 @@ function generateStamps(uiDefinition, stampsDefition) {
       anchor: categoryBtnName,
       topOffset: -1.5,
       leftOffset: -1.5,
+      label: category + ' stamps'
     };
     uiDefinition.palettes.push(categoryPalette);
 

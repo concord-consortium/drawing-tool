@@ -1,14 +1,24 @@
 var $ = require('jquery');
 
+// Palette ids must be unique across the whole page (they are referenced by
+// aria-controls) and one page may host several drawing tool instances.
+var _paletteIdx = 0;
+
 function Palette(options, ui) {
   this.ui          = ui;
   this.name        = options.name;
   this.permanent   = !!options.permanent;
   this.hideOnClick = options.hideOnClick === undefined ? true : options.hideOnClick;
   this.anchor      = options.anchor;
+  this.id          = 'dt-palette-' + _paletteIdx++;
   this.$element    = $('<div>')
+    .attr('id', this.id)
     .addClass('dt-palette')
     .addClass(options.vertical ? 'dt-vertical' : 'dt-horizontal');
+
+  if (options.label) {
+    this.$element.attr('role', 'group').attr('aria-label', options.label);
+  }
 
   this.topOffset = options.hasOwnProperty('topOffset') ? options.topOffset : 0;
   this.leftOffset = options.hasOwnProperty('leftOffset') ? options.leftOffset : 0;
@@ -43,6 +53,7 @@ Palette.prototype._show = function () {
   var anchorButton = this.anchor && this.ui.getButton(this.anchor);
   if (anchorButton) {
     anchorButton.$element.addClass("dt-active");
+    anchorButton.$element.attr('aria-expanded', 'true');
   }
 
   if (this.permanent) {
@@ -65,6 +76,7 @@ Palette.prototype._hide = function () {
   var anchorButton = this.anchor && this.ui.getButton(this.anchor);
   if (anchorButton) {
     anchorButton.$element.removeClass("dt-active");
+    anchorButton.$element.attr('aria-expanded', 'false');
     if (hadFocus) {
       anchorButton.$element.trigger('focus');
     }

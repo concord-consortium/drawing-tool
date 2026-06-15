@@ -65,27 +65,33 @@ var ui = {
     },
     {
       name: 'lines',
-      anchor: 'linesPalette'
+      anchor: 'linesPalette',
+      label: 'Line types'
     },
     {
       name: 'shapes',
-      anchor: 'shapesPalette'
+      anchor: 'shapesPalette',
+      label: 'Shapes'
     },
     {
       name: 'fontSizes',
-      anchor: 'text'
+      anchor: 'text',
+      label: 'Font sizes'
     },
     {
       name: 'strokeColors',
-      anchor: 'strokeColorPalette'
+      anchor: 'strokeColorPalette',
+      label: 'Stroke colors'
     },
     {
       name: 'fillColors',
-      anchor: 'fillColorPalette'
+      anchor: 'fillColorPalette',
+      label: 'Fill colors'
     },
     {
       name: 'strokeWidths',
-      anchor: 'strokeWidthPalette'
+      anchor: 'strokeWidthPalette',
+      label: 'Stroke widths'
     }
   ],
   buttons: [

@@ -7,8 +7,14 @@ var uiDefinition   = require('./ui-definition');
 function UIManager(drawingTool) {
   this.drawingTool = drawingTool;
 
+  // role="toolbar" + roving tabindex (set up in Task 6): the whole toolbar
+  // is one Tab stop and Arrow keys move between buttons. The toolbar is a
+  // vertical column, so aria-orientation is vertical.
   this.$tools = $('<div>')
     .addClass('dt-tools')
+    .attr('role', 'toolbar')
+    .attr('aria-orientation', 'vertical')
+    .attr('aria-label', 'Drawing tools')
     .prependTo(drawingTool.$element);
 
   // Toolbar should be the height of the canvas.
@@ -77,6 +83,10 @@ function UIManager(drawingTool) {
     if (btn.onInit) {
       btn.onInit.call(btn, this, drawingTool);
     }
+  }
+
+  for (var paletteName in this._palettes) {
+    this._setupPaletteAnchor(this._palettes[paletteName]);
   }
 }
 
@@ -153,6 +163,19 @@ UIManager.prototype._setupPaletteActiveButton = function (button) {
     // This will update "active" palette button during every click / touch.
     this._paletteActiveButton[button.palette] = button;
   }.bind(this));
+};
+
+// Expose the relation between an expandable button and the palette it
+// opens to assistive technology.
+UIManager.prototype._setupPaletteAnchor = function (palette) {
+  var anchorButton = palette.anchor && this.getButton(palette.anchor);
+  if (!anchorButton) {
+    return;
+  }
+  anchorButton.$element
+    .attr('aria-haspopup', 'true')
+    .attr('aria-controls', palette.id)
+    .attr('aria-expanded', 'false');
 };
 
 var _idx = 0;

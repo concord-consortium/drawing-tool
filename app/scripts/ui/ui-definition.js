@@ -4,17 +4,22 @@ var ColorButton     = require('./color-button');
 var LineWidthButton = require('./line-width-button');
 var SelectedLineWidthButton = require('./selected-line-width-button');
 
+// Keyboard shortcut hints shown in tooltips. The shortcuts themselves are
+// implemented in undo-redo.js, clone-tool.js, delete-tool.js, select-tool.js.
+var isMac = typeof navigator !== 'undefined' && /Mac|iPad|iPhone/.test(navigator.platform);
+var modKey = isMac ? 'Cmd+' : 'Ctrl+';
+
 var COLORS = [
-  {value: '',        icon: require('../../assets/color-none-icon.svg')},
-  {value: '#3f3f3f', icon: require('../../assets/color-black-icon.svg')},
-  {value: '#fff',    icon: require('../../assets/color-white-icon.svg')},
-  {value: '#bfbfbf', icon: require('../../assets/color-gray-icon.svg')},
-  {value: '#eb0000', icon: require('../../assets/color-red-icon.svg')},
-  {value: '#008a00', icon: require('../../assets/color-green-icon.svg')},
-  {value: '#00f',    icon: require('../../assets/color-blue-icon.svg')},
-  {value: '#ff8415', icon: require('../../assets/color-orange-icon.svg')},
-  {value: '#ff0',    icon: require('../../assets/color-yellow-icon.svg')},
-  {value: '#d100d1', icon: require('../../assets/color-purple-icon.svg')},
+  {value: '',        name: 'No color', icon: require('../../assets/color-none-icon.svg')},
+  {value: '#3f3f3f', name: 'Black',    icon: require('../../assets/color-black-icon.svg')},
+  {value: '#fff',    name: 'White',    icon: require('../../assets/color-white-icon.svg')},
+  {value: '#bfbfbf', name: 'Gray',     icon: require('../../assets/color-gray-icon.svg')},
+  {value: '#eb0000', name: 'Red',      icon: require('../../assets/color-red-icon.svg')},
+  {value: '#008a00', name: 'Green',    icon: require('../../assets/color-green-icon.svg')},
+  {value: '#00f',    name: 'Blue',     icon: require('../../assets/color-blue-icon.svg')},
+  {value: '#ff8415', name: 'Orange',   icon: require('../../assets/color-orange-icon.svg')},
+  {value: '#ff0',    name: 'Yellow',   icon: require('../../assets/color-yellow-icon.svg')},
+  {value: '#d100d1', name: 'Purple',   icon: require('../../assets/color-purple-icon.svg')},
  ];
 
 var STROKE_WIDTHS = [
@@ -105,7 +110,8 @@ var ui = {
     },
     {
       name: 'linesPalette',
-      tooltip: 'Line tool (click and hold to show available line types)',
+      tooltip: 'Line tool (click and hold, or press the right arrow key, to show line types)',
+      ariaLabel: 'Line tool',
       classes: 'dt-expand',
       reflectsTools: ['line', 'arrow', 'doubleArrow'],
       palette: 'main',
@@ -122,7 +128,8 @@ var ui = {
     },
     {
       name: 'shapesPalette',
-      tooltip: 'Basic shape tool (click and hold to show available shapes)',
+      tooltip: 'Basic shape tool (click and hold, or press the right arrow key, to show shapes)',
+      ariaLabel: 'Basic shape tool',
       classes: 'dt-expand',
       reflectsTools: ['rect', 'ellipse', 'square', 'circle'],
       palette: 'main',
@@ -139,7 +146,8 @@ var ui = {
     },
     {
       name: 'text',
-      tooltip: 'Text tool (click and hold to show available font sizes)',
+      tooltip: 'Text tool (click and hold, or press the right arrow key, to show font sizes)',
+      ariaLabel: 'Text tool',
       label: 'T',
       // Do not exit text edit mode on click. See text tool class.
       classes: 'dt-expand dt-keep-text-edit-mode',
@@ -157,7 +165,8 @@ var ui = {
     },
     {
       name: 'strokeColorPalette',
-      tooltip: 'Stroke color (click and hold to show available colors)',
+      tooltip: 'Stroke color (opens color palette)',
+      ariaLabel: 'Stroke color',
       buttonClass: StrokeButton,
       // Do not exit text edit mode on click. See text tool class.
       classes: 'dt-keep-text-edit-mode',
@@ -175,7 +184,8 @@ var ui = {
     },
     {
       name: 'fillColorPalette',
-      tooltip: 'Fill color (click and hold to show available colors)',
+      tooltip: 'Fill color (opens color palette)',
+      ariaLabel: 'Fill color',
       buttonClass: FillButton,
       palette: 'main',
       onInit: function () {
@@ -191,7 +201,8 @@ var ui = {
     },
     {
       name: 'strokeWidthPalette',
-      tooltip: 'Stroke width (click and hold to show available options)',
+      tooltip: 'Stroke width (opens width palette)',
+      ariaLabel: 'Stroke width',
       buttonClass: SelectedLineWidthButton,
       label: 'w',
       palette: 'main',
@@ -205,7 +216,8 @@ var ui = {
     },
     {
       name: 'clone',
-      tooltip: 'Clone tool',
+      tooltip: 'Clone tool (' + modKey + 'C to copy, ' + modKey + 'V to paste selection)',
+      ariaLabel: 'Clone tool',
       label: 'c',
       activatesTool: 'clone',
       palette: 'main',
@@ -238,7 +250,8 @@ var ui = {
     },
     {
       name: 'undo',
-      tooltip: 'Undo',
+      tooltip: 'Undo (' + modKey + 'Z)',
+      ariaLabel: 'Undo',
       label: 'u',
       classes: 'dt-undo-redo',
       palette: 'main',
@@ -258,7 +271,8 @@ var ui = {
     },
     {
       name: 'redo',
-      tooltip: 'Redo',
+      tooltip: 'Redo (' + modKey + 'Y)',
+      ariaLabel: 'Redo',
       label: 'r',
       classes: 'dt-undo-redo',
       palette: 'main',
@@ -278,7 +292,8 @@ var ui = {
     },
     {
       name: 'trash',
-      tooltip: 'Delete selected objects',
+      tooltip: 'Delete selected objects (Delete or Backspace key)',
+      ariaLabel: 'Delete selected objects',
       label: 'd',
       activatesTool: 'trash',
       palette: 'main',
@@ -366,6 +381,7 @@ FONT_SIZES.forEach(function (fontSize) {
   ui.buttons.push({
     label: 'T',
     tooltip: fontSize + 'px',
+    ariaLabel: fontSize + ' pixel font',
     // Do not exit text edit mode on click. See text tool class.
     classes: 'dt-keep-text-edit-mode',
     onClick: function () {
@@ -383,7 +399,7 @@ FONT_SIZES.forEach(function (fontSize) {
 COLORS.forEach(function (color) {
   ui.buttons.push({
     buttonClass: ColorButton,
-    tooltip: color.value,
+    tooltip: color.name + ' stroke color',
     // Do not exit text edit mode on click. See text tool class.
     classes: 'dt-keep-text-edit-mode',
     color: color.value,
@@ -393,7 +409,7 @@ COLORS.forEach(function (color) {
   });
   ui.buttons.push({
     buttonClass: ColorButton,
-    tooltip: color.value,
+    tooltip: color.name + ' fill color',
     color: color.value,
     type: 'fill',
     palette: 'fillColors',
@@ -405,6 +421,7 @@ STROKE_WIDTHS.forEach(function (width) {
   ui.buttons.push({
     buttonClass: LineWidthButton,
     tooltip: width.value + 'px',
+    ariaLabel: width.value + ' pixel stroke width',
     width: width.value,
     palette: 'strokeWidths',
     icon: width.icon

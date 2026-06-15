@@ -11,7 +11,8 @@ function generateStamps(uiDefinition, stampsDefition) {
   var prevBtnIdx = findButtonIndex(INSERT_STAMP_AFTER, uiDefinition.buttons);
   uiDefinition.buttons.splice(prevBtnIdx + 1, 0, {
     name: 'stamp',
-    tooltip: 'Stamp tool (click and hold to show available categories)',
+    tooltip: 'Stamp tool (click and hold, or press the right arrow key, to show categories)',
+    ariaLabel: 'Stamp tool',
     classes: 'dt-expand dt-img-btn',
     label: 'M',
     palette: 'main',

@@ -24,6 +24,7 @@ function BasicButton(options, ui, drawingTool, extraClasses) {
     .addClass(options.classes)
     .addClass(extraClasses)
     .attr('title', options.tooltip)
+    .attr('aria-label', options.ariaLabel || options.tooltip)
     .appendTo(ui.getPalette(options.palette).$element);
 
   if (this.icon) {

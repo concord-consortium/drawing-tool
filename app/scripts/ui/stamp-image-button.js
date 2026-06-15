@@ -11,6 +11,13 @@ function StampImageButton(options, ui, drawingTool, extraClasses) {
   this._stamp = null;
   this._imageSrc = drawingTool.proxy(options.imageSrc);
 
+  // Stamps are configured as bare image URLs; derive an accessible name
+  // from the file name, e.g. ".../stamps/simple-atom.svg" => "simple atom stamp".
+  var fileName = (options.imageSrc || '').split('/').pop().split('.')[0];
+  if (fileName) {
+    this.$element.attr('aria-label', decodeURIComponent(fileName).replace(/[-_]+/g, ' ') + ' stamp');
+  }
+
   this.$element.addClass('dt-img-btn');
 
   this._startWaiting();

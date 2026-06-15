@@ -33,8 +33,55 @@ function Palette(options, ui) {
     this._clearWindowHandlers();
   }.bind(this);
 
+  // Close the palette when keyboard focus moves out of it. Mirrors the
+  // mousedown auto-hide for mouse users. During a focusout event the
+  // browser may not have focused the new element yet, so check
+  // relatedTarget rather than document.activeElement.
+  this._onFocusOut = function (e) {
+    var newTarget = e.relatedTarget;
+    if (newTarget && (this.$element.is(newTarget) || this.$element.find(newTarget).length > 0)) {
+      return;
+    }
+    if (this.$element.is(':visible')) {
+      this._hide();
+    }
+  }.bind(this);
+
+  // Keyboard handling inside an open palette. Palette options are not
+  // individual Tab stops (they are tabindex="-1", set in
+  // UIManager._setupKeyboardNavigation), so Arrow / Home / End are the only
+  // way to move between them. Escape closes the palette; _hide returns
+  // focus to the anchor button.
+  this._onKeyDown = function (e) {
+    if (e.keyCode === 27 /* Escape */) {
+      e.stopPropagation();
+      this._hide();
+      return;
+    }
+    var $btns = this.$element.find('.dt-btn');
+    if (!$btns.length) {
+      return;
+    }
+    var idx = $btns.index(document.activeElement);
+    var target = null;
+    switch (e.keyCode) {
+      case 37: /* ArrowLeft  */
+      case 38: /* ArrowUp    */ target = idx - 1; break;
+      case 39: /* ArrowRight */
+      case 40: /* ArrowDown  */ target = idx + 1; break;
+      case 36: /* Home       */ target = 0; break;
+      case 35: /* End        */ target = $btns.length - 1; break;
+      default: return;
+    }
+    e.preventDefault();
+    var n = $btns.length;
+    $btns.eq((target % n + n) % n).trigger('focus');  // wraps both ends
+  }.bind(this);
+
   if (!this.permanent) {
     this.$element.hide();
+    this.$element.on('focusout', this._onFocusOut);
+    this.$element.on('keydown', this._onKeyDown);
   }
 }
 
@@ -44,6 +91,15 @@ Palette.prototype.toggle = function () {
   } else {
     this._show();
   }
+};
+
+// Opens the palette (if needed) and moves keyboard focus to its first
+// button. Used for keyboard-driven opening, where focus must land inside.
+Palette.prototype.showAndFocus = function () {
+  if (!this.$element.is(':visible')) {
+    this._show();
+  }
+  this.$element.find('.dt-btn').first().trigger('focus');
 };
 
 Palette.prototype._show = function () {

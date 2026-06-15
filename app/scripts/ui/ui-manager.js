@@ -88,6 +88,8 @@ function UIManager(drawingTool) {
   for (var paletteName in this._palettes) {
     this._setupPaletteAnchor(this._palettes[paletteName]);
   }
+
+  this._setupKeyboardNavigation();
 }
 
 UIManager.prototype._processUIDefinition = function (uiDef) {
@@ -166,7 +168,8 @@ UIManager.prototype._setupPaletteActiveButton = function (button) {
 };
 
 // Expose the relation between an expandable button and the palette it
-// opens to assistive technology.
+// opens to assistive technology, and let keyboard users open it
+// (mouse/touch users use click-and-hold or click).
 UIManager.prototype._setupPaletteAnchor = function (palette) {
   var anchorButton = palette.anchor && this.getButton(palette.anchor);
   if (!anchorButton) {
@@ -176,6 +179,70 @@ UIManager.prototype._setupPaletteAnchor = function (palette) {
     .attr('aria-haspopup', 'true')
     .attr('aria-controls', palette.id)
     .attr('aria-expanded', 'false');
+  anchorButton.$element.on('keydown', function (e) {
+    // ArrowRight opens the palette (palettes fly out to the right of their
+    // anchor). ArrowUp/ArrowDown are reserved for moving between toolbar
+    // buttons (roving tabindex), so they must NOT open the palette.
+    if (e.keyCode === 39 /* ArrowRight */) {
+      e.preventDefault();
+      palette.showAndFocus();
+      return;
+    }
+    // The button's own Enter/Space handler runs first (bound earlier). If
+    // it just opened this palette (stroke color, fill color, stroke width
+    // toggle their palette on click), move focus into it.
+    if ((e.keyCode === 13 /* Enter */ || e.keyCode === 32 /* Space */) &&
+        palette.$element.is(':visible')) {
+      palette.showAndFocus();
+    }
+  });
+};
+
+// Make the toolbar a single Tab stop with a roving tabindex (ARIA Toolbar
+// pattern). Only one main-toolbar button is in the page tab order at a
+// time; Arrow / Home / End keys move focus AND the tab stop between
+// buttons. Popup-palette buttons are never their own Tab stop - they are
+// reached by opening their palette (ArrowRight / Enter on the anchor).
+UIManager.prototype._setupKeyboardNavigation = function () {
+  // Every toolbar/palette button: programmatically focusable, but not a
+  // Tab stop.
+  this.$tools.find('.dt-btn').attr('tabindex', '-1');
+
+  var mainPalette = this.getPalette('main');
+  if (!mainPalette) {
+    return;
+  }
+  var $main = mainPalette.$element.find('.dt-btn');
+  if (!$main.length) {
+    return;
+  }
+  // The one button that IS the toolbar's tab stop.
+  $main.eq(0).attr('tabindex', '0');
+
+  function focusAt(i) {
+    var n = $main.length;
+    var idx = (i % n + n) % n;  // wrap around both ends
+    $main.attr('tabindex', '-1');
+    $main.eq(idx).attr('tabindex', '0').trigger('focus');
+  }
+
+  $main.on('keydown', function (e) {
+    var idx = $main.index(this);
+    switch (e.keyCode) {
+      case 38: /* ArrowUp   */ e.preventDefault(); focusAt(idx - 1); break;
+      case 40: /* ArrowDown */ e.preventDefault(); focusAt(idx + 1); break;
+      case 36: /* Home      */ e.preventDefault(); focusAt(0); break;
+      case 35: /* End       */ e.preventDefault(); focusAt($main.length - 1); break;
+    }
+  });
+
+  // When a main button receives focus by any route (mouse click, or focus
+  // returning from a closed palette), make it the sole tab stop so a later
+  // Shift+Tab / Tab leaves from the right place.
+  $main.on('focus', function () {
+    $main.attr('tabindex', '-1');
+    $(this).attr('tabindex', '0');
+  });
 };
 
 var _idx = 0;

@@ -167,6 +167,9 @@ BasicButton.prototype.setLocked = function (v) {
   } else {
     this.$element.removeClass('dt-locked');
   }
+  // aria-disabled rather than the disabled attribute: locked buttons stay
+  // in the Tab order so keyboard users can still discover them.
+  this.$element.attr('aria-disabled', v ? 'true' : 'false');
   this._locked = v;
 };
 

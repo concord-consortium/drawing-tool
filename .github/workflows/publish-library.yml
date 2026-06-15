@@ -14,7 +14,7 @@ name: Publish to npm
 #
 # Authentication uses npm trusted publishing (OIDC). No NPM_TOKEN secret is
 # required, but the npm package must list this repo + workflow under "Trusted
-# Publishers" in its settings (see the spec's bootstrap notes).
+# Publishers" in its settings on npmjs.com (a one-time setup, already done).
 
 on:
   push:

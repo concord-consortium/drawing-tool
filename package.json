@@ -1,13 +1,20 @@
 {
-  "name": "drawing-tool",
+  "name": "@concord-consortium/drawing-tool",
   "description": "HTML5 Drawing Tool",
   "author": "",
-  "version": "2.3.2",
+  "version": "0.0.0-development",
   "bugs": {
     "url": "https://github.com/concord-consortium/drawing-tool/issues"
   },
   "homepage": "https://github.com/concord-consortium/drawing-tool#readme",
   "main": "app/index.js",
+  "publishConfig": {
+    "access": "public"
+  },
+  "files": [
+    "app",
+    "dist"
+  ],
   "keywords": [
     "drawing",
     "tool",
@@ -19,9 +26,10 @@
     "url": "git+https://github.com/concord-consortium/drawing-tool.git"
   },
   "scripts": {
-    "build": "webpack",
-    "start": "webpack-dev-server --inline --hot --content-base dist/",
-    "server": "webpack-dev-server"
+    "build": "NODE_OPTIONS=--openssl-legacy-provider webpack",
+    "prepack": "npm run build",
+    "start": "NODE_OPTIONS=--openssl-legacy-provider webpack-dev-server --inline --hot --content-base dist/",
+    "server": "NODE_OPTIONS=--openssl-legacy-provider webpack-dev-server"
   },
   "peerDependencies": {
     "jquery": ">= 2.1.3"

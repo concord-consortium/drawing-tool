@@ -39,6 +39,23 @@ function BasicButton(options, ui, drawingTool, extraClasses) {
       .appendTo(this.$element);
   }
 
+  // Keyboard activation. This library deliberately acts on 'mousedown
+  // touchstart' rather than 'click' (see note at the top of this file), so
+  // a native button's Enter/Space click events would be ignored. Trigger
+  // the 'mousedown' handlers directly instead. preventDefault() stops the
+  // browser from also synthesizing a 'click' (and stops Space scrolling).
+  this.$element.on('keydown', function (e) {
+    if (e.keyCode !== 13 /* Enter */ && e.keyCode !== 32 /* Space */) {
+      return;
+    }
+    e.preventDefault();
+    if (this._locked) {
+      return;
+    }
+    this.click();
+    this._hidePaletteAfterKeyboardActivation();
+  }.bind(this));
+
   if (options.onClick) {
     this.$element.on('mousedown touchstart', function (e) {
       if (this._locked) return;
@@ -115,6 +132,17 @@ BasicButton.prototype.click = function () {
   // to #trigger). Use it as otherwise it could interfere with some other
   // handlers listening to 'mousedown' on window (palette auto-hide feature).
   this.$element.triggerHandler('mousedown');
+};
+
+// Popup palettes auto-hide on window 'mousedown', which never fires for
+// keyboard activation, so hide the button's containing palette explicitly.
+// Mirrors the _closeOnClick logic in palette.js: permanent palettes and
+// palettes with hideOnClick=false (stamp categories) stay open.
+BasicButton.prototype._hidePaletteAfterKeyboardActivation = function () {
+  var palette = this.ui.getPalette(this.palette);
+  if (palette && !palette.permanent && palette.hideOnClick && palette.$element.is(':visible')) {
+    palette._hide();
+  }
 };
 
 BasicButton.prototype.setActive = function (v) {

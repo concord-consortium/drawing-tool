@@ -57,13 +57,18 @@ Palette.prototype._show = function () {
 };
 
 Palette.prototype._hide = function () {
+  // If keyboard focus is inside the palette when it closes, return it to
+  // the anchor button so the user isn't dropped back to the document body.
+  var hadFocus = this.$element.find(document.activeElement).length > 0;
   this.$element.hide();
   this._clearWindowHandlers();
   var anchorButton = this.anchor && this.ui.getButton(this.anchor);
   if (anchorButton) {
     anchorButton.$element.removeClass("dt-active");
+    if (hadFocus) {
+      anchorButton.$element.trigger('focus');
+    }
   }
-
 };
 
 Palette.prototype._clearWindowHandlers = function () {

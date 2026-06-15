@@ -15,19 +15,12 @@ function ColorButton(options, ui, drawingTool, extraClasses) {
     };
   }
   options.onClick = callback;
+  options.isToggle = true;
   options.onStateChange = function (state) {
     if (options.type === 'stroke') {
-      if (state.stroke === options.color) {
-        this.$element.addClass('dt-active');
-      } else {
-        this.$element.removeClass('dt-active');
-      }
+      this.setActive(state.stroke === options.color);
     } else {
-      if (state.fill === options.color) {
-        this.$element.addClass('dt-active');
-      } else {
-        this.$element.removeClass('dt-active');
-      }
+      this.setActive(state.fill === options.color);
     }
   };
   BasicButton.call(this, options, ui, drawingTool, extraClasses);

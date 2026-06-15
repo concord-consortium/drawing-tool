@@ -382,6 +382,7 @@ FONT_SIZES.forEach(function (fontSize) {
     label: 'T',
     tooltip: fontSize + 'px',
     ariaLabel: fontSize + ' pixel font',
+    isToggle: true,
     // Do not exit text edit mode on click. See text tool class.
     classes: 'dt-keep-text-edit-mode',
     onClick: function () {

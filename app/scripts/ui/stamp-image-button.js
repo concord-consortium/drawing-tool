@@ -6,6 +6,7 @@ function StampImageButton(options, ui, drawingTool, extraClasses) {
   options.onClick = function () {
     this.dt.setStampObject(this._stamp, this._imageSrc);
   };
+  options.isToggle = true;
   BasicButton.call(this, options, ui, drawingTool, extraClasses);
 
   this._stamp = null;

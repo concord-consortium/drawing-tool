@@ -17,6 +17,11 @@ function BasicButton(options, ui, drawingTool, extraClasses) {
 
   this._locked = false;
 
+  // Buttons that represent an on/off state (tool choice, color, width,
+  // font size, stamp) expose it via aria-pressed. Plain action buttons
+  // (undo, redo, send to back...) must not have aria-pressed at all.
+  this._isToggle = !!(options.activatesTool || options.reflectsTools || options.isToggle);
+
   this.icon = options.icon && options.icon.default;
 
   this.$element = $('<button type="button">')
@@ -26,6 +31,10 @@ function BasicButton(options, ui, drawingTool, extraClasses) {
     .attr('title', options.tooltip)
     .attr('aria-label', options.ariaLabel || options.tooltip)
     .appendTo(ui.getPalette(options.palette).$element);
+
+  if (this._isToggle) {
+    this.$element.attr('aria-pressed', 'false');
+  }
 
   if (this.icon) {
     this.$icon = $('<img>')
@@ -99,11 +108,7 @@ function BasicButton(options, ui, drawingTool, extraClasses) {
     }.bind(this));
 
     drawingTool.on('tool:changed', function (toolName) {
-      if (toolName === options.activatesTool) {
-        this.$element.addClass('dt-active');
-      } else {
-        this.$element.removeClass('dt-active');
-      }
+      this.setActive(toolName === options.activatesTool);
     }.bind(this));
   }
 
@@ -114,7 +119,6 @@ function BasicButton(options, ui, drawingTool, extraClasses) {
         this.setIcon(ui.getButton(toolName));
       } else {
         this.setActive(false);
-        this.$element.removeClass('dt-active');
       }
     }.bind(this));
   }
@@ -151,6 +155,9 @@ BasicButton.prototype.setActive = function (v) {
     this.$element.addClass('dt-active');
   } else {
     this.$element.removeClass('dt-active');
+  }
+  if (this._isToggle) {
+    this.$element.attr('aria-pressed', v ? 'true' : 'false');
   }
 };
 

@@ -16,7 +16,16 @@ function StampImageButton(options, ui, drawingTool, extraClasses) {
   // from the file name, e.g. ".../stamps/simple-atom.svg" => "simple atom stamp".
   var fileName = (options.imageSrc || '').split('/').pop().split('.')[0];
   if (fileName) {
-    this.$element.attr('aria-label', decodeURIComponent(fileName).replace(/[-_]+/g, ' ') + ' stamp');
+    // Stamps come from arbitrary configured URLs; a stray '%' that isn't
+    // valid percent-encoding makes decodeURIComponent throw, which would
+    // crash toolbar init. Fall back to the raw file name in that case.
+    var label;
+    try {
+      label = decodeURIComponent(fileName);
+    } catch (e) {
+      label = fileName;
+    }
+    this.$element.attr('aria-label', label.replace(/[-_]+/g, ' ') + ' stamp');
   }
 
   this.$element.addClass('dt-img-btn');

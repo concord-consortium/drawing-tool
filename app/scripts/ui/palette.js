@@ -38,6 +38,15 @@ function Palette(options, ui) {
   // browser may not have focused the new element yet, so check
   // relatedTarget rather than document.activeElement.
   this._onFocusOut = function (e) {
+    // Palettes that stay open on click (hideOnClick: false) are also kept
+    // open on focusout. They anchor child palettes (stamp categories ->
+    // category stamps); a child palette is a sibling div, not nested here,
+    // so moving focus into it would otherwise auto-hide this parent and
+    // break the child's focus restoration to an anchor that is now hidden.
+    // These palettes are closed with Escape (see _onKeyDown) instead.
+    if (!this.hideOnClick) {
+      return;
+    }
     var newTarget = e.relatedTarget;
     if (newTarget && (this.$element.is(newTarget) || this.$element.find(newTarget).length > 0)) {
       return;

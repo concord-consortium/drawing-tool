@@ -123,6 +123,18 @@ UIManager.prototype.togglePalette = function (name) {
   this._palettes[name].toggle();
 };
 
+// Hide every open popup palette (permanent palettes - the main toolbar -
+// stay put). _hide only restores focus when focus was inside the palette,
+// so calling this while focus is on a main button does not steal it.
+UIManager.prototype._closeOpenPalettes = function () {
+  for (var name in this._palettes) {
+    var palette = this._palettes[name];
+    if (!palette.permanent && palette.$element.is(':visible')) {
+      palette._hide();
+    }
+  }
+};
+
 UIManager.prototype.getMainContainer = function () {
   return this.drawingTool.$element;
 };
@@ -219,7 +231,14 @@ UIManager.prototype._setupKeyboardNavigation = function () {
   // The one button that IS the toolbar's tab stop.
   $main.eq(0).attr('tabindex', '0');
 
+  var self = this;
   function focusAt(i) {
+    // Roving to another main button means we are leaving any open popup
+    // palette behind. Mouse/long-press opening leaves focus on the main
+    // anchor (focus never enters the palette), so without this an Arrow
+    // key would rove away while the palette stayed open - letting several
+    // palettes be visible at once. Close them as we move.
+    self._closeOpenPalettes();
     var n = $main.length;
     var idx = (i % n + n) % n;  // wrap around both ends
     $main.attr('tabindex', '-1');

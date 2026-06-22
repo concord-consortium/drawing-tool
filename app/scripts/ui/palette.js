@@ -117,7 +117,10 @@ Palette.prototype._show = function () {
 
   var anchorButton = this.anchor && this.ui.getButton(this.anchor);
   if (anchorButton) {
-    anchorButton.$element.addClass("dt-active");
+    // The "palette is open" highlight is driven by aria-expanded in CSS,
+    // not dt-active. dt-active means "this tool/value is selected" and is
+    // owned by setActive(); reusing it here let _hide() wipe a still-valid
+    // selection highlight when a palette closed after picking a tool.
     anchorButton.$element.attr('aria-expanded', 'true');
   }
 
@@ -140,7 +143,8 @@ Palette.prototype._hide = function () {
   this._clearWindowHandlers();
   var anchorButton = this.anchor && this.ui.getButton(this.anchor);
   if (anchorButton) {
-    anchorButton.$element.removeClass("dt-active");
+    // Only clear the expanded state - dt-active (selected tool/value) is
+    // owned by setActive() and must survive the palette closing.
     anchorButton.$element.attr('aria-expanded', 'false');
     if (hadFocus) {
       anchorButton.$element.trigger('focus');

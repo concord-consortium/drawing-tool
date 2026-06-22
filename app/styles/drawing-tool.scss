@@ -135,7 +135,12 @@ $text: Arial, sans-serif;
       outline-offset: -2px;
     }
 
-    &.dt-active {
+    // dt-active: this tool/value is selected. aria-expanded: this button's
+    // palette is open. Both share the same highlight but are independent
+    // states, so a button can be selected and not open, or open and not
+    // selected, without one clobbering the other.
+    &.dt-active,
+    &[aria-expanded="true"] {
       background: $cc-teal-light-4;
     }
 
@@ -159,7 +164,8 @@ $text: Arial, sans-serif;
       line-height: $buttonSize;
       margin-top: -1px;
 
-      &.dt-active {
+      &.dt-active,
+      &[aria-expanded="true"] {
         border-right: $border-width solid $cc-teal-light-4;
       }
     }

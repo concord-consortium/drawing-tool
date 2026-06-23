@@ -38,21 +38,23 @@ function Palette(options, ui) {
   // browser may not have focused the new element yet, so check
   // relatedTarget rather than document.activeElement.
   this._onFocusOut = function (e) {
-    // Palettes that stay open on click (hideOnClick: false) are also kept
-    // open on focusout. They anchor child palettes (stamp categories ->
-    // category stamps); a child palette is a sibling div, not nested here,
-    // so moving focus into it would otherwise auto-hide this parent and
-    // break the child's focus restoration to an anchor that is now hidden.
-    // These palettes are closed with Escape (see _onKeyDown) instead.
-    if (!this.hideOnClick) {
-      return;
-    }
     var newTarget = e.relatedTarget;
+    // Focus is staying inside this palette: keep it open.
     if (newTarget && (this.$element.is(newTarget) || this.$element.find(newTarget).length > 0)) {
       return;
     }
+    // Focus is moving into a child palette - one opened from a button
+    // inside this palette (stamp categories -> a category's stamps). The
+    // child is a sibling <div>, not nested here, so keep this parent open
+    // so the child can later restore focus to its anchor button.
+    if (newTarget && this._focusMovedToChildPalette(newTarget)) {
+      return;
+    }
+    // Focus has genuinely left (Tab-away, or focus moved elsewhere). Close,
+    // but do NOT restore focus to the anchor: that would steal focus from
+    // wherever the user is heading and trap them back in the toolbar.
     if (this.$element.is(':visible')) {
-      this._hide();
+      this._hide(false);
     }
   }.bind(this);
 
@@ -135,10 +137,17 @@ Palette.prototype._show = function () {
   }.bind(this), 16);
 };
 
-Palette.prototype._hide = function () {
-  // If keyboard focus is inside the palette when it closes, return it to
-  // the anchor button so the user isn't dropped back to the document body.
-  var hadFocus = this.$element.find(document.activeElement).length > 0;
+Palette.prototype._hide = function (restoreFocus) {
+  if (restoreFocus === undefined) {
+    restoreFocus = true;
+  }
+  // When closing, return focus to the anchor only if focus is currently
+  // inside the palette, so the user isn't dropped back to the document
+  // body. A focusout-driven close passes restoreFocus=false: during a
+  // focusout document.activeElement is unreliable and the user is already
+  // moving elsewhere, so restoring focus would steal it from the element
+  // they are tabbing to (a keyboard trap).
+  var hadFocus = restoreFocus && this.$element.find(document.activeElement).length > 0;
   this.$element.hide();
   this._clearWindowHandlers();
   var anchorButton = this.anchor && this.ui.getButton(this.anchor);
@@ -150,6 +159,20 @@ Palette.prototype._hide = function () {
       anchorButton.$element.trigger('focus');
     }
   }
+};
+
+// True when `target` lives inside a palette that was opened from a button
+// within this palette (e.g. a stamp category's stamps, opened from a
+// category button inside the stamp-categories palette). Anchor buttons
+// reference the palette they open via aria-controls, so the anchor of the
+// palette containing `target` being inside this palette marks it as a child.
+Palette.prototype._focusMovedToChildPalette = function (target) {
+  var $palette = $(target).closest('.dt-palette');
+  if (!$palette.length) {
+    return false;
+  }
+  var $anchor = $('[aria-controls="' + $palette.attr('id') + '"]');
+  return $anchor.length > 0 && this.$element.find($anchor).length > 0;
 };
 
 Palette.prototype._clearWindowHandlers = function () {

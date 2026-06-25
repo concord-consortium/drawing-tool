@@ -6,17 +6,34 @@ function StampImageButton(options, ui, drawingTool, extraClasses) {
   options.onClick = function () {
     this.dt.setStampObject(this._stamp, this._imageSrc);
   };
+  options.isToggle = true;
   BasicButton.call(this, options, ui, drawingTool, extraClasses);
 
   this._stamp = null;
   this._imageSrc = drawingTool.proxy(options.imageSrc);
+
+  // Stamps are configured as bare image URLs; derive an accessible name
+  // from the file name, e.g. ".../stamps/simple-atom.svg" => "simple atom stamp".
+  var fileName = (options.imageSrc || '').split('/').pop().split('.')[0];
+  if (fileName) {
+    // Stamps come from arbitrary configured URLs; a stray '%' that isn't
+    // valid percent-encoding makes decodeURIComponent throw, which would
+    // crash toolbar init. Fall back to the raw file name in that case.
+    var label;
+    try {
+      label = decodeURIComponent(fileName);
+    } catch (e) {
+      label = fileName;
+    }
+    this.$element.attr('aria-label', label.replace(/[-_]+/g, ' ') + ' stamp');
+  }
 
   this.$element.addClass('dt-img-btn');
 
   this._startWaiting();
   this.dt.tools.stamp.loadImage(this._imageSrc, function (fabricObj, img) {
     this._stamp = fabricObj;
-    this.$image = $(img).appendTo(this.$element);
+    this.$image = $(img).attr('alt', '').appendTo(this.$element);
     this._stopWaiting();
   }.bind(this), null, 'anonymous');
 

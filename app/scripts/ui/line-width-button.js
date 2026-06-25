@@ -7,12 +7,9 @@ function LineWidthButton(options, ui, drawingTool, extraClasses) {
     this.dt.setStrokeWidth(options.width);
     this.dt.setSelectionStrokeWidth(options.width);
   };
+  options.isToggle = true;
   options.onStateChange = function (state) {
-    if (state.strokeWidth === options.width) {
-      this.$element.addClass('dt-active');
-    } else {
-      this.$element.removeClass('dt-active');
-    }
+    this.setActive(state.strokeWidth === options.width);
   };
   BasicButton.call(this, options, ui, drawingTool, extraClasses);
 }

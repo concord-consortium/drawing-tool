@@ -7,8 +7,14 @@ var uiDefinition   = require('./ui-definition');
 function UIManager(drawingTool) {
   this.drawingTool = drawingTool;
 
+  // role="toolbar" + roving tabindex (set up in Task 6): the whole toolbar
+  // is one Tab stop and Arrow keys move between buttons. The toolbar is a
+  // vertical column, so aria-orientation is vertical.
   this.$tools = $('<div>')
     .addClass('dt-tools')
+    .attr('role', 'toolbar')
+    .attr('aria-orientation', 'vertical')
+    .attr('aria-label', 'Drawing tools')
     .prependTo(drawingTool.$element);
 
   // Toolbar should be the height of the canvas.
@@ -78,6 +84,12 @@ function UIManager(drawingTool) {
       btn.onInit.call(btn, this, drawingTool);
     }
   }
+
+  for (var paletteName in this._palettes) {
+    this._setupPaletteAnchor(this._palettes[paletteName]);
+  }
+
+  this._setupKeyboardNavigation();
 }
 
 UIManager.prototype._processUIDefinition = function (uiDef) {
@@ -109,6 +121,18 @@ UIManager.prototype.getPalette = function (name) {
 
 UIManager.prototype.togglePalette = function (name) {
   this._palettes[name].toggle();
+};
+
+// Hide every open popup palette (permanent palettes - the main toolbar -
+// stay put). _hide only restores focus when focus was inside the palette,
+// so calling this while focus is on a main button does not steal it.
+UIManager.prototype._closeOpenPalettes = function () {
+  for (var name in this._palettes) {
+    var palette = this._palettes[name];
+    if (!palette.permanent && palette.$element.is(':visible')) {
+      palette._hide();
+    }
+  }
 };
 
 UIManager.prototype.getMainContainer = function () {
@@ -153,6 +177,91 @@ UIManager.prototype._setupPaletteActiveButton = function (button) {
     // This will update "active" palette button during every click / touch.
     this._paletteActiveButton[button.palette] = button;
   }.bind(this));
+};
+
+// Expose the relation between an expandable button and the palette it
+// opens to assistive technology, and let keyboard users open it
+// (mouse/touch users use click-and-hold or click).
+UIManager.prototype._setupPaletteAnchor = function (palette) {
+  var anchorButton = palette.anchor && this.getButton(palette.anchor);
+  if (!anchorButton) {
+    return;
+  }
+  anchorButton.$element
+    .attr('aria-haspopup', 'true')
+    .attr('aria-controls', palette.id)
+    .attr('aria-expanded', 'false');
+  anchorButton.$element.on('keydown', function (e) {
+    // ArrowRight opens the palette (palettes fly out to the right of their
+    // anchor). ArrowUp/ArrowDown are reserved for moving between toolbar
+    // buttons (roving tabindex), so they must NOT open the palette.
+    if (e.keyCode === 39 /* ArrowRight */) {
+      e.preventDefault();
+      palette.showAndFocus();
+      return;
+    }
+    // The button's own Enter/Space handler runs first (bound earlier). If
+    // it just opened this palette (stroke color, fill color, stroke width
+    // toggle their palette on click), move focus into it.
+    if ((e.keyCode === 13 /* Enter */ || e.keyCode === 32 /* Space */) &&
+        palette.$element.is(':visible')) {
+      palette.showAndFocus();
+    }
+  });
+};
+
+// Make the toolbar a single Tab stop with a roving tabindex (ARIA Toolbar
+// pattern). Only one main-toolbar button is in the page tab order at a
+// time; Arrow / Home / End keys move focus AND the tab stop between
+// buttons. Popup-palette buttons are never their own Tab stop - they are
+// reached by opening their palette (ArrowRight / Enter on the anchor).
+UIManager.prototype._setupKeyboardNavigation = function () {
+  // Every toolbar/palette button: programmatically focusable, but not a
+  // Tab stop.
+  this.$tools.find('.dt-btn').attr('tabindex', '-1');
+
+  var mainPalette = this.getPalette('main');
+  if (!mainPalette) {
+    return;
+  }
+  var $main = mainPalette.$element.find('.dt-btn');
+  if (!$main.length) {
+    return;
+  }
+  // The one button that IS the toolbar's tab stop.
+  $main.eq(0).attr('tabindex', '0');
+
+  var self = this;
+  function focusAt(i) {
+    // Roving to another main button means we are leaving any open popup
+    // palette behind. Mouse/long-press opening leaves focus on the main
+    // anchor (focus never enters the palette), so without this an Arrow
+    // key would rove away while the palette stayed open - letting several
+    // palettes be visible at once. Close them as we move.
+    self._closeOpenPalettes();
+    var n = $main.length;
+    var idx = (i % n + n) % n;  // wrap around both ends
+    $main.attr('tabindex', '-1');
+    $main.eq(idx).attr('tabindex', '0').trigger('focus');
+  }
+
+  $main.on('keydown', function (e) {
+    var idx = $main.index(this);
+    switch (e.keyCode) {
+      case 38: /* ArrowUp   */ e.preventDefault(); focusAt(idx - 1); break;
+      case 40: /* ArrowDown */ e.preventDefault(); focusAt(idx + 1); break;
+      case 36: /* Home      */ e.preventDefault(); focusAt(0); break;
+      case 35: /* End       */ e.preventDefault(); focusAt($main.length - 1); break;
+    }
+  });
+
+  // When a main button receives focus by any route (mouse click, or focus
+  // returning from a closed palette), make it the sole tab stop so a later
+  // Shift+Tab / Tab leaves from the right place.
+  $main.on('focus', function () {
+    $main.attr('tabindex', '-1');
+    $(this).attr('tabindex', '0');
+  });
 };
 
 var _idx = 0;

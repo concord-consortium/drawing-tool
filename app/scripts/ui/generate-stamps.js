@@ -11,7 +11,8 @@ function generateStamps(uiDefinition, stampsDefition) {
   var prevBtnIdx = findButtonIndex(INSERT_STAMP_AFTER, uiDefinition.buttons);
   uiDefinition.buttons.splice(prevBtnIdx + 1, 0, {
     name: 'stamp',
-    tooltip: 'Stamp tool (click and hold to show available categories)',
+    tooltip: 'Stamp tool (click and hold, or press the right arrow key, to show categories)',
+    ariaLabel: 'Stamp tool',
     classes: 'dt-expand dt-img-btn',
     label: 'M',
     palette: 'main',
@@ -30,7 +31,8 @@ function generateStamps(uiDefinition, stampsDefition) {
     name: 'stampCategories',
     anchor: 'stamp',
     vertical: true,
-    hideOnClick: false
+    hideOnClick: false,
+    label: 'Stamp categories'
   });
 
   // Generate separate palettes with stamp buttons for each category.
@@ -55,6 +57,7 @@ function generateStamps(uiDefinition, stampsDefition) {
       anchor: categoryBtnName,
       topOffset: -1.5,
       leftOffset: -1.5,
+      label: category + ' stamps'
     };
     uiDefinition.palettes.push(categoryPalette);
 
